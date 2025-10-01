@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -58,7 +58,7 @@ const NeighborhoodMap = () => {
     }
   };
 
-  const handleMapClick = (e) => {
+  const handleMapClick = useCallback((e) => {
     if (step !== 1) return;
     if (marker) marker.remove();
 
@@ -69,7 +69,7 @@ const NeighborhoodMap = () => {
     setMarker(newMarker);
     setLocation(e.lngLat);
     setStep(2);
-  };
+  }, [step, marker]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -77,7 +77,7 @@ const NeighborhoodMap = () => {
     return () => {
       mapRef.current.off('click', handleMapClick);
     };
-  }, [step, marker, handleMapClick]);
+  }, [handleMapClick]);
 
   const handleReset = () => {
     if (marker) marker.remove();
@@ -115,7 +115,6 @@ const NeighborhoodMap = () => {
       {step === 2 && (
         <div className="overlay overlay-enter">
           <h2>Step 2: Years & Name</h2>
-
 
           <label>What do you call this area?</label>
           <input
@@ -155,7 +154,10 @@ const NeighborhoodMap = () => {
       {step === 3 && (
         <div className="overlay overlay-enter">
           <h2>Step 3: Where would you mark this neighborhood's boundaries?</h2>
-          <p>The polygon tool is active -- tap to add a starting point, tap again to add more points, doubleclick to close the shape.</p>
+          <p>
+            The polygon tool is active -- tap to add a starting point, tap again to add more points,
+            doubleclick to close the shape.
+          </p>
           <div className="overlay-actions">
             <button onClick={() => setStep(4)} disabled={!boundary}>
               Next
