@@ -36,7 +36,7 @@ jobs:
 
       - name: List repo contents
         run: |
-        ls -la
+          ls -la
 
 
       - name: Run FTP deploy
