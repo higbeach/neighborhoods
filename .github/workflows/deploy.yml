@@ -35,18 +35,13 @@ jobs:
           which node
           node -v
 
-      - name: List repo contents
-        run: |
-          ls -la
-
-
       - name: Run FTP deploy
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          
         run: |
           cd client
-            ls -la
              node ./deploy.js
 
