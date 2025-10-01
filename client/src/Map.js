@@ -77,7 +77,7 @@ const NeighborhoodMap = () => {
     return () => {
       mapRef.current.off('click', handleMapClick);
     };
-  }, [step, marker]);
+  }, [step, marker, handleMapClick]);
 
   const handleReset = () => {
     if (marker) marker.remove();
