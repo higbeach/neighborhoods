@@ -28,11 +28,11 @@ jobs:
           cd client
           npm run build
 
-      - name: Deploy via FTP
-        uses: sebastianpopp/ftp-action@v1.2.0
+      - name: Upload via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          host: ${{ secrets.FTP_HOST }}
-          user: ${{ secrets.FTP_USERNAME }}
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          localDir: client/build
-          remoteDir: public_html/ourlivingneighborhoods.html
+          local-dir: client/build
+          server-dir: public_html/ourlivingneighborhoods.org
