@@ -26,7 +26,8 @@ jobs:
 
       - name: Install deploy dependencies
         run: |
-          npm install
+          cd client
+          npm install ftp-deploy
 
       - name: Run FTP deploy
         env:
@@ -34,4 +35,5 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
-          node deplowy.js
+          cd client
+          node deploy.js
