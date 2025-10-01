@@ -22,17 +22,16 @@ jobs:
         run: |
           cd client
           npm install
-
-      - name: Build React app
-        run: |
-          cd client
           npm run build
 
-      - name: Upload via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.3
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: client/build
-          server-dir: public_html/ourlivingneighborhoods.org
+      - name: Install deploy dependencies
+        run: |
+          npm install
+
+      - name: Run FTP deploy
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          node deplowy.js
