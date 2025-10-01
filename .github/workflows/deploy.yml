@@ -29,10 +29,10 @@ jobs:
           npm run build
 
       - name: Upload via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@v4
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: client/build
-          server-dir: public_html/ourlivingneighborhoods.org/
+          server-dir: public_html/ourlivingneighborhoods.org
