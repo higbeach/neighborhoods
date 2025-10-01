@@ -7,7 +7,7 @@ const config = {
   host: process.env.FTP_HOST,
   port: 21,
   localRoot: __dirname + "/build",
-  remoteRoot: "/public_html/ourlivingneighborhoods",
+  remoteRoot: "/public_html/ourlivingneighborhoods/",
   include: ["*", "**/*"],
   deleteRemote: true,
   forcePasv: true,
