@@ -18,10 +18,11 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
+      - name: Install dependencies and build React app
         run: |
           cd client
-          npm install
+          npm install --legacy-peer-deps
+          chmod +x node_modules/.bin/react-scripts
           npm run build
 
       - name: Install deploy dependencies
