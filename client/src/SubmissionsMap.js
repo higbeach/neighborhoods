@@ -19,32 +19,34 @@ const SubmissionsMap = ({ submissions }) => {
     });
 
     mapRef.current.on('load', () => {
-      submissions.forEach((s) => {
+      submissions.forEach((s, index) => {
+        const boundary = s.boundary;
         const hasValidBoundary =
-          s.boundary &&
-          s.boundary.geometry &&
-          typeof s._id === 'string' &&
-          s._id.trim() !== '';
+          boundary &&
+          boundary.type === 'Feature' &&
+          boundary.geometry &&
+          boundary.geometry.type &&
+          Array.isArray(boundary.geometry.coordinates);
 
-        if (hasValidBoundary) {
-          const sourceId = `boundary-${s._id}`;
+        const sourceId = typeof s._id === 'string' && s._id.trim() !== ''
+          ? `boundary-${s._id}`
+          : `boundary-fallback-${index}`;
 
-          if (!mapRef.current.getSource(sourceId)) {
-            mapRef.current.addSource(sourceId, {
-              type: 'geojson',
-              data: s.boundary,
-            });
+        if (hasValidBoundary && !mapRef.current.getSource(sourceId)) {
+          mapRef.current.addSource(sourceId, {
+            type: 'geojson',
+            data: boundary,
+          });
 
-            mapRef.current.addLayer({
-              id: sourceId,
-              type: 'fill',
-              source: sourceId,
-              paint: {
-                'fill-color': '#088',
-                'fill-opacity': 0.4,
-              },
-            });
-          }
+          mapRef.current.addLayer({
+            id: sourceId,
+            type: 'fill',
+            source: sourceId,
+            paint: {
+              'fill-color': '#088',
+              'fill-opacity': 0.4,
+            },
+          });
         } else {
           console.warn('⏭️ Skipping invalid boundary or ID:', s);
         }
