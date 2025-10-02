@@ -3,22 +3,25 @@ import React, { useState, useEffect } from 'react';
 const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmitted }) => {
   const [changes, setChanges] = useState('');
   const [animate, setAnimate] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // Trigger fade-in animation on mount
     const t = setTimeout(() => setAnimate(true), 0);
     return () => clearTimeout(t);
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    setError('');
 
     const submission = {
       areaName,
       years,
-      changes,       // optional text
-      location,      // { lng, lat }
-      boundary       // GeoJSON feature for the polygon
+      changes,
+      location,
+      boundary,
     };
 
     try {
@@ -30,12 +33,16 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
 
       if (res.ok) {
         console.log('✅ Submission saved:', submission);
-        onSubmitted(); // advance to Thank You step
+        onSubmitted();
       } else {
+        setError(`Server error: ${res.statusText}`);
         console.error('❌ Error saving submission:', res.statusText);
       }
     } catch (err) {
+      setError('Network error. Please try again.');
       console.error('❌ Network error:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -54,12 +61,16 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
           rows={4}
         />
         <br /><br />
+        {error && <p style={{ color: 'red' }}>{error}</p>}
         <div className="overlay-actions">
-          <button type="submit">Submit</button>
+          <button type="submit" disabled={submitting}>
+            {submitting ? 'Submitting…' : 'Submit'}
+          </button>
           <button
             type="button"
             className="secondary"
             onClick={onReset}
+            disabled={submitting}
           >
             Reset
           </button>
