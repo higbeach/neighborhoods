@@ -24,8 +24,11 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
       boundary,
     };
 
+    // Replace with your actual Render backend URL
+    const endpoint = 'https://your-app-name.onrender.com/api/submissions';
+
     try {
-      const res = await fetch('http://localhost:4000/api/submissions', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submission),
