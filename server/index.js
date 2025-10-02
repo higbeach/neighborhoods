@@ -10,8 +10,14 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Middleware
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000' }));
+// ✅ CORS: allow requests from your live frontend
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://neighborhoods.buddybuilds.site' // ← replace with your actual frontend domain if different
+  ]
+}));
+
 app.use(bodyParser.json());
 
 // Path to submissions file
