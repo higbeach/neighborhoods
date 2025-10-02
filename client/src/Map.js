@@ -7,7 +7,7 @@ import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import BoundariesForm from './BoundariesForm';
 import neighborhoodNames from './neighborhoodNames';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiZXJpY2hvbG1lcyIsImEiOiJjbGZxZ2Z6Z3gwN3ZkM3BvM3Z0Z3Z2Z2ZxIn0.4ZJvZzXJv8XzJvZzXJv8XzQ';
+mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
 
 const NeighborhoodMap = () => {
   const mapContainer = useRef(null);
@@ -107,7 +107,7 @@ const NeighborhoodMap = () => {
 
       {step === 1 && (
         <div className="overlay overlay-enter">
-          <h2>Step 1: Mark Where You Live Pretty Please!</h2>
+          <h2>Step 1: Mark Where You Live Pretty Please</h2>
           <p>Click anywhere on the map to drop a pin?</p>
         </div>
       )}
