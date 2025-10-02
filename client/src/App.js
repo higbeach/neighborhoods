@@ -1,8 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import NeighborhoodMap from './Map';       // ✅ renamed import
-import AdminMap from './AdminMap';         // admin-only view
-import SubmissionsViewer from './SubmissionsViewer'; // ✅ new viewer component
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import NeighborhoodMap from './Map';       // Public-facing mapping flow
+import AdminMap from './AdminMap';         // Admin-only view
+import SubmissionsViewer from './SubmissionsViewer'; // Viewer for all submissions
 import './App.css';
 
 function App() {
@@ -10,14 +10,12 @@ function App() {
     <div className="App">
       <Router>
         <Routes>
-          {/* Public-facing mapping flow */}
           <Route path="/" element={<NeighborhoodMap />} />
-
-          {/* Private admin view (only you know this route) */}
           <Route path="/admin" element={<AdminMap />} />
-
-          {/* Viewer for all submissions */}
           <Route path="/submissions" element={<SubmissionsViewer />} />
+
+          {/* Optional: redirect unknown routes to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </div>
