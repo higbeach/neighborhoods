@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 4000;
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://neighborhoods.buddybuilds.site' // ← replace with your actual frontend domain if different
+    'https://ourlivingneighborhoods.org' // ← replace with your actual frontend domain if different
   ]
 }));
 
