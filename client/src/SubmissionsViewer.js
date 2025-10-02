@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Map from './Map'; // adjust path if needed
 
 const SubmissionsViewer = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -25,22 +26,25 @@ const SubmissionsViewer = () => {
       ) : submissions.length === 0 ? (
         <p>No submissions yet.</p>
       ) : (
-        <ul>
-          {submissions.map((s, i) => (
-            <li key={i}>
-              <strong>{s.areaName}</strong> ({s.years})<br />
-              <em>
-                {s.location && typeof s.location === 'object'
-                  ? `Lat: ${s.location.lat}, Lng: ${s.location.lng}`
-                  : s.location}
-              </em>
-              <br />
-              <p>{s.changes || 'No comments provided.'}</p>
-              <small>{new Date(s.timestamp).toLocaleString()}</small>
-              <hr />
-            </li>
-          ))}
-        </ul>
+        <>
+          <Map submissions={submissions} />
+          <ul>
+            {submissions.map((s, i) => (
+              <li key={i}>
+                <strong>{s.areaName}</strong> ({s.years})<br />
+                <em>
+                  {s.location && typeof s.location === 'object'
+                    ? `Lat: ${s.location.lat}, Lng: ${s.location.lng}`
+                    : s.location}
+                </em>
+                <br />
+                <p>{s.changes || 'No comments provided.'}</p>
+                <small>{new Date(s.timestamp).toLocaleString()}</small>
+                <hr />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );
