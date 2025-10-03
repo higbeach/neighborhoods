@@ -104,6 +104,46 @@ const SubmissionsMap = ({ submissions }) => {
     });
   }, [submissions]);
 
+  // 🔁 Update polygon styles when selectedId changes
+  useEffect(() => {
+    if (!mapRef.current || !selectedId) return;
+
+    submissions.forEach((s, index) => {
+      const sourceId =
+        typeof s._id === 'string' && s._id.trim() !== ''
+          ? `boundary-${s._id}`
+          : `boundary-fallback-${index}`;
+
+      const isSelected = s._id === selectedId;
+
+      if (mapRef.current.getLayer(sourceId)) {
+        mapRef.current.setPaintProperty(
+          sourceId,
+          'fill-color',
+          isSelected ? '#f00' : '#088'
+        );
+        mapRef.current.setPaintProperty(
+          sourceId,
+          'fill-opacity',
+          isSelected ? 0.6 : 0.4
+        );
+      }
+
+      if (mapRef.current.getLayer(`${sourceId}-outline`)) {
+        mapRef.current.setPaintProperty(
+          `${sourceId}-outline`,
+          'line-color',
+          isSelected ? '#f00' : '#000'
+        );
+        mapRef.current.setPaintProperty(
+          `${sourceId}-outline`,
+          'line-width',
+          isSelected ? 3 : 1
+        );
+      }
+    });
+  }, [selectedId, submissions]);
+
   return <div ref={mapContainer} style={{ width: '100vw', height: '100vh' }} />;
 };
 
