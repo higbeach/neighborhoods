@@ -1,82 +1,90 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmitted }) => {
-  const [changes, setChanges] = useState('');
-  const [animate, setAnimate] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const t = setTimeout(() => setAnimate(true), 0);
-    return () => clearTimeout(t);
-  }, []);
+const BoundariesForm = ({ draw }) => {
+  const [neighborhood, setNeighborhood] = useState('');
+  const [years, setYears] = useState('');
+  const [comments, setComments] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError('');
 
-    const submission = {
-      areaName,
-      years,
-      changes,
-      location,
-      boundary,
-    };
+    // Get the first drawn feature from Mapbox Draw
+    const drawn = draw.getAll();
+    if (!drawn.features.length) {
+      alert('Please draw a boundary on the map before submitting.');
+      return;
+    }
+
+    const geometry = drawn.features[0].geometry;
 
     try {
-      const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions', {
+      const res = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submission),
+        body: JSON.stringify({
+          geometry,
+          properties: {
+            neighborhood,
+            years,
+            comments,
+          },
+        }),
       });
 
-      if (res.ok) {
-        console.log('✅ Submission saved:', submission);
-        onSubmitted();
-      } else {
-        setError(`Server error: ${res.statusText}`);
-        console.error('❌ Error saving submission:', res.statusText);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
       }
+
+      const data = await res.json();
+      console.log('✅ Saved submission:', data);
+
+      // Reset form + clear drawing
+      setNeighborhood('');
+      setYears('');
+      setComments('');
+      draw.deleteAll();
+      alert('Submission saved!');
     } catch (err) {
-      setError('Network error. Please try again.');
-      console.error('❌ Network error:', err);
-    } finally {
-      setSubmitting(false);
+      console.error('Error saving submission:', err.message);
+      alert('Error saving submission. See console for details.');
     }
   };
 
   return (
-    <div className={`overlay ${animate ? 'overlay-enter' : ''}`}>
-      <h2>Step 4: Optional Questions?</h2>
-      <p className="question">
-        How would you say these boundaries changed over the years? (optional)
-      </p>
-
-      <form onSubmit={handleSubmit}>
-        <textarea
-          placeholder="Your thoughts (optional)"
-          value={changes}
-          onChange={(e) => setChanges(e.target.value)}
-          rows={4}
-        />
-        <br /><br />
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <div className="overlay-actions">
-          <button type="submit" disabled={submitting}>
-            {submitting ? 'Submitting…' : 'Submit'}
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            onClick={onReset}
-            disabled={submitting}
-          >
-            Reset
-          </button>
-        </div>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
+      <div>
+        <label>
+          Neighborhood Name:
+          <input
+            type="text"
+            value={neighborhood}
+            onChange={(e) => setNeighborhood(e.target.value)}
+            required
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Years Lived:
+          <input
+            type="number"
+            value={years}
+            onChange={(e) => setYears(e.target.value)}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          Comments:
+          <textarea
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+          />
+        </label>
+      </div>
+      <button type="submit">Submit Boundary</button>
+    </form>
   );
 };
 
