@@ -4,13 +4,29 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
 
-const SubmissionsMap = ({ submissions }) => {
+const SubmissionsMap = () => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const [selectedId, setSelectedId] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
 
+  // Load submissions.geojson once
   useEffect(() => {
-    if (mapRef.current) return;
+    fetch('/data/submissions.geojson')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.type === 'FeatureCollection') {
+          setSubmissions(data.features);
+        } else {
+          console.error('Invalid GeoJSON format');
+        }
+      })
+      .catch((err) => console.error('Error loading submissions:', err));
+  }, []);
+
+  // Initialize map and add sources/layers
+  useEffect(() => {
+    if (mapRef.current || submissions.length === 0) return;
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -20,24 +36,16 @@ const SubmissionsMap = ({ submissions }) => {
     });
 
     mapRef.current.on('load', () => {
-      submissions.forEach((s, index) => {
-        const boundary = s.boundary;
-        const hasValidBoundary =
-          boundary &&
-          boundary.type === 'Feature' &&
-          boundary.geometry &&
-          boundary.geometry.type &&
-          Array.isArray(boundary.geometry.coordinates);
-
+      submissions.forEach((f, index) => {
         const sourceId =
-          typeof s._id === 'string' && s._id.trim() !== ''
-            ? `boundary-${s._id}`
+          f.properties && f.properties.id
+            ? `boundary-${f.properties.id}`
             : `boundary-fallback-${index}`;
 
-        if (hasValidBoundary && !mapRef.current.getSource(sourceId)) {
+        if (!mapRef.current.getSource(sourceId)) {
           mapRef.current.addSource(sourceId, {
             type: 'geojson',
-            data: boundary,
+            data: f,
           });
 
           mapRef.current.addLayer({
@@ -61,41 +69,15 @@ const SubmissionsMap = ({ submissions }) => {
           });
 
           mapRef.current.on('click', sourceId, (e) => {
-            setSelectedId(s._id);
+            setSelectedId(f.properties.id || index);
 
             new mapboxgl.Popup()
-              .setLngLat(
-                s.location
-                  ? [s.location.lng, s.location.lat]
-                  : e.lngLat
-              )
+              .setLngLat(e.lngLat)
               .setHTML(`
-                <strong>${s.areaName || 'Unnamed'}</strong><br/>
-                ${s.years} years<br/>
-                ${s.changes || 'No comments'}<br/>
-                <small>${new Date(s.timestamp).toLocaleString()}</small>
-              `)
-              .addTo(mapRef.current);
-          });
-        } else {
-          console.warn('⏭️ Skipping invalid boundary or ID:', s);
-        }
-
-        if (s.location && s.location.lng && s.location.lat) {
-          const marker = new mapboxgl.Marker()
-            .setLngLat([s.location.lng, s.location.lat])
-            .addTo(mapRef.current);
-
-          marker.getElement().addEventListener('click', () => {
-            setSelectedId(s._id);
-
-            new mapboxgl.Popup()
-              .setLngLat([s.location.lng, s.location.lat])
-              .setHTML(`
-                <strong>${s.areaName || 'Unnamed'}</strong><br/>
-                ${s.years} years<br/>
-                ${s.changes || 'No comments'}<br/>
-                <small>${new Date(s.timestamp).toLocaleString()}</small>
+                <strong>${f.properties.neighborhood || 'Unnamed'}</strong><br/>
+                ${f.properties.years || ''} years<br/>
+                ${f.properties.comments || 'No comments'}<br/>
+                <small>${f.properties.timestamp || ''}</small>
               `)
               .addTo(mapRef.current);
           });
@@ -104,17 +86,17 @@ const SubmissionsMap = ({ submissions }) => {
     });
   }, [submissions]);
 
-  // 🔁 Update polygon styles when selectedId changes
+  // Update styles when selection changes
   useEffect(() => {
     if (!mapRef.current || !selectedId) return;
 
-    submissions.forEach((s, index) => {
+    submissions.forEach((f, index) => {
       const sourceId =
-        typeof s._id === 'string' && s._id.trim() !== ''
-          ? `boundary-${s._id}`
+        f.properties && f.properties.id
+          ? `boundary-${f.properties.id}`
           : `boundary-fallback-${index}`;
 
-      const isSelected = s._id === selectedId;
+      const isSelected = (f.properties.id || index) === selectedId;
 
       if (mapRef.current.getLayer(sourceId)) {
         mapRef.current.setPaintProperty(

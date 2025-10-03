@@ -4,9 +4,11 @@ const BoundariesForm = ({ draw }) => {
   const [neighborhood, setNeighborhood] = useState('');
   const [years, setYears] = useState('');
   const [comments, setComments] = useState('');
-  const [submitted, setSubmitted] = useState(false); // track confirmation step
+  const [success, setSuccess] = useState(false); // inline confirmation
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     // Get the first drawn feature from Mapbox Draw
     const drawn = draw.getAll();
     if (!drawn.features.length) {
@@ -35,37 +37,31 @@ const BoundariesForm = ({ draw }) => {
         throw new Error(text || res.statusText);
       }
 
-      const data = await res.json();
-      console.log('✅ Saved submission:', data);
+      await res.json();
 
-      // Reset form fields
+      // Inline confirmation; keep the form and map exactly where they are
+      setSuccess(true);
+      // Reset fields but DO NOT clear the drawing (keeps map context and layout)
       setNeighborhood('');
       setYears('');
       setComments('');
-      draw.deleteAll();
 
-      // Show confirmation step
-      setSubmitted(true);
+      // If you want the drawing cleared after submit, uncomment:
+      // draw.deleteAll();
     } catch (err) {
       console.error('Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
     }
   };
 
-  // If already submitted, show confirmation step
-  if (submitted) {
-    return (
-      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ccc' }}>
-        <h3>✅ Thank you!</h3>
-        <p>Your boundary has been saved.</p>
-        <button onClick={() => setSubmitted(false)}>Add Another</button>
-      </div>
-    );
-  }
-
-  // Otherwise show the form
   return (
-    <div style={{ marginTop: '1rem' }}>
+    <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
+      {success && (
+        <div style={{ marginBottom: '0.75rem', color: '#0a6' }}>
+          ✅ Your boundary was saved. You can add another or adjust the map.
+        </div>
+      )}
+
       <div>
         <label>
           Neighborhood Name:
@@ -77,6 +73,7 @@ const BoundariesForm = ({ draw }) => {
           />
         </label>
       </div>
+
       <div>
         <label>
           Years Lived:
@@ -87,6 +84,7 @@ const BoundariesForm = ({ draw }) => {
           />
         </label>
       </div>
+
       <div>
         <label>
           Comments:
@@ -96,10 +94,9 @@ const BoundariesForm = ({ draw }) => {
           />
         </label>
       </div>
-      <button type="button" onClick={handleSubmit}>
-        Next
-      </button>
-    </div>
+
+      <button type="submit">Next</button>
+    </form>
   );
 };
 
