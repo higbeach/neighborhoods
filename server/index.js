@@ -1,4 +1,3 @@
-// server/index.js
 require('dotenv').config();
 
 const express = require('express');
@@ -14,43 +13,55 @@ const PORT = process.env.PORT || 4000;
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://ourlivingneighborhoods.org' // ← replace with your actual frontend domain if different
+    'https://ourlivingneighborhoods.org' // ← replace if your frontend domain changes
   ]
 }));
 
 app.use(bodyParser.json());
 
-// Path to submissions file
-const submissionsFile = path.join(__dirname, 'submissions.json');
+// Path to submissions file (GeoJSON)
+const submissionsFile = path.join(__dirname, 'submissions.geojson');
 
-// Ensure file exists
+// Ensure file exists with empty FeatureCollection
 if (!fs.existsSync(submissionsFile)) {
-  fs.writeFileSync(submissionsFile, JSON.stringify([]));
+  fs.writeFileSync(
+    submissionsFile,
+    JSON.stringify({ type: 'FeatureCollection', features: [] }, null, 2)
+  );
 }
 
 // POST endpoint to save a submission
 app.post('/api/submissions', (req, res) => {
-  const newSubmission = req.body;
+  const { geometry, properties } = req.body;
 
-  // Load existing submissions
-  const data = fs.readFileSync(submissionsFile);
-  const submissions = JSON.parse(data);
+  if (!geometry || !properties) {
+    return res.status(400).json({ error: 'Missing geometry or properties' });
+  }
 
-  // Add timestamp
-  newSubmission.timestamp = new Date().toISOString();
+  // Load existing FeatureCollection
+  const data = JSON.parse(fs.readFileSync(submissionsFile));
 
-  // Save
-  submissions.push(newSubmission);
-  fs.writeFileSync(submissionsFile, JSON.stringify(submissions, null, 2));
+  // Build new Feature
+  const feature = {
+    type: 'Feature',
+    geometry,
+    properties: {
+      ...properties,
+      timestamp: new Date().toISOString()
+    }
+  };
 
-  res.json({ status: 'ok', submission: newSubmission });
+  // Append and save
+  data.features.push(feature);
+  fs.writeFileSync(submissionsFile, JSON.stringify(data, null, 2));
+
+  res.json({ status: 'ok', feature });
 });
 
 // GET endpoint to fetch all submissions
 app.get('/api/submissions', (req, res) => {
-  const data = fs.readFileSync(submissionsFile);
-  const submissions = JSON.parse(data);
-  res.json(submissions);
+  const data = JSON.parse(fs.readFileSync(submissionsFile));
+  res.json(data);
 });
 
 // Start server
