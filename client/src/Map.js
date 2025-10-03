@@ -107,8 +107,8 @@ const NeighborhoodMap = () => {
 
       {step === 1 && (
         <div className="overlay overlay-enter">
-          <h2>Step 1: Mark Where You Live Pretty Please</h2>
-          <p>Click anywhere on the map to drop a pin?</p>
+          <h2>Step 1: Mark Where You Live</h2>
+          <p>Click anywhere on the map to drop a pin</p>
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const BoundariesForm = ({ draw, onComplete }) => {
+const BoundariesForm = ({ draw }) => {
   const [neighborhood, setNeighborhood] = useState('');
   const [years, setYears] = useState('');
   const [comments, setComments] = useState('');
@@ -39,18 +39,12 @@ const BoundariesForm = ({ draw, onComplete }) => {
       const data = await res.json();
       console.log('✅ Saved submission:', data);
 
-      // Reset form + clear drawing
+      // Keep the box visible and drawing intact (no wizard step change)
+      // Just clear the fields for convenience
       setNeighborhood('');
       setYears('');
       setComments('');
-      draw.deleteAll();
-
-      // Let parent wizard know we’re done
-      if (onComplete) {
-        onComplete();
-      } else {
-        alert('Submission saved!');
-      }
+      alert('Submission saved!');
     } catch (err) {
       console.error('Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
