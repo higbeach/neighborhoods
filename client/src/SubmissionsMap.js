@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -7,6 +7,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY
 const SubmissionsMap = ({ submissions }) => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -28,9 +29,10 @@ const SubmissionsMap = ({ submissions }) => {
           boundary.geometry.type &&
           Array.isArray(boundary.geometry.coordinates);
 
-        const sourceId = typeof s._id === 'string' && s._id.trim() !== ''
-          ? `boundary-${s._id}`
-          : `boundary-fallback-${index}`;
+        const sourceId =
+          typeof s._id === 'string' && s._id.trim() !== ''
+            ? `boundary-${s._id}`
+            : `boundary-fallback-${index}`;
 
         if (hasValidBoundary && !mapRef.current.getSource(sourceId)) {
           mapRef.current.addSource(sourceId, {
@@ -47,15 +49,56 @@ const SubmissionsMap = ({ submissions }) => {
               'fill-opacity': 0.4,
             },
           });
+
+          mapRef.current.addLayer({
+            id: `${sourceId}-outline`,
+            type: 'line',
+            source: sourceId,
+            paint: {
+              'line-color': '#000',
+              'line-width': 1,
+            },
+          });
+
+          mapRef.current.on('click', sourceId, (e) => {
+            setSelectedId(s._id);
+
+            new mapboxgl.Popup()
+              .setLngLat(
+                s.location
+                  ? [s.location.lng, s.location.lat]
+                  : e.lngLat
+              )
+              .setHTML(`
+                <strong>${s.areaName || 'Unnamed'}</strong><br/>
+                ${s.years} years<br/>
+                ${s.changes || 'No comments'}<br/>
+                <small>${new Date(s.timestamp).toLocaleString()}</small>
+              `)
+              .addTo(mapRef.current);
+          });
         } else {
           console.warn('⏭️ Skipping invalid boundary or ID:', s);
         }
 
         if (s.location && s.location.lng && s.location.lat) {
-          new mapboxgl.Marker()
+          const marker = new mapboxgl.Marker()
             .setLngLat([s.location.lng, s.location.lat])
-            .setPopup(new mapboxgl.Popup().setText(s.areaName || 'Unnamed'))
             .addTo(mapRef.current);
+
+          marker.getElement().addEventListener('click', () => {
+            setSelectedId(s._id);
+
+            new mapboxgl.Popup()
+              .setLngLat([s.location.lng, s.location.lat])
+              .setHTML(`
+                <strong>${s.areaName || 'Unnamed'}</strong><br/>
+                ${s.years} years<br/>
+                ${s.changes || 'No comments'}<br/>
+                <small>${new Date(s.timestamp).toLocaleString()}</small>
+              `)
+              .addTo(mapRef.current);
+          });
         }
       });
     });
