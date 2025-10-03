@@ -4,10 +4,9 @@ const BoundariesForm = ({ draw }) => {
   const [neighborhood, setNeighborhood] = useState('');
   const [years, setYears] = useState('');
   const [comments, setComments] = useState('');
+  const [submitted, setSubmitted] = useState(false); // track confirmation step
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     // Get the first drawn feature from Mapbox Draw
     const drawn = draw.getAll();
     if (!drawn.features.length) {
@@ -39,20 +38,34 @@ const BoundariesForm = ({ draw }) => {
       const data = await res.json();
       console.log('✅ Saved submission:', data);
 
-      // Keep the box visible and drawing intact (no wizard step change)
-      // Just clear the fields for convenience
+      // Reset form fields
       setNeighborhood('');
       setYears('');
       setComments('');
-      alert('Submission saved!');
+      draw.deleteAll();
+
+      // Show confirmation step
+      setSubmitted(true);
     } catch (err) {
       console.error('Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
     }
   };
 
+  // If already submitted, show confirmation step
+  if (submitted) {
+    return (
+      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ccc' }}>
+        <h3>✅ Thank you!</h3>
+        <p>Your boundary has been saved.</p>
+        <button onClick={() => setSubmitted(false)}>Add Another</button>
+      </div>
+    );
+  }
+
+  // Otherwise show the form
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
+    <div style={{ marginTop: '1rem' }}>
       <div>
         <label>
           Neighborhood Name:
@@ -83,8 +96,10 @@ const BoundariesForm = ({ draw }) => {
           />
         </label>
       </div>
-      <button type="submit">Next</button>
-    </form>
+      <button type="button" onClick={handleSubmit}>
+        Next
+      </button>
+    </div>
   );
 };
 
