@@ -1,194 +1,106 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import mapboxgl from 'mapbox-gl';
-import MapboxDraw from '@mapbox/mapbox-gl-draw';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
+import React, { useState } from 'react';
 
-import BoundariesForm from './BoundariesForm';
-import neighborhoodNames from './neighborhoodNames';
+const BoundariesForm = ({ draw }) => {
+  const [neighborhood, setNeighborhood] = useState('');
+  const [years, setYears] = useState('');
+  const [comments, setComments] = useState('');
+  const [submitted, setSubmitted] = useState(false); // track confirmation step
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
-
-const NeighborhoodMap = () => {
-  const mapContainer = useRef(null);
-  const mapRef = useRef(null);
-  const drawRef = useRef(null);
-
-  const [step, setStep] = useState(1);
-  const [marker, setMarker] = useState(null);
-  const [location, setLocation] = useState(null);
-  const [years, setYears] = useState(0);
-  const [areaName, setAreaName] = useState('');
-  const [boundary, setBoundary] = useState(null);
-
-  useEffect(() => {
-    if (mapRef.current) return;
-
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v10',
-      center: [-122.33, 47.61],
-      zoom: 11,
-    });
-
-    drawRef.current = new MapboxDraw({
-      displayControlsDefault: false,
-      controls: { polygon: true, trash: true },
-    });
-
-    mapRef.current.addControl(drawRef.current);
-
-    mapRef.current.on('draw.create', updateBoundary);
-    mapRef.current.on('draw.update', updateBoundary);
-    mapRef.current.on('draw.delete', () => setBoundary(null));
-  }, []);
-
-  useEffect(() => {
-    if (step === 3 && drawRef.current) {
-      drawRef.current.changeMode('draw_polygon');
+  const handleSubmit = async () => {
+    // Get the first drawn feature from Mapbox Draw
+    const drawn = draw.getAll();
+    if (!drawn.features.length) {
+      alert('Please draw a boundary on the map before submitting.');
+      return;
     }
-  }, [step]);
 
-  const updateBoundary = () => {
-    const data = drawRef.current.getAll();
-    if (data.features.length > 0) {
-      setBoundary(data.features[0]);
-    } else {
-      setBoundary(null);
+    const geometry = drawn.features[0].geometry;
+
+    try {
+      const res = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          geometry,
+          properties: {
+            neighborhood,
+            years,
+            comments,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || res.statusText);
+      }
+
+      const data = await res.json();
+      console.log('✅ Saved submission:', data);
+
+      // Reset form fields
+      setNeighborhood('');
+      setYears('');
+      setComments('');
+      draw.deleteAll();
+
+      // Show confirmation step
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Error saving submission:', err.message);
+      alert('Error saving submission. See console for details.');
     }
   };
 
-  const handleMapClick = useCallback((e) => {
-    if (step !== 1) return;
-    if (marker) marker.remove();
+  // If already submitted, show confirmation step
+  if (submitted) {
+    return (
+      <div style={{ marginTop: '1rem', padding: '1rem', border: '1px solid #ccc' }}>
+        <h3>✅ Thank you!</h3>
+        <p>Your boundary has been saved.</p>
+        <button onClick={() => setSubmitted(false)}>Add Another</button>
+      </div>
+    );
+  }
 
-    const newMarker = new mapboxgl.Marker()
-      .setLngLat(e.lngLat)
-      .addTo(mapRef.current);
-
-    setMarker(newMarker);
-    setLocation(e.lngLat);
-    setStep(2);
-  }, [step, marker]);
-
-  useEffect(() => {
-    if (!mapRef.current) return;
-    mapRef.current.on('click', handleMapClick);
-    return () => {
-      mapRef.current.off('click', handleMapClick);
-    };
-  }, [handleMapClick]);
-
-  const handleReset = () => {
-    if (marker) marker.remove();
-    setMarker(null);
-    setLocation(null);
-    setYears(0);
-    setAreaName('');
-    setBoundary(null);
-    drawRef.current.deleteAll();
-    setStep(1);
-  };
-
+  // Otherwise show the form
   return (
-    <div className="map-wrapper">
-      <div
-        ref={mapContainer}
-        className="map-container"
-        style={
-          step === 1
-            ? {
-                cursor:
-                  'url("https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi-dotless_hdpi.png") 10 32, pointer',
-              }
-            : {}
-        }
-      />
-
-      {step === 1 && (
-        <div className="overlay overlay-enter">
-          <h2>Step 1: Mark Where You Live</h2>
-          <p>Click anywhere on the map to drop a pin</p>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div className="overlay overlay-enter">
-          <h2>Step 2: Years & Name</h2>
-
-          <label>What do you call this area?</label>
+    <div style={{ marginTop: '1rem' }}>
+      <div>
+        <label>
+          Neighborhood Name:
           <input
             type="text"
-            placeholder="Neighborhood name"
-            value={areaName}
-            onChange={(e) => setAreaName(e.target.value)}
-            list="neighborhood-names"
+            value={neighborhood}
+            onChange={(e) => setNeighborhood(e.target.value)}
+            required
           />
-          <datalist id="neighborhood-names">
-            {neighborhoodNames.map((name, idx) => (
-              <option key={idx} value={name} />
-            ))}
-          </datalist>
-
-          <label>How long have you lived here?</label>
+        </label>
+      </div>
+      <div>
+        <label>
+          Years Lived:
           <input
-            type="range"
-            min="0"
-            max="100"
+            type="number"
             value={years}
             onChange={(e) => setYears(e.target.value)}
           />
-          <p>{years} years</p>
-
-          <div className="overlay-actions">
-            <button onClick={() => setStep(3)} disabled={!areaName}>
-              Next
-            </button>
-            <button className="secondary" onClick={handleReset}>
-              Reset
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="overlay overlay-enter">
-          <h2>Step 3: Where would you mark this neighborhood's boundaries?</h2>
-          <p>
-            The polygon tool is active -- tap to add a starting point, tap again to add more points,
-            doubleclick to close the shape.
-          </p>
-          <div className="overlay-actions">
-            <button onClick={() => setStep(4)} disabled={!boundary}>
-              Next
-            </button>
-            <button className="secondary" onClick={handleReset}>
-              Reset
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 4 && (
-        <BoundariesForm
-          boundary={boundary}
-          location={location}
-          years={years}
-          areaName={areaName}
-          onReset={handleReset}
-          onSubmitted={() => setStep(5)}
-        />
-      )}
-
-      {step === 5 && (
-        <div className="overlay overlay-enter">
-          <h2>Thank you!</h2>
-          <p>Your submission has been recorded.</p>
-          <button onClick={handleReset}>Start Over</button>
-        </div>
-      )}
+        </label>
+      </div>
+      <div>
+        <label>
+          Comments:
+          <textarea
+            value={comments}
+            onChange={(e) => setComments(e.target.value)}
+          />
+        </label>
+      </div>
+      <button type="button" onClick={handleSubmit}>
+        Next
+      </button>
     </div>
   );
 };
 
-export default NeighborhoodMap;
+export default BoundariesForm;
