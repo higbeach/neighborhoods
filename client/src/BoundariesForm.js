@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const BoundariesForm = ({ draw }) => {
+const BoundariesForm = ({ draw, onComplete }) => {
   const [neighborhood, setNeighborhood] = useState('');
   const [years, setYears] = useState('');
   const [comments, setComments] = useState('');
@@ -44,7 +44,13 @@ const BoundariesForm = ({ draw }) => {
       setYears('');
       setComments('');
       draw.deleteAll();
-      alert('Submission saved!');
+
+      // Let parent wizard know we’re done
+      if (onComplete) {
+        onComplete();
+      } else {
+        alert('Submission saved!');
+      }
     } catch (err) {
       console.error('Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
@@ -83,7 +89,7 @@ const BoundariesForm = ({ draw }) => {
           />
         </label>
       </div>
-      <button type="submit">Submit Boundary</button>
+      <button type="submit">Next</button>
     </form>
   );
 };
