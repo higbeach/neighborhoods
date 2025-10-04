@@ -122,6 +122,14 @@ app.get('/api/blocks', (req, res) => {
   }
 });
 
+// -------------------- DEBUG ROUTES --------------------
+
+app.get('/api/debug/blocks-exists', (req, res) => {
+  const blocksPath = path.join(__dirname, 'data', 'blocks.geojson');
+  const exists = fs.existsSync(blocksPath);
+  res.json({ blocksFileExists: exists });
+});
+
 // -------------------- SERVE REACT BUILD --------------------
 
 const buildPath = path.join(__dirname, '../client/build');
