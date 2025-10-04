@@ -1,0 +1,34 @@
+name: Process blocks votes
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *"  # daily at 09:00 UTC
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          pip install geopandas shapely pyproj fiona requests
+
+      - name: Run processing script
+        run: |
+          python scripts/process_blocks_votes.py
+
+      - name: Commit processed file
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add server/data/blocks_with_votes.geojson
+          git commit -m "Update blocks_with_votes.geojson [ci skip]" || echo "No changes"
+          git push
