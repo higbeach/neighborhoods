@@ -6,7 +6,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const turf = require('@turf/turf');   // 👈 new dependency
+const turf = require('@turf/turf');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 // Paths to data files
 const dataDir = path.join(__dirname, 'data');
 const submissionsFile = path.join(dataDir, 'submissions.geojson');
-const blocksFile = path.join(dataDir, 'blocks.geojson'); // base block geometries
+const blocksFile = path.join(dataDir, 'blocks.geojson');
 
 // Ensure submissions file exists
 if (!fs.existsSync(submissionsFile)) {
