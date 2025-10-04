@@ -3,6 +3,14 @@
 # dependencies
 /node_modules
 /node_modules/.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# React build output
+client/build/
+client/.cache/
+client/node_modules/
 
 /.pnp
 .pnp.js
@@ -13,6 +21,12 @@
 # production
 /build
 
+# Logs
+logs
+*.log
+*.log.*
+
+
 # misc
 .DS_Store
 .env.local
@@ -20,6 +34,21 @@
 .env.test.local
 .env.production.local
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints
