@@ -89,20 +89,42 @@ app.get('/api/submissions', (req, res) => {
 // GET: dynamically generate blocks with votes
 app.get('/api/blocks', (req, res) => {
   try {
-    // Load base blocks
-    const blocks = JSON.parse(fs.readFileSync(blocksFile, 'utf8'));
+    const blocksRaw = fs.readFileSync(blocksFile, 'utf8');
+    const submissionsRaw = fs.readFileSync(submissionsFile, 'utf8');
 
-    // Load submissions
-    const submissions = JSON.parse(fs.readFileSync(submissionsFile, 'utf8'));
+    const blocks = JSON.parse(blocksRaw);
+    const submissions = JSON.parse(submissionsRaw);
 
-    // Aggregate votes by block
-    const blockFeatures = blocks.features.map((block) => {
+    if (!Array.isArray(blocks.features)) {
+      throw new Error("blocks.geojson is missing 'features' array");
+    }
+
+    if (!Array.isArray(submissions.features)) {
+      throw new Error("submissions.geojson is missing 'features' array");
+    }
+
+    const blockFeatures = blocks.features.map((block, i) => {
+      if (!block.geometry) {
+        console.warn(`⚠️ Block ${i} is missing geometry`);
+        return block;
+      }
+
       let count = 0;
-      submissions.features.forEach((sub) => {
-        if (turf.booleanPointInPolygon(sub, block)) {
-          count += 1;
+      submissions.features.forEach((sub, j) => {
+        if (!sub.geometry) {
+          console.warn(`⚠️ Submission ${j} is missing geometry`);
+          return;
+        }
+
+        try {
+          if (turf.booleanPointInPolygon(sub, block)) {
+            count += 1;
+          }
+        } catch (e) {
+          console.error(`❌ Turf error on block ${i}, submission ${j}:`, e);
         }
       });
+
       return {
         ...block,
         properties: {
@@ -117,7 +139,7 @@ app.get('/api/blocks', (req, res) => {
       features: blockFeatures,
     });
   } catch (err) {
-    console.error('Error generating blocks dynamically:', err);
+    console.error('❌ /api/blocks failed:', err);
     res.status(500).json({ error: 'Failed to generate blocks dynamically' });
   }
 });
