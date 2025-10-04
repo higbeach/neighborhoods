@@ -6,6 +6,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const turf = require('@turf/turf');   // 👈 new dependency
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -16,7 +17,7 @@ app.use(bodyParser.json());
 // Paths to data files
 const dataDir = path.join(__dirname, 'data');
 const submissionsFile = path.join(dataDir, 'submissions.geojson');
-const blocksVotesFile = path.join(dataDir, 'blocks_with_votes.geojson');
+const blocksFile = path.join(dataDir, 'blocks.geojson'); // base block geometries
 
 // Ensure submissions file exists
 if (!fs.existsSync(submissionsFile)) {
@@ -85,20 +86,44 @@ app.get('/api/submissions', (req, res) => {
   }
 });
 
-// GET: return blocks_with_votes.geojson
+// GET: dynamically generate blocks with votes
 app.get('/api/blocks', (req, res) => {
   try {
-    const raw = fs.readFileSync(blocksVotesFile, 'utf8');
-    res.type('application/json').send(raw);
+    // Load base blocks
+    const blocks = JSON.parse(fs.readFileSync(blocksFile, 'utf8'));
+
+    // Load submissions
+    const submissions = JSON.parse(fs.readFileSync(submissionsFile, 'utf8'));
+
+    // Aggregate votes by block
+    const blockFeatures = blocks.features.map((block) => {
+      let count = 0;
+      submissions.features.forEach((sub) => {
+        if (turf.booleanPointInPolygon(sub, block)) {
+          count += 1;
+        }
+      });
+      return {
+        ...block,
+        properties: {
+          ...block.properties,
+          votes: count,
+        },
+      };
+    });
+
+    res.json({
+      type: 'FeatureCollection',
+      features: blockFeatures,
+    });
   } catch (err) {
-    console.error('Error reading blocks_with_votes:', err);
-    res.status(500).json({ error: 'Failed to load blocks_with_votes' });
+    console.error('Error generating blocks dynamically:', err);
+    res.status(500).json({ error: 'Failed to generate blocks dynamically' });
   }
 });
 
 // -------------------- SERVE REACT BUILD --------------------
 
-// If you’re serving your React build from Express, include this:
 const buildPath = path.join(__dirname, '../client/build');
 if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
