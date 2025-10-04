@@ -8,7 +8,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # React build output
-client/build/
+
 client/.cache/
 client/node_modules/
 
@@ -52,3 +52,6 @@ ENV/
 
 # Jupyter notebooks checkpoints
 .ipynb_checkpoints
+
+
+server/data/blocks.geojson
