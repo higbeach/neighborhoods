@@ -8,7 +8,13 @@ const BlocksViewer = () => {
   useEffect(() => {
     const fetchBlocks = async () => {
       try {
-        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/blocks'); // backend URL
+        // Decide which base URL to use
+        const baseUrl =
+          process.env.NODE_ENV === 'development'
+            ? '' // in dev, proxy will forward /api/* to localhost:4000
+            : 'https://neighborhoods-lgvg.onrender.com'; // your deployed backend
+
+        const res = await fetch(`${baseUrl}/api/blocks`);
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
         setBlocks(data);
