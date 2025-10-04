@@ -1,0 +1,44 @@
+name: Update Blocks Data
+
+on:
+  # Manual trigger button in GitHub Actions tab
+  workflow_dispatch:
+
+  # Automatic schedule (every day at 6am UTC)
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  build-blocks:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out your repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. Install Python dependencies (adjust if you need geopandas, etc.)
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geopandas pandas shapely fiona pyproj rtree
+
+      # 4. Run your script to regenerate blocks_with_votes.geojson
+      - name: Generate blocks_with_votes.geojson
+        run: |
+          python scripts/process_blocks_votes.py
+
+      # 5. Commit and push the updated file back to the repo
+      - name: Commit updated blocks file
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add server/data/blocks_with_votes.geojson
+          git commit -m "Auto-update blocks_with_votes.geojson [skip ci]" || echo "No changes to commit"
+          git push
