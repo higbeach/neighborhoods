@@ -2,25 +2,33 @@ import React, { useEffect, useState } from 'react';
 import SubmissionsMap from './SubmissionsMap';
 
 const SubmissionsViewer = () => {
-  const [submissions, setSubmissions] = useState([]);
+  const [submissions, setSubmissions] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('https://neighborhoods-lgvg.onrender.com/api/submissions')
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchSubmissions = async () => {
+      try {
+        // Use your deployed backend URL
+        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions');
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const data = await res.json();
         setSubmissions(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('❌ Failed to load submissions:', err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchSubmissions();
   }, []);
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
-      {loading ? <p>Loading map…</p> : <SubmissionsMap submissions={submissions} />}
+      {loading && <p>Loading map…</p>}
+      {!loading && submissions && (
+        <SubmissionsMap submissions={submissions} />
+      )}
     </div>
   );
 };

@@ -7,26 +7,28 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY
 const SubmissionsMap = () => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
-  const [selectedId, setSelectedId] = useState(null);
-  const [submissions, setSubmissions] = useState([]);
+  const [submissions, setSubmissions] = useState(null);
+  const [selectedFeatureId, setSelectedFeatureId] = useState(null);
 
-  // Load submissions.geojson once
+  // Fetch live submissions from backend
   useEffect(() => {
-    fetch('/data/submissions.geojson')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.type === 'FeatureCollection') {
-          setSubmissions(data.features);
-        } else {
-          console.error('Invalid GeoJSON format');
-        }
-      })
-      .catch((err) => console.error('Error loading submissions:', err));
+    const fetchData = async () => {
+      try {
+        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions');
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const data = await res.json();
+        setSubmissions(data);
+      } catch (err) {
+        console.error('❌ Error loading submissions:', err);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Initialize map and add sources/layers
+  // Initialize map
   useEffect(() => {
-    if (mapRef.current || submissions.length === 0) return;
+    if (mapRef.current) return;
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -34,97 +36,104 @@ const SubmissionsMap = () => {
       center: [-122.33, 47.61],
       zoom: 11,
     });
+  }, []);
 
-    mapRef.current.on('load', () => {
-      submissions.forEach((f, index) => {
-        const sourceId =
-          f.properties && f.properties.id
-            ? `boundary-${f.properties.id}`
-            : `boundary-fallback-${index}`;
-
-        if (!mapRef.current.getSource(sourceId)) {
-          mapRef.current.addSource(sourceId, {
-            type: 'geojson',
-            data: f,
-          });
-
-          mapRef.current.addLayer({
-            id: sourceId,
-            type: 'fill',
-            source: sourceId,
-            paint: {
-              'fill-color': '#088',
-              'fill-opacity': 0.4,
-            },
-          });
-
-          mapRef.current.addLayer({
-            id: `${sourceId}-outline`,
-            type: 'line',
-            source: sourceId,
-            paint: {
-              'line-color': '#000',
-              'line-width': 1,
-            },
-          });
-
-          mapRef.current.on('click', sourceId, (e) => {
-            setSelectedId(f.properties.id || index);
-
-            new mapboxgl.Popup()
-              .setLngLat(e.lngLat)
-              .setHTML(`
-                <strong>${f.properties.neighborhood || 'Unnamed'}</strong><br/>
-                ${f.properties.years || ''} years<br/>
-                ${f.properties.comments || 'No comments'}<br/>
-                <small>${f.properties.timestamp || ''}</small>
-              `)
-              .addTo(mapRef.current);
-          });
-        }
-      });
-    });
-  }, [submissions]);
-
-  // Update styles when selection changes
+  // Add/update submissions layer
   useEffect(() => {
-    if (!mapRef.current || !selectedId) return;
+    if (!mapRef.current || !submissions) return;
 
-    submissions.forEach((f, index) => {
-      const sourceId =
-        f.properties && f.properties.id
-          ? `boundary-${f.properties.id}`
-          : `boundary-fallback-${index}`;
+    if (mapRef.current.getSource('submissions')) {
+      mapRef.current.getSource('submissions').setData(submissions);
+    } else {
+      mapRef.current.addSource('submissions', {
+        type: 'geojson',
+        data: submissions,
+      });
 
-      const isSelected = (f.properties.id || index) === selectedId;
+      // Fill layer with conditional styling based on feature-state
+      mapRef.current.addLayer({
+        id: 'submissions-fill',
+        type: 'fill',
+        source: 'submissions',
+        paint: {
+          'fill-color': [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            '#f00', // red if selected
+            '#088'  // teal otherwise
+          ],
+          'fill-opacity': [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            0.6,
+            0.4
+          ]
+        },
+      });
 
-      if (mapRef.current.getLayer(sourceId)) {
-        mapRef.current.setPaintProperty(
-          sourceId,
-          'fill-color',
-          isSelected ? '#f00' : '#088'
-        );
-        mapRef.current.setPaintProperty(
-          sourceId,
-          'fill-opacity',
-          isSelected ? 0.6 : 0.4
-        );
-      }
+      mapRef.current.addLayer({
+        id: 'submissions-outline',
+        type: 'line',
+        source: 'submissions',
+        paint: {
+          'line-color': [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            '#f00',
+            '#000'
+          ],
+          'line-width': [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            3,
+            1
+          ]
+        },
+      });
 
-      if (mapRef.current.getLayer(`${sourceId}-outline`)) {
-        mapRef.current.setPaintProperty(
-          `${sourceId}-outline`,
-          'line-color',
-          isSelected ? '#f00' : '#000'
+      // Popup + highlight on click
+      mapRef.current.on('click', 'submissions-fill', (e) => {
+        if (!e.features.length) return;
+        const feature = e.features[0];
+        const props = feature.properties;
+
+        // Clear previous selection
+        if (selectedFeatureId !== null) {
+          mapRef.current.setFeatureState(
+            { source: 'submissions', id: selectedFeatureId },
+            { selected: false }
+          );
+        }
+
+        // Set new selection
+        const newId = feature.id || feature.properties.id || feature.properties._id || feature.properties.timestamp;
+        setSelectedFeatureId(newId);
+        mapRef.current.setFeatureState(
+          { source: 'submissions', id: newId },
+          { selected: true }
         );
-        mapRef.current.setPaintProperty(
-          `${sourceId}-outline`,
-          'line-width',
-          isSelected ? 3 : 1
-        );
-      }
-    });
-  }, [selectedId, submissions]);
+
+        // Show popup
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`
+            <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+            ${props.years || ''} years<br/>
+            ${props.comments || 'No comments'}<br/>
+            <small>${props.timestamp || ''}</small>
+          `)
+          .addTo(mapRef.current);
+      });
+
+      // Cursor change on hover
+      mapRef.current.on('mouseenter', 'submissions-fill', () => {
+        mapRef.current.getCanvas().style.cursor = 'pointer';
+      });
+      mapRef.current.on('mouseleave', 'submissions-fill', () => {
+        mapRef.current.getCanvas().style.cursor = '';
+      });
+    }
+  }, [submissions, selectedFeatureId]);
 
   return <div ref={mapContainer} style={{ width: '100vw', height: '100vh' }} />;
 };

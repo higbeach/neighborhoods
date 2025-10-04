@@ -1,35 +1,34 @@
 import React, { useState } from 'react';
 
-const BoundariesForm = ({ draw }) => {
-  const [neighborhood, setNeighborhood] = useState('');
-  const [years, setYears] = useState('');
+const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmitted }) => {
   const [comments, setComments] = useState('');
-  const [success, setSuccess] = useState(false); // inline confirmation
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Get the first drawn feature from Mapbox Draw
-    const drawn = draw.getAll();
-    if (!drawn.features.length) {
-      alert('Please draw a boundary on the map before submitting.');
+    if (!boundary) {
+      alert('Please draw a boundary before submitting.');
       return;
     }
 
-    const geometry = drawn.features[0].geometry;
+    // Build GeoJSON Feature
+    const feature = {
+      type: 'Feature',
+      geometry: boundary.geometry, // boundary is a full Feature, so use its geometry
+      properties: {
+        neighborhood: areaName,
+        years,
+        comments,
+        location,
+        timestamp: new Date().toISOString(),
+      },
+    };
 
     try {
       const res = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          geometry,
-          properties: {
-            neighborhood,
-            years,
-            comments,
-          },
-        }),
+        body: JSON.stringify(feature),
       });
 
       if (!res.ok) {
@@ -38,16 +37,10 @@ const BoundariesForm = ({ draw }) => {
       }
 
       await res.json();
+      console.log('✅ Saved submission:', feature);
 
-      // Inline confirmation; keep the form and map exactly where they are
-      setSuccess(true);
-      // Reset fields but DO NOT clear the drawing (keeps map context and layout)
-      setNeighborhood('');
-      setYears('');
-      setComments('');
-
-      // If you want the drawing cleared after submit, uncomment:
-      // draw.deleteAll();
+      // Advance wizard to step 5 (thank‑you overlay)
+      onSubmitted();
     } catch (err) {
       console.error('Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
@@ -55,37 +48,9 @@ const BoundariesForm = ({ draw }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
-      {success && (
-        <div style={{ marginBottom: '0.75rem', color: '#0a6' }}>
-          ✅ Your boundary was saved. You can add another or adjust the map.
-        </div>
-      )}
-
-      <div>
-        <label>
-          Neighborhood Name:
-          <input
-            type="text"
-            value={neighborhood}
-            onChange={(e) => setNeighborhood(e.target.value)}
-            required
-          />
-        </label>
-      </div>
-
-      <div>
-        <label>
-          Years Lived:
-          <input
-            type="number"
-            value={years}
-            onChange={(e) => setYears(e.target.value)}
-          />
-        </label>
-      </div>
-
-      <div>
+    <div className="overlay overlay-enter">
+      <h2>Step 4: Confirm & Submit</h2>
+      <form onSubmit={handleSubmit}>
         <label>
           Comments:
           <textarea
@@ -93,10 +58,14 @@ const BoundariesForm = ({ draw }) => {
             onChange={(e) => setComments(e.target.value)}
           />
         </label>
-      </div>
-
-      <button type="submit">Next</button>
-    </form>
+        <div className="overlay-actions">
+          <button type="submit">Submit</button>
+          <button type="button" className="secondary" onClick={onReset}>
+            Reset
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
