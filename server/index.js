@@ -155,14 +155,12 @@ app.get('/api/debug/blocks-exists', (req, res) => {
 // -------------------- SERVE REACT BUILD --------------------
 
 const buildPath = path.join(__dirname, '../client/build');
-if (fs.existsSync(buildPath)) {
-  app.use(express.static(buildPath));
+app.use(express.static(buildPath));
 
-  // Catch‑all: send index.html for non‑API routes
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(buildPath, 'index.html'));
-  });
-}
+// Serve React index.html for all non-API routes
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(buildPath, 'index.html'));
+});
 
 // -------------------- START SERVER --------------------
 app.listen(PORT, () => {
