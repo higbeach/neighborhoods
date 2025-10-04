@@ -96,6 +96,7 @@ const SubmissionsMap = () => {
         if (!e.features.length) return;
         const feature = e.features[0];
         const props = feature.properties;
+        const id = feature.id; // ✅ stable id from backend
 
         // Clear previous selection
         if (selectedFeatureId !== null) {
@@ -106,10 +107,9 @@ const SubmissionsMap = () => {
         }
 
         // Set new selection
-        const newId = feature.id || feature.properties.id || feature.properties._id || feature.properties.timestamp;
-        setSelectedFeatureId(newId);
+        setSelectedFeatureId(id);
         mapRef.current.setFeatureState(
-          { source: 'submissions', id: newId },
+          { source: 'submissions', id },
           { selected: true }
         );
 

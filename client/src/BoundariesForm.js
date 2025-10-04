@@ -11,16 +11,15 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
       return;
     }
 
-    // Build GeoJSON Feature
+    // Build GeoJSON Feature (no id — backend will add one)
     const feature = {
       type: 'Feature',
-      geometry: boundary.geometry, // boundary is a full Feature, so use its geometry
+      geometry: boundary.geometry,
       properties: {
         neighborhood: areaName,
         years,
         comments,
         location,
-        timestamp: new Date().toISOString(),
       },
     };
 
@@ -31,16 +30,20 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
         body: JSON.stringify(feature),
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || res.statusText);
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Server did not return JSON: ${text}`);
       }
 
-      await res.json();
-      console.log('✅ Saved submission:', feature);
+      if (!res.ok) {
+        throw new Error(data.error || res.statusText);
+      }
 
-      // Advance wizard to step 5 (thank‑you overlay)
-      onSubmitted();
+      console.log('✅ Saved submission:', data.feature);
+      onSubmitted(); // advance to thank-you step
     } catch (err) {
       console.error('Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
