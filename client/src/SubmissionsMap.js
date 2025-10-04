@@ -14,7 +14,7 @@ const SubmissionsMap = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions');
+        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions'); // ✅ full backend URL
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
         setSubmissions(data);
@@ -50,7 +50,6 @@ const SubmissionsMap = () => {
         data: submissions,
       });
 
-      // Fill layer with conditional styling based on feature-state
       mapRef.current.addLayer({
         id: 'submissions-fill',
         type: 'fill',
@@ -59,8 +58,8 @@ const SubmissionsMap = () => {
           'fill-color': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            '#f00', // red if selected
-            '#088'  // teal otherwise
+            '#f00',
+            '#088'
           ],
           'fill-opacity': [
             'case',
@@ -96,7 +95,7 @@ const SubmissionsMap = () => {
         if (!e.features.length) return;
         const feature = e.features[0];
         const props = feature.properties;
-        const id = feature.id; // ✅ stable id from backend
+        const id = feature.id;
 
         // Clear previous selection
         if (selectedFeatureId !== null) {
@@ -113,7 +112,6 @@ const SubmissionsMap = () => {
           { selected: true }
         );
 
-        // Show popup
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
           .setHTML(`

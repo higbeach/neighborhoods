@@ -11,7 +11,7 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
       return;
     }
 
-    // Build GeoJSON Feature (no id — backend will add one)
+    // Build GeoJSON Feature (backend will add id + timestamp)
     const feature = {
       type: 'Feature',
       geometry: boundary.geometry,
@@ -24,11 +24,14 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
     };
 
     try {
-      const res = await fetch('/api/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(feature),
-      });
+      const res = await fetch(
+        'https://neighborhoods-lgvg.onrender.com/api/submissions', // ✅ full backend URL
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(feature),
+        }
+      );
 
       const text = await res.text();
       let data;
@@ -43,7 +46,7 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
       }
 
       console.log('✅ Saved submission:', data.feature);
-      onSubmitted(); // advance to thank-you step
+      onSubmitted(); // advance to thank‑you step
     } catch (err) {
       console.error('Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');

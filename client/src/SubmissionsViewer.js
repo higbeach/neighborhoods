@@ -8,8 +8,7 @@ const SubmissionsViewer = () => {
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
-        // Use your deployed backend URL
-        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions');
+        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions'); // ✅ full backend URL
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
         setSubmissions(data);
