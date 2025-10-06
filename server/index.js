@@ -36,16 +36,80 @@ function generateId() {
 
 // -------------------- API ROUTES --------------------
 
-// 🔒 Temporarily disabled to prevent crash loop
-// app.post('/api/submissions', ...);
-// app.get('/api/submissions', ...);
-// app.get('/api/blocks', ...);
+// ✅ Memory-safe GET: dynamically generate blocks with votes
+app.get('/api/blocks', (req, res) => {
+  try {
+    const blocksRaw = fs.readFileSync(blocksFile, 'utf8');
+    const submissionsRaw = fs.readFileSync(submissionsFile, 'utf8');
+
+    const blocks = JSON.parse(blocksRaw);
+    const submissions = JSON.parse(submissionsRaw);
+
+    if (!Array.isArray(blocks.features)) {
+      throw new Error("blocks.geojson is missing 'features' array");
+    }
+
+    if (!Array.isArray(submissions.features)) {
+      throw new Error("submissions.geojson is missing 'features' array");
+    }
+
+    const limit = parseInt(req.query.limit, 10);
+    const submissionsToUse = isNaN(limit)
+      ? submissions.features
+      : submissions.features.slice(0, limit);
+
+    const blockFeatures = blocks.features.map((block, i) => {
+      if (!block.geometry) {
+        console.warn(`⚠️ Block ${i} is missing geometry`);
+        return {
+          ...block,
+          properties: {
+            ...block.properties,
+            votes: 0,
+            error: 'Missing geometry',
+          },
+        };
+      }
+
+      let count = 0;
+      submissionsToUse.forEach((sub, j) => {
+        if (!sub.geometry) {
+          console.warn(`⚠️ Submission ${j} is missing geometry`);
+          return;
+        }
+
+        try {
+          if (turf.booleanPointInPolygon(sub, block)) {
+            count += 1;
+          }
+        } catch (e) {
+          console.error(`❌ Turf error on block ${i}, submission ${j}:`, e);
+        }
+      });
+
+      return {
+        ...block,
+        properties: {
+          ...block.properties,
+          votes: count,
+        },
+      };
+    });
+
+    res.json({
+      type: 'FeatureCollection',
+      features: blockFeatures,
+    });
+  } catch (err) {
+    console.error('❌ /api/blocks failed:', err);
+    res.status(500).json({ error: 'Failed to generate blocks dynamically' });
+  }
+});
 
 // -------------------- DEBUG ROUTES --------------------
 
 app.get('/api/debug/blocks-exists', (req, res) => {
-  const blocksPath = path.join(__dirname, 'data', 'blocks.geojson');
-  const exists = fs.existsSync(blocksPath);
+  const exists = fs.existsSync(blocksFile);
   res.json({ blocksFileExists: exists });
 });
 
