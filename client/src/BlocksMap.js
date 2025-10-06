@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
+import bbox from '@turf/bbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
@@ -24,7 +25,11 @@ const BlocksMap = ({ blocks }) => {
         data: blocks,
       });
 
-      // Color ramp by vote_count
+      // Zoom to block extent
+      const bounds = bbox(blocks);
+      mapRef.current.fitBounds(bounds, { padding: 20 });
+
+      // Color ramp by votes
       mapRef.current.addLayer({
         id: 'blocks-fill',
         type: 'fill',
@@ -32,7 +37,7 @@ const BlocksMap = ({ blocks }) => {
         paint: {
           'fill-color': [
             'step',
-            ['get', 'vote_count'],
+            ['get', 'votes'],
             '#f0f9e8',     // 0
             1, '#ccebc5',  // 1+
             3, '#a8ddb5',  // 3+
@@ -62,7 +67,7 @@ const BlocksMap = ({ blocks }) => {
           .setLngLat(e.lngLat)
           .setHTML(`
             <strong>Block</strong>: ${p.block_id || '—'}<br/>
-            <strong>Votes</strong>: ${p.vote_count ?? 0}<br/>
+            <strong>Votes</strong>: ${p.votes ?? 0}<br/>
             <strong>Neighborhoods</strong>: ${(p.neighborhoods || []).join(', ') || '—'}<br/>
             <small>${p.last_updated || ''}</small>
           `)
