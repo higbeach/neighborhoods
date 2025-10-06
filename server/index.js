@@ -106,6 +106,31 @@ app.get('/api/blocks', (req, res) => {
   }
 });
 
+// ✅ Memory-safe GET: return all submissions
+app.get('/api/submissions', (req, res) => {
+  try {
+    const raw = fs.readFileSync(submissionsFile, 'utf8');
+    const data = JSON.parse(raw);
+
+    if (!Array.isArray(data.features)) {
+      throw new Error("submissions.geojson is missing 'features' array");
+    }
+
+    const limit = parseInt(req.query.limit, 10);
+    const features = isNaN(limit)
+      ? data.features
+      : data.features.slice(0, limit);
+
+    res.json({
+      type: 'FeatureCollection',
+      features,
+    });
+  } catch (err) {
+    console.error('❌ /api/submissions failed:', err);
+    res.status(500).json({ error: 'Failed to load submissions' });
+  }
+});
+
 // -------------------- DEBUG ROUTES --------------------
 
 app.get('/api/debug/blocks-exists', (req, res) => {
