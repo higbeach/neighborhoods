@@ -28,7 +28,8 @@ const NeighborhoodForm = ({ boundary, location, years, onReset, onSubmitted }) =
     };
 
     try {
-      const res = await fetch('/api/submissions', {
+      const API_BASE = 'https://neighborhoods-server.onrender.com';
+      const res = await fetch(`${API_BASE}/api/submissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(feature),
