@@ -36,7 +36,70 @@ function generateId() {
 
 // -------------------- API ROUTES --------------------
 
-// ✅ Memory-safe GET: dynamically generate blocks with votes
+// ✅ POST: save a new submission
+app.post('/api/submissions', (req, res) => {
+  const { geometry, properties } = req.body;
+
+  if (!geometry || !properties) {
+    return res.status(400).json({ error: 'Missing geometry or properties' });
+  }
+
+  try {
+    const raw = fs.readFileSync(submissionsFile, 'utf8');
+    const data = JSON.parse(raw);
+
+    if (!Array.isArray(data.features)) {
+      data.features = [];
+    }
+
+    const id = generateId();
+    const feature = {
+      type: 'Feature',
+      id,
+      geometry,
+      properties: {
+        ...properties,
+        id,
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    data.features.push(feature);
+    fs.writeFileSync(submissionsFile, JSON.stringify(data, null, 2));
+
+    res.json({ status: 'ok', feature });
+  } catch (err) {
+    console.error('❌ Error saving submission:', err);
+    res.status(500).json({ error: 'Failed to save submission' });
+  }
+});
+
+// ✅ GET: return all submissions
+app.get('/api/submissions', (req, res) => {
+  try {
+    const raw = fs.readFileSync(submissionsFile, 'utf8');
+    const data = JSON.parse(raw);
+
+    if (!Array.isArray(data.features)) {
+      throw new Error("submissions.geojson is missing 'features' array");
+    }
+
+    const limit = parseInt(req.query.limit, 10);
+    const features = isNaN(limit)
+      ? data.features
+      : data.features.slice(0, limit);
+
+    res.json({
+      type: 'FeatureCollection',
+      features,
+    });
+  } catch (err) {
+    console.error('❌ /api/submissions failed:', err);
+    res.status(500).json({ error: 'Failed to load submissions' });
+  }
+});
+
+// ✅ GET: dynamically generate blocks with votes
 app.get('/api/blocks', (req, res) => {
   try {
     const blocksRaw = fs.readFileSync(blocksFile, 'utf8');
@@ -103,31 +166,6 @@ app.get('/api/blocks', (req, res) => {
   } catch (err) {
     console.error('❌ /api/blocks failed:', err);
     res.status(500).json({ error: 'Failed to generate blocks dynamically' });
-  }
-});
-
-// ✅ Memory-safe GET: return all submissions
-app.get('/api/submissions', (req, res) => {
-  try {
-    const raw = fs.readFileSync(submissionsFile, 'utf8');
-    const data = JSON.parse(raw);
-
-    if (!Array.isArray(data.features)) {
-      throw new Error("submissions.geojson is missing 'features' array");
-    }
-
-    const limit = parseInt(req.query.limit, 10);
-    const features = isNaN(limit)
-      ? data.features
-      : data.features.slice(0, limit);
-
-    res.json({
-      type: 'FeatureCollection',
-      features,
-    });
-  } catch (err) {
-    console.error('❌ /api/submissions failed:', err);
-    res.status(500).json({ error: 'Failed to load submissions' });
   }
 });
 
