@@ -6,6 +6,8 @@ import SubmissionsViewer from './SubmissionsViewer'; // Viewer for all submissio
 import BlocksViewer from './BlocksViewer';    // ✅ New block-level votes viewer
 import './App.css';
 
+// Triggering rebuild for /submissions route
+
 function App() {
   return (
     <div className="App">
