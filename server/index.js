@@ -36,113 +36,10 @@ function generateId() {
 
 // -------------------- API ROUTES --------------------
 
-// POST: save a new submission
-app.post('/api/submissions', (req, res) => {
-  const { geometry, properties } = req.body;
-
-  if (!geometry || !properties) {
-    return res.status(400).json({ error: 'Missing geometry or properties' });
-  }
-
-  try {
-    const raw = fs.readFileSync(submissionsFile, 'utf8');
-    const data = JSON.parse(raw);
-
-    if (!Array.isArray(data.features)) {
-      data.features = [];
-    }
-
-    const id = generateId();
-    const feature = {
-      type: 'Feature',
-      id,
-      geometry,
-      properties: {
-        ...properties,
-        id,
-        timestamp: new Date().toISOString(),
-      },
-    };
-
-    data.features.push(feature);
-    fs.writeFileSync(submissionsFile, JSON.stringify(data, null, 2));
-
-    res.json({ status: 'ok', feature });
-  } catch (err) {
-    console.error('Error saving submission:', err);
-    res.status(500).json({ error: 'Failed to save submission' });
-  }
-});
-
-// GET: return all submissions
-app.get('/api/submissions', (req, res) => {
-  try {
-    const raw = fs.readFileSync(submissionsFile, 'utf8');
-    const data = JSON.parse(raw);
-    res.json(data);
-  } catch (err) {
-    console.error('Error reading submissions:', err);
-    res.status(500).json({ error: 'Failed to load submissions' });
-  }
-});
-
-// GET: dynamically generate blocks with votes
-app.get('/api/blocks', (req, res) => {
-  try {
-    const blocksRaw = fs.readFileSync(blocksFile, 'utf8');
-    const submissionsRaw = fs.readFileSync(submissionsFile, 'utf8');
-
-    const blocks = JSON.parse(blocksRaw);
-    const submissions = JSON.parse(submissionsRaw);
-
-    if (!Array.isArray(blocks.features)) {
-      throw new Error("blocks.geojson is missing 'features' array");
-    }
-
-    if (!Array.isArray(submissions.features)) {
-      throw new Error("submissions.geojson is missing 'features' array");
-    }
-
-    const blockFeatures = blocks.features.map((block, i) => {
-      if (!block.geometry) {
-        console.warn(`⚠️ Block ${i} is missing geometry`);
-        return block;
-      }
-
-      let count = 0;
-      submissions.features.forEach((sub, j) => {
-        if (!sub.geometry) {
-          console.warn(`⚠️ Submission ${j} is missing geometry`);
-          return;
-        }
-
-        try {
-          if (turf.booleanPointInPolygon(sub, block)) {
-            count += 1;
-          }
-        } catch (e) {
-          console.error(`❌ Turf error on block ${i}, submission ${j}:`, e);
-        }
-      });
-
-      return {
-        ...block,
-        properties: {
-          ...block.properties,
-          votes: count,
-        },
-      };
-    });
-
-    res.json({
-      type: 'FeatureCollection',
-      features: blockFeatures,
-    });
-  } catch (err) {
-    console.error('❌ /api/blocks failed:', err);
-    res.status(500).json({ error: 'Failed to generate blocks dynamically' });
-  }
-});
+// 🔒 Temporarily disabled to prevent crash loop
+// app.post('/api/submissions', ...);
+// app.get('/api/submissions', ...);
+// app.get('/api/blocks', ...);
 
 // -------------------- DEBUG ROUTES --------------------
 
@@ -150,6 +47,17 @@ app.get('/api/debug/blocks-exists', (req, res) => {
   const blocksPath = path.join(__dirname, 'data', 'blocks.geojson');
   const exists = fs.existsSync(blocksPath);
   res.json({ blocksFileExists: exists });
+});
+
+app.get('/api/debug/submissions-preview', (req, res) => {
+  try {
+    const raw = fs.readFileSync(submissionsFile, 'utf8');
+    const data = JSON.parse(raw);
+    res.json({ ok: true, featuresCount: data.features?.length || 0 });
+  } catch (err) {
+    console.error('❌ Failed to preview submissions.geojson:', err);
+    res.status(500).json({ error: 'Could not read submissions.geojson' });
+  }
 });
 
 // -------------------- SERVE REACT BUILD --------------------
