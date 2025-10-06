@@ -14,10 +14,12 @@ const NeighborhoodForm = ({ boundary, location, years, onReset, onSubmitted }) =
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const API_BASE = 'https://neighborhoods-server.onrender.com';
+
     // Build GeoJSON Feature
     const feature = {
       type: 'Feature',
-      geometry: boundary, // boundary should already be a valid GeoJSON geometry
+      geometry: boundary,
       properties: {
         neighborhood: name,
         notes,
@@ -28,7 +30,6 @@ const NeighborhoodForm = ({ boundary, location, years, onReset, onSubmitted }) =
     };
 
     try {
-      const API_BASE = 'https://neighborhoods-server.onrender.com';
       const res = await fetch(`${API_BASE}/api/submissions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,8 +44,8 @@ const NeighborhoodForm = ({ boundary, location, years, onReset, onSubmitted }) =
       await res.json();
       console.log('✅ Saved submission:', feature);
 
-      setSubmitted(true); // show confirmation
-      onSubmitted?.();    // let parent know if needed
+      setSubmitted(true);
+      onSubmitted?.();
     } catch (err) {
       console.error('Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
