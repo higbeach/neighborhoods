@@ -4,6 +4,8 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
 
+// ✅ Confirmed backend URL: neighborhoods-server.onrender.com
+
 const SubmissionsMap = () => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
