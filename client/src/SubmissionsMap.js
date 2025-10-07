@@ -14,12 +14,25 @@ const SubmissionsMap = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions'); // ✅ full backend URL
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-        const data = await res.json();
+        const res = await fetch('https://neighborhoods-server.onrender.com/api/submissions');
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          console.error('❌ Server did not return valid JSON:', text);
+          throw new Error(`Invalid JSON: ${text}`);
+        }
+
+        if (!res.ok) {
+          console.error('❌ Failed to load submissions:', data.error || res.statusText);
+          throw new Error(data.error || res.statusText);
+        }
+
+        console.log('📦 Loaded submissions:', data);
         setSubmissions(data);
       } catch (err) {
-        console.error('❌ Error loading submissions:', err);
+        console.error('🚨 Error loading submissions:', err.message);
       }
     };
 
@@ -97,7 +110,6 @@ const SubmissionsMap = () => {
         const props = feature.properties;
         const id = feature.id;
 
-        // Clear previous selection
         if (selectedFeatureId !== null) {
           mapRef.current.setFeatureState(
             { source: 'submissions', id: selectedFeatureId },
@@ -105,7 +117,6 @@ const SubmissionsMap = () => {
           );
         }
 
-        // Set new selection
         setSelectedFeatureId(id);
         mapRef.current.setFeatureState(
           { source: 'submissions', id },
@@ -123,7 +134,6 @@ const SubmissionsMap = () => {
           .addTo(mapRef.current);
       });
 
-      // Cursor change on hover
       mapRef.current.on('mouseenter', 'submissions-fill', () => {
         mapRef.current.getCanvas().style.cursor = 'pointer';
       });

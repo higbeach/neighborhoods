@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmitted }) => {
   console.log('📦 BoundariesForm loaded');
+
   const [comments, setComments] = useState('');
 
   const handleSubmit = async (e) => {
@@ -26,7 +27,7 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
 
     try {
       const res = await fetch(
-        'https://neighborhoods-server.onrender.com/api/submissions', // ✅ corrected backend URL
+        'https://neighborhoods-server.onrender.com/api/submissions',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -39,17 +40,21 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
       try {
         data = JSON.parse(text);
       } catch {
+        console.error('❌ Server did not return valid JSON:', text);
         throw new Error(`Server did not return JSON: ${text}`);
       }
 
       if (!res.ok) {
+        console.error('❌ Submission failed:', data.error || res.statusText);
         throw new Error(data.error || res.statusText);
       }
 
-      console.log('✅ Saved submission:', data.feature);
+      console.log('✅ Full backend response:', data);
+      console.log('📍 Saved feature:', data.feature || '(no feature returned)');
+
       onSubmitted(); // advance to thank‑you step
     } catch (err) {
-      console.error('Error saving submission:', err.message);
+      console.error('🚨 Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
     }
   };
