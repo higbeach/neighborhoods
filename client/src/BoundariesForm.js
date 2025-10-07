@@ -25,7 +25,7 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
 
     try {
       const res = await fetch(
-        'https://neighborhoods-lgvg.onrender.com/api/submissions', // ✅ full backend URL
+        'https://neighborhoods-server.onrender.com/api/submissions', // ✅ corrected backend URL
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
