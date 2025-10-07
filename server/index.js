@@ -31,7 +31,7 @@ const blocksFile = path.join(dataDir, 'blocks.geojson');
 app.post('/api/submissions', async (req, res) => {
   const { geometry, properties } = req.body;
 
-  console.log('📬 Received submission:', req.body); // ← NEW: confirms frontend is reaching backend
+  console.log('📬 Received submission:', req.body);
 
   if (!geometry || !properties) {
     return res.status(400).json({ error: 'Missing geometry or properties' });
@@ -49,6 +49,9 @@ app.post('/api/submissions', async (req, res) => {
           properties: { ...properties, id, timestamp },
         },
       ]);
+
+    // ✅ NEW: log Supabase response
+    console.log('🧾 Supabase insert result:', { data, error });
 
     if (error) throw error;
 
