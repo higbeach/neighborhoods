@@ -1,0 +1,14 @@
+{
+  "headers": {
+    "/**": {
+      "Cache-Control": "public, max-age=0, must-revalidate"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/**",
+      "destination": "/index.html",
+      "statusCode": 200
+    }
+  ]
+}
