@@ -169,14 +169,15 @@ const NeighborhoodMap = () => {
         </div>
       )}
 
-      {step === 4 && (
-        <>
-          {console.log('🧭 Rendering BoundariesForm with:', {
-            boundary,
-            location,
-            years,
-            areaName,
-          })}
+      {step === 4 && (() => {
+        console.log('🧭 Rendering BoundariesForm with:', {
+         boundary,
+          location,
+          years,
+          areaName,
+        });
+
+       return (
         <BoundariesForm
           boundary={boundary}
           location={location}
@@ -185,7 +186,9 @@ const NeighborhoodMap = () => {
           onReset={handleReset}
           onSubmitted={() => setStep(5)}
         />
-      )}
+       );
+      })()}
+
 
       {step === 5 && (
         <div className="overlay overlay-enter">
