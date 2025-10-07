@@ -4,42 +4,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
 
-// ✅ Confirmed backend URL: neighborhoods-server.onrender.com
-
-const SubmissionsMap = () => {
+const SubmissionsMap = ({ submissions }) => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
-  const [submissions, setSubmissions] = useState(null);
   const [selectedFeatureId, setSelectedFeatureId] = useState(null);
-
-  // Fetch live submissions from backend
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch('https://neighborhoods-server.onrender.com/api/submissions');
-        const text = await res.text();
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          console.error('❌ Server did not return valid JSON:', text);
-          throw new Error(`Invalid JSON: ${text}`);
-        }
-
-        if (!res.ok) {
-          console.error('❌ Failed to load submissions:', data.error || res.statusText);
-          throw new Error(data.error || res.statusText);
-        }
-
-        console.log('📦 Loaded submissions:', data);
-        setSubmissions(data);
-      } catch (err) {
-        console.error('🚨 Error loading submissions:', err.message);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   // Initialize map
   useEffect(() => {
@@ -105,7 +73,6 @@ const SubmissionsMap = () => {
         },
       });
 
-      // Popup + highlight on click
       mapRef.current.on('click', 'submissions-fill', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
