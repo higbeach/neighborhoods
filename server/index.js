@@ -12,7 +12,11 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+// ✅ CORS fix: allow frontend domain
+app.use(cors({
+  origin: 'https://neighborhoods-dxab.onrender.com',
+}));
+
 app.use(bodyParser.json());
 
 // Supabase client
@@ -50,7 +54,6 @@ app.post('/api/submissions', async (req, res) => {
         },
       ]);
 
-    // ✅ NEW: log Supabase response
     console.log('🧾 Supabase insert result:', { data, error });
 
     if (error) throw error;
@@ -61,7 +64,6 @@ app.post('/api/submissions', async (req, res) => {
     res.status(500).json({ error: 'Failed to save submission' });
   }
 });
-
 
 // ✅ GET: return all submissions from Supabase
 app.get('/api/submissions', async (req, res) => {
