@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmitted }) => {
+  console.log('📦 BoundariesForm loaded');
   const [comments, setComments] = useState('');
 
   const handleSubmit = async (e) => {

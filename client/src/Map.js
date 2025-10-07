@@ -170,6 +170,13 @@ const NeighborhoodMap = () => {
       )}
 
       {step === 4 && (
+        <>
+          {console.log('🧭 Rendering BoundariesForm with:', {
+            boundary,
+            location,
+            years,
+            areaName,
+          })}
         <BoundariesForm
           boundary={boundary}
           location={location}
