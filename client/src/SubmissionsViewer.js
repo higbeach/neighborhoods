@@ -1,3 +1,5 @@
+// ✅ Confirmed backend URL: neighborhoods-server.onrender.com
+
 import React, { useEffect, useState } from 'react';
 import SubmissionsMap from './SubmissionsMap';
 
@@ -8,12 +10,25 @@ const SubmissionsViewer = () => {
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
-        const res = await fetch('https://neighborhoods-lgvg.onrender.com/api/submissions'); // ✅ full backend URL
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-        const data = await res.json();
+        const res = await fetch('https://neighborhoods-server.onrender.com/api/submissions');
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          console.error('❌ Server did not return valid JSON:', text);
+          throw new Error(`Invalid JSON: ${text}`);
+        }
+
+        if (!res.ok) {
+          console.error('❌ Failed to load submissions:', data.error || res.statusText);
+          throw new Error(data.error || res.statusText);
+        }
+
+        console.log('📦 Loaded submissions:', data);
         setSubmissions(data);
       } catch (err) {
-        console.error('❌ Failed to load submissions:', err);
+        console.error('🚨 Error fetching submissions:', err.message);
       } finally {
         setLoading(false);
       }
