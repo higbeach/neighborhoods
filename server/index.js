@@ -65,10 +65,12 @@ app.post('/api/submissions', async (req, res) => {
   }
 });
 
-// ✅ GET: return all submissions from Supabase
+// ✅ GET: return all submissions from Supabase (with enhanced logging)
 app.get('/api/submissions', async (req, res) => {
   try {
+    console.log('📡 Incoming request: GET /api/submissions');
     const limit = parseInt(req.query.limit, 10);
+    console.log('🔢 Limit param:', isNaN(limit) ? 'none' : limit);
 
     const query = supabase
       .from('submissions')
@@ -79,20 +81,34 @@ app.get('/api/submissions', async (req, res) => {
       ? await query
       : await query.limit(limit);
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Supabase query error:', error);
+      throw error;
+    }
 
-    const features = data.map((row) => ({
-      type: 'Feature',
-      geometry: row.geometry,
-      properties: row.properties,
-    }));
+    if (!Array.isArray(data)) {
+      console.error('❌ Supabase returned non-array:', data);
+      throw new Error('Invalid data format from Supabase');
+    }
 
+    const features = data.map((row, i) => {
+      if (!row.geometry || !row.properties) {
+        console.warn(`⚠️ Submission ${i} missing geometry or properties`);
+      }
+      return {
+        type: 'Feature',
+        geometry: row.geometry,
+        properties: row.properties,
+      };
+    });
+
+    console.log(`✅ Returning ${features.length} submissions`);
     res.json({
       type: 'FeatureCollection',
       features,
     });
   } catch (err) {
-    console.error('❌ Supabase fetch failed:', err);
+    console.error('❌ /api/submissions failed:', err);
     res.status(500).json({ error: 'Failed to load submissions' });
   }
 });
