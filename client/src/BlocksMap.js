@@ -20,14 +20,33 @@ const BlocksMap = ({ blocks }) => {
     });
 
     mapRef.current.on('load', () => {
+      if (!blocks || !blocks.features?.length) {
+        console.warn('⚠️ No blocks data available');
+        return;
+      }
+
       mapRef.current.addSource('blocks', {
         type: 'geojson',
         data: blocks,
       });
 
-      // Zoom to block extent
-      const bounds = bbox(blocks);
-      mapRef.current.fitBounds(bounds, { padding: 20 });
+      // Validate and zoom to block extent
+      try {
+        const bounds = bbox(blocks); // [minX, minY, maxX, maxY]
+        const sw = [bounds[0], bounds[1]];
+        const ne = [bounds[2], bounds[3]];
+
+        if (
+          sw[1] < -90 || sw[1] > 90 ||
+          ne[1] < -90 || ne[1] > 90
+        ) {
+          console.warn('⚠️ Invalid bounds:', bounds);
+        } else {
+          mapRef.current.fitBounds([sw, ne], { padding: 20 });
+        }
+      } catch (err) {
+        console.error('❌ Failed to fit bounds:', err);
+      }
 
       // Color ramp by votes
       mapRef.current.addLayer({
