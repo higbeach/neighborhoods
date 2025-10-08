@@ -24,6 +24,8 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+// Force update (temp)
+
 // Paths to static files
 const dataDir = path.join(__dirname, 'data');
 const blocksFile = path.join(dataDir, 'blocks_with_votes.geojson'); // ✅ updated
