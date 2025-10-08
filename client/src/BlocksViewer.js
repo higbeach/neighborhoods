@@ -15,7 +15,8 @@ const BlocksViewer = () => {
         const baseUrl =
           process.env.NODE_ENV === 'development'
             ? ''
-            : 'https://neighborhoods-lgvg.onrender.com';
+            : 'https://neighborhoods-server.onrender.com';
+
 
         const blocksRes = await fetch(`${baseUrl}/api/blocks`);
         const submissionsRes = await fetch(`${baseUrl}/api/submissions`);
