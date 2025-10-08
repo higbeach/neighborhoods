@@ -8,6 +8,7 @@ const SubmissionsMap = ({ submissions }) => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const [selectedFeatureId, setSelectedFeatureId] = useState(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Initialize map
   useEffect(() => {
@@ -19,21 +20,28 @@ const SubmissionsMap = ({ submissions }) => {
       center: [-122.33, 47.61],
       zoom: 11,
     });
+
+    mapRef.current.on('load', () => {
+      console.log('🗺️ Map style loaded');
+      setMapLoaded(true);
+    });
   }, []);
 
   // Add/update submissions layer
   useEffect(() => {
-    if (!mapRef.current || !submissions) return;
+    if (!mapRef.current || !submissions || !mapLoaded) return;
 
-    if (mapRef.current.getSource('submissions')) {
-      mapRef.current.getSource('submissions').setData(submissions);
+    const map = mapRef.current;
+
+    if (map.getSource('submissions')) {
+      map.getSource('submissions').setData(submissions);
     } else {
-      mapRef.current.addSource('submissions', {
+      map.addSource('submissions', {
         type: 'geojson',
         data: submissions,
       });
 
-      mapRef.current.addLayer({
+      map.addLayer({
         id: 'submissions-fill',
         type: 'fill',
         source: 'submissions',
@@ -42,18 +50,18 @@ const SubmissionsMap = ({ submissions }) => {
             'case',
             ['boolean', ['feature-state', 'selected'], false],
             '#f00',
-            '#088'
+            '#088',
           ],
           'fill-opacity': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
             0.6,
-            0.4
-          ]
+            0.4,
+          ],
         },
       });
 
-      mapRef.current.addLayer({
+      map.addLayer({
         id: 'submissions-outline',
         type: 'line',
         source: 'submissions',
@@ -62,35 +70,32 @@ const SubmissionsMap = ({ submissions }) => {
             'case',
             ['boolean', ['feature-state', 'selected'], false],
             '#f00',
-            '#000'
+            '#000',
           ],
           'line-width': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
             3,
-            1
-          ]
+            1,
+          ],
         },
       });
 
-      mapRef.current.on('click', 'submissions-fill', (e) => {
+      map.on('click', 'submissions-fill', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
         const props = feature.properties;
         const id = feature.id;
 
         if (selectedFeatureId !== null) {
-          mapRef.current.setFeatureState(
+          map.setFeatureState(
             { source: 'submissions', id: selectedFeatureId },
             { selected: false }
           );
         }
 
         setSelectedFeatureId(id);
-        mapRef.current.setFeatureState(
-          { source: 'submissions', id },
-          { selected: true }
-        );
+        map.setFeatureState({ source: 'submissions', id }, { selected: true });
 
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
@@ -100,17 +105,18 @@ const SubmissionsMap = ({ submissions }) => {
             ${props.comments || 'No comments'}<br/>
             <small>${props.timestamp || ''}</small>
           `)
-          .addTo(mapRef.current);
+          .addTo(map);
       });
 
-      mapRef.current.on('mouseenter', 'submissions-fill', () => {
-        mapRef.current.getCanvas().style.cursor = 'pointer';
+      map.on('mouseenter', 'submissions-fill', () => {
+        map.getCanvas().style.cursor = 'pointer';
       });
-      mapRef.current.on('mouseleave', 'submissions-fill', () => {
-        mapRef.current.getCanvas().style.cursor = '';
+
+      map.on('mouseleave', 'submissions-fill', () => {
+        map.getCanvas().style.cursor = '';
       });
     }
-  }, [submissions, selectedFeatureId]);
+  }, [submissions, mapLoaded, selectedFeatureId]);
 
   return <div ref={mapContainer} style={{ width: '100vw', height: '100vh' }} />;
 };
