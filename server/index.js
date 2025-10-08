@@ -6,7 +6,6 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const turf = require('@turf/turf');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -27,7 +26,7 @@ const supabase = createClient(
 
 // Paths to static files
 const dataDir = path.join(__dirname, 'data');
-const blocksFile = path.join(dataDir, 'blocks.geojson');
+const blocksFile = path.join(dataDir, 'blocks_with_votes.geojson'); // ✅ updated
 
 // -------------------- API ROUTES --------------------
 
@@ -65,7 +64,7 @@ app.post('/api/submissions', async (req, res) => {
   }
 });
 
-// ✅ GET: return all submissions from Supabase (with enhanced logging)
+// ✅ GET: return all submissions from Supabase
 app.get('/api/submissions', async (req, res) => {
   try {
     console.log('📡 Incoming request: GET /api/submissions');
@@ -113,76 +112,15 @@ app.get('/api/submissions', async (req, res) => {
   }
 });
 
-// ✅ GET: dynamically generate blocks with votes
-app.get('/api/blocks', async (req, res) => {
+// ✅ GET: serve enriched blocks with votes
+app.get('/api/blocks', (req, res) => {
   try {
     const blocksRaw = fs.readFileSync(blocksFile, 'utf8');
     const blocks = JSON.parse(blocksRaw);
-
-    if (!Array.isArray(blocks.features)) {
-      throw new Error("blocks.geojson is missing 'features' array");
-    }
-
-    const limit = parseInt(req.query.limit, 10);
-
-    const query = supabase
-      .from('submissions')
-      .select('geometry')
-      .order('created_at', { ascending: false });
-
-    const { data: submissions, error } = isNaN(limit)
-      ? await query
-      : await query.limit(limit);
-
-    if (error) throw error;
-
-    const submissionsToUse = submissions.map((row) => ({
-      type: 'Feature',
-      geometry: row.geometry,
-    }));
-
-    const blockFeatures = blocks.features.map((block, i) => {
-      if (!block.geometry) {
-        console.warn(`⚠️ Block ${i} is missing geometry`);
-        return {
-          ...block,
-          properties: {
-            ...block.properties,
-            votes: 0,
-            error: 'Missing geometry',
-          },
-        };
-      }
-
-      let count = 0;
-      submissionsToUse.forEach((sub, j) => {
-        if (!sub.geometry) return;
-
-        try {
-          if (turf.booleanPointInPolygon(sub, block)) {
-            count += 1;
-          }
-        } catch (e) {
-          console.error(`❌ Turf error on block ${i}, submission ${j}:`, e);
-        }
-      });
-
-      return {
-        ...block,
-        properties: {
-          ...block.properties,
-          votes: count,
-        },
-      };
-    });
-
-    res.json({
-      type: 'FeatureCollection',
-      features: blockFeatures,
-    });
+    res.json(blocks);
   } catch (err) {
     console.error('❌ /api/blocks failed:', err);
-    res.status(500).json({ error: 'Failed to generate blocks dynamically' });
+    res.status(500).json({ error: 'Failed to load blocks' });
   }
 });
 
