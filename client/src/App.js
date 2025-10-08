@@ -7,6 +7,8 @@ import BlocksViewer from './BlocksViewer';    // ✅ New block-level votes viewe
 import './App.css';
 
 // Triggering rebuild for /submissions route
+// ✅ Triggering rebuild with timestamp: Oct 7, 2025
+
 
 function App() {
   return (
