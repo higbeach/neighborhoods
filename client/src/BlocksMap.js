@@ -80,11 +80,18 @@ const BlocksMap = ({ blocks }) => {
         const f = e.features[0];
         const p = f.properties || {};
 
-        const neighborhoods = Array.isArray(p.neighborhoods)
-          ? p.neighborhoods
-          : typeof p.neighborhoods === 'string'
-            ? [p.neighborhoods]
-            : [];
+        // Safely coerce neighborhoods to array
+        let neighborhoods = [];
+        if (Array.isArray(p.neighborhoods)) {
+          neighborhoods = p.neighborhoods;
+        } else if (typeof p.neighborhoods === 'string') {
+          try {
+            const parsed = JSON.parse(p.neighborhoods);
+            neighborhoods = Array.isArray(parsed) ? parsed : [parsed];
+          } catch {
+            neighborhoods = [p.neighborhoods];
+          }
+        }
 
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
