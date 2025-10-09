@@ -80,24 +80,23 @@ const BlocksMap = ({ blocks }) => {
         const f = e.features[0];
         const p = f.properties || {};
 
-        // Safely coerce neighborhoods to array of strings
+        // Safely render neighborhoods
         let neighborhoodsText = '—';
-        try {
-          const raw = p.neighborhoods;
-          let neighborhoods = [];
+        const raw = p.neighborhoods;
 
-          if (Array.isArray(raw)) {
-            neighborhoods = raw;
-          } else if (typeof raw === 'string') {
+        if (Array.isArray(raw)) {
+          neighborhoodsText = raw.map(n => String(n)).join(', ');
+        } else if (typeof raw === 'string') {
+          try {
             const parsed = JSON.parse(raw);
-            neighborhoods = Array.isArray(parsed) ? parsed : [parsed];
+            if (Array.isArray(parsed)) {
+              neighborhoodsText = parsed.map(n => String(n)).join(', ');
+            } else {
+              neighborhoodsText = String(parsed);
+            }
+          } catch {
+            neighborhoodsText = raw;
           }
-
-          if (Array.isArray(neighborhoods)) {
-            neighborhoodsText = neighborhoods.map(String).join(', ');
-          }
-        } catch {
-          neighborhoodsText = '—';
         }
 
         new mapboxgl.Popup()
