@@ -79,12 +79,19 @@ const BlocksMap = ({ blocks }) => {
       mapRef.current.on('click', 'blocks-fill', (e) => {
         const f = e.features[0];
         const p = f.properties || {};
+
+        const neighborhoods = Array.isArray(p.neighborhoods)
+          ? p.neighborhoods
+          : typeof p.neighborhoods === 'string'
+            ? [p.neighborhoods]
+            : [];
+
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
           .setHTML(`
             <strong>Block</strong>: ${p.BLOCK_ID || '—'}<br/>
             <strong>Votes</strong>: ${p.vote_count ?? 0}<br/>
-            <strong>Neighborhoods</strong>: ${(p.neighborhoods || []).join(', ') || '—'}<br/>
+            <strong>Neighborhoods</strong>: ${neighborhoods.length ? neighborhoods.join(', ') : '—'}<br/>
             <small>${p.last_updated || ''}</small>
           `)
           .addTo(mapRef.current);
