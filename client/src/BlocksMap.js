@@ -80,18 +80,24 @@ const BlocksMap = ({ blocks }) => {
         const f = e.features[0];
         const p = f.properties || {};
 
-        // Safely coerce neighborhoods to array
-        let neighborhoods = [];
+        // Safely coerce neighborhoods to array of strings
+        let neighborhoodsText = '—';
         try {
           const raw = p.neighborhoods;
+          let neighborhoods = [];
+
           if (Array.isArray(raw)) {
             neighborhoods = raw;
           } else if (typeof raw === 'string') {
             const parsed = JSON.parse(raw);
             neighborhoods = Array.isArray(parsed) ? parsed : [parsed];
           }
+
+          if (Array.isArray(neighborhoods)) {
+            neighborhoodsText = neighborhoods.map(String).join(', ');
+          }
         } catch {
-          neighborhoods = [];
+          neighborhoodsText = '—';
         }
 
         new mapboxgl.Popup()
@@ -99,7 +105,7 @@ const BlocksMap = ({ blocks }) => {
           .setHTML(`
             <strong>Block</strong>: ${p.BLOCK_ID || '—'}<br/>
             <strong>Votes</strong>: ${p.vote_count ?? 0}<br/>
-            <strong>Neighborhoods</strong>: ${neighborhoods.length ? neighborhoods.join(', ') : '—'}<br/>
+            <strong>Neighborhoods</strong>: ${neighborhoodsText}<br/>
             <small>${p.last_updated || ''}</small>
           `)
           .addTo(mapRef.current);
