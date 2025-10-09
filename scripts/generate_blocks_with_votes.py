@@ -1,7 +1,7 @@
 import os
 import geopandas as gpd
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -62,11 +62,11 @@ counts = (
 
 # -------------------- PIVOT AND CALCULATE PERCENTAGES --------------------
 pivot = counts.pivot(index="BLOCK_ID", columns="neighborhood_name", values="count").fillna(0)
-pivot["total_votes"] = pivot.sum(axis=1)
+pivot["vote_count"] = pivot.sum(axis=1)  # ✅ renamed for frontend compatibility
 
 for col in pivot.columns:
-    if col != "total_votes":
-        pivot[col + "_pct"] = (pivot[col] / pivot["total_votes"]) * 100
+    if col != "vote_count":
+        pivot[col + "_pct"] = (pivot[col] / pivot["vote_count"]) * 100
 
 # -------------------- ADD DOMINANT NEIGHBORHOOD --------------------
 pct_cols = [c for c in pivot.columns if c.endswith("_pct")]
@@ -74,7 +74,7 @@ pivot["dominant_neighborhood"] = pivot[pct_cols].idxmax(axis=1).str.replace("_pc
 
 # -------------------- MERGE BACK TO BLOCKS --------------------
 blocks_with_votes = blocks.join(pivot, how="left")
-blocks_with_votes["last_updated"] = datetime.utcnow().isoformat()
+blocks_with_votes["last_updated"] = datetime.now(timezone.utc).isoformat()
 
 # -------------------- EXPORT --------------------
 blocks_with_votes.to_file(OUTPUT_PATH, driver="GeoJSON")

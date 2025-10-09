@@ -54,12 +54,12 @@ const BlocksMap = ({ blocks }) => {
           'fill-color': [
             'step',
             ['get', 'vote_count'],
-            '#f0f9e8',     // 0
-            1, '#ccebc5',  // 1+
-            3, '#a8ddb5',  // 3+
-            5, '#7bccc4',  // 5+
-            10, '#43a2ca', // 10+
-            20, '#0868ac'  // 20+
+            '#f0f9e8',
+            1, '#ccebc5',
+            3, '#a8ddb5',
+            5, '#7bccc4',
+            10, '#43a2ca',
+            20, '#0868ac'
           ],
           'fill-opacity': 0.6
         }
@@ -80,39 +80,31 @@ const BlocksMap = ({ blocks }) => {
         const f = e.features[0];
         const p = f.properties || {};
 
-        // Log raw neighborhoods for debugging
-        console.log('🧠 Raw neighborhoods value:', p.neighborhoods);
+        const voteCount = p.vote_count ?? 0;
+        const lastUpdated = p.last_updated || '';
+        const blockId = p.BLOCK_ID || '—';
 
-        // Safely render neighborhoods
-        let neighborhoodsText = '—';
-        const raw = p.neighborhoods;
+        // Extract all neighborhood percentages
+        const neighborhoodDetails = Object.entries(p)
+          .filter(([key, value]) => key.endsWith('_pct') && value > 0)
+          .map(([key, pct]) => {
+            const name = key.replace('_pct', '');
+            const count = p[name] ?? 0;
+            return `<li><strong>${name}</strong>: ${count} votes (${pct.toFixed(1)}%)</li>`;
+          })
+          .join('');
 
-        if (Array.isArray(raw)) {
-          neighborhoodsText = raw.map(n => String(n)).toString();
-        } else if (typeof raw === 'string') {
-          try {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
-              neighborhoodsText = parsed.map(n => String(n)).toString();
-            } else {
-              neighborhoodsText = String(parsed);
-            }
-          } catch {
-            neighborhoodsText = raw;
-          }
-        } else if (raw !== null && raw !== undefined) {
-          neighborhoodsText = String(raw);
-        }
+        const popupHTML = `
+          <strong>Block</strong>: ${blockId}<br/>
+          <strong>Votes</strong>: ${voteCount}<br/>
+          ${neighborhoodDetails ? `<ul>${neighborhoodDetails}</ul>` : '<em>No neighborhood votes</em>'}
+          <small>${lastUpdated}</small><br/>
+          <small style="color:#999;">v2025.10.08</small>
+        `;
 
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
-          .setHTML(`
-            <strong>Block</strong>: ${p.BLOCK_ID || '—'}<br/>
-            <strong>Votes</strong>: ${p.vote_count ?? 0}<br/>
-            <strong>Neighborhoods</strong>: ${neighborhoodsText}<br/>
-            <small>${p.last_updated || ''}</small><br/>
-            <small style="color:#999;">v2025.10.08</small>
-          `)
+          .setHTML(popupHTML)
           .addTo(mapRef.current);
       });
 
