@@ -51,7 +51,7 @@ submissions = submissions[submissions["neighborhood_name"].notnull()]
 print(f"🗺️ Loaded {len(submissions)} valid submissions")
 
 # -------------------- SPATIAL JOIN --------------------
-joined = gpd.sjoin(blocks, submissions, how="left", predicate="intersects")
+joined = gpd.sjoin(blocks, submissions, how="left", predicate="within")
 
 # -------------------- COUNT NEIGHBORHOOD MENTIONS --------------------
 counts = (
