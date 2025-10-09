@@ -75,7 +75,7 @@ const BlocksMap = ({ blocks }) => {
         }
       });
 
-      // Popups
+      // Popups! 
       mapRef.current.on('click', 'blocks-fill', (e) => {
         const f = e.features[0];
         const p = f.properties || {};
