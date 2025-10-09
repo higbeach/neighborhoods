@@ -82,15 +82,16 @@ const BlocksMap = ({ blocks }) => {
 
         // Safely coerce neighborhoods to array
         let neighborhoods = [];
-        if (Array.isArray(p.neighborhoods)) {
-          neighborhoods = p.neighborhoods;
-        } else if (typeof p.neighborhoods === 'string') {
-          try {
-            const parsed = JSON.parse(p.neighborhoods);
+        try {
+          const raw = p.neighborhoods;
+          if (Array.isArray(raw)) {
+            neighborhoods = raw;
+          } else if (typeof raw === 'string') {
+            const parsed = JSON.parse(raw);
             neighborhoods = Array.isArray(parsed) ? parsed : [parsed];
-          } catch {
-            neighborhoods = [p.neighborhoods];
           }
+        } catch {
+          neighborhoods = [];
         }
 
         new mapboxgl.Popup()
