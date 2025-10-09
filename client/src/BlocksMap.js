@@ -85,18 +85,20 @@ const BlocksMap = ({ blocks }) => {
         const raw = p.neighborhoods;
 
         if (Array.isArray(raw)) {
-          neighborhoodsText = raw.map(n => String(n)).join(', ');
+          neighborhoodsText = raw.map(n => String(n)).toString();
         } else if (typeof raw === 'string') {
           try {
             const parsed = JSON.parse(raw);
             if (Array.isArray(parsed)) {
-              neighborhoodsText = parsed.map(n => String(n)).join(', ');
+              neighborhoodsText = parsed.map(n => String(n)).toString();
             } else {
               neighborhoodsText = String(parsed);
             }
           } catch {
             neighborhoodsText = raw;
           }
+        } else if (raw !== null && raw !== undefined) {
+          neighborhoodsText = String(raw);
         }
 
         new mapboxgl.Popup()
