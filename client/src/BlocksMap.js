@@ -75,10 +75,13 @@ const BlocksMap = ({ blocks }) => {
         }
       });
 
-      // Popups! 
+      // Popups
       mapRef.current.on('click', 'blocks-fill', (e) => {
         const f = e.features[0];
         const p = f.properties || {};
+
+        // Log raw neighborhoods for debugging
+        console.log('🧠 Raw neighborhoods value:', p.neighborhoods);
 
         // Safely render neighborhoods
         let neighborhoodsText = '—';
@@ -107,7 +110,8 @@ const BlocksMap = ({ blocks }) => {
             <strong>Block</strong>: ${p.BLOCK_ID || '—'}<br/>
             <strong>Votes</strong>: ${p.vote_count ?? 0}<br/>
             <strong>Neighborhoods</strong>: ${neighborhoodsText}<br/>
-            <small>${p.last_updated || ''}</small>
+            <small>${p.last_updated || ''}</small><br/>
+            <small style="color:#999;">v2025.10.08</small>
           `)
           .addTo(mapRef.current);
       });
