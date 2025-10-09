@@ -30,16 +30,13 @@ const BlocksMap = ({ blocks }) => {
         data: blocks,
       });
 
-      // Validate and zoom to block extent
+      // Fit to block extent
       try {
-        const bounds = bbox(blocks); // [minX, minY, maxX, maxY]
+        const bounds = bbox(blocks);
         const sw = [bounds[0], bounds[1]];
         const ne = [bounds[2], bounds[3]];
 
-        if (
-          sw[1] < -90 || sw[1] > 90 ||
-          ne[1] < -90 || ne[1] > 90
-        ) {
+        if (sw[1] < -90 || sw[1] > 90 || ne[1] < -90 || ne[1] > 90) {
           console.warn('⚠️ Invalid bounds:', bounds);
         } else {
           mapRef.current.fitBounds([sw, ne], { padding: 20 });
@@ -48,7 +45,7 @@ const BlocksMap = ({ blocks }) => {
         console.error('❌ Failed to fit bounds:', err);
       }
 
-      // Color ramp by votes
+      // Color ramp by vote_count
       mapRef.current.addLayer({
         id: 'blocks-fill',
         type: 'fill',
@@ -56,7 +53,7 @@ const BlocksMap = ({ blocks }) => {
         paint: {
           'fill-color': [
             'step',
-            ['get', 'votes'],
+            ['get', 'vote_count'],
             '#f0f9e8',     // 0
             1, '#ccebc5',  // 1+
             3, '#a8ddb5',  // 3+
@@ -85,8 +82,8 @@ const BlocksMap = ({ blocks }) => {
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
           .setHTML(`
-            <strong>Block</strong>: ${p.block_id || '—'}<br/>
-            <strong>Votes</strong>: ${p.votes ?? 0}<br/>
+            <strong>Block</strong>: ${p.BLOCK_ID || '—'}<br/>
+            <strong>Votes</strong>: ${p.vote_count ?? 0}<br/>
             <strong>Neighborhoods</strong>: ${(p.neighborhoods || []).join(', ') || '—'}<br/>
             <small>${p.last_updated || ''}</small>
           `)
