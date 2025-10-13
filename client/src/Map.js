@@ -14,7 +14,7 @@ const NeighborhoodMap = () => {
   const mapRef = useRef(null);
   const drawRef = useRef(null);
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // Start at intro screen
   const [marker, setMarker] = useState(null);
   const [location, setLocation] = useState(null);
   const [years, setYears] = useState(0);
@@ -87,7 +87,7 @@ const NeighborhoodMap = () => {
     setAreaName('');
     setBoundary(null);
     drawRef.current.deleteAll();
-    setStep(1);
+    setStep(0);
   };
 
   return (
@@ -104,6 +104,14 @@ const NeighborhoodMap = () => {
             : {}
         }
       />
+
+      {step === 0 && (
+        <div className="overlay overlay-intro">
+          <h2>Help Us Map Your Neighborhood</h2>
+          <p>This is a beta-test focused on Columbia City, Seattle and its adjacent neighborhoods.</p>
+          <button onClick={() => setStep(1)}>Let's Go</button>
+        </div>
+      )}
 
       {step === 1 && (
         <div className="overlay overlay-enter">
@@ -171,24 +179,23 @@ const NeighborhoodMap = () => {
 
       {step === 4 && (() => {
         console.log('🧭 Rendering BoundariesForm with:', {
-         boundary,
+          boundary,
           location,
           years,
           areaName,
         });
 
-       return (
-        <BoundariesForm
-          boundary={boundary}
-          location={location}
-          years={years}
-          areaName={areaName}
-          onReset={handleReset}
-          onSubmitted={() => setStep(5)}
-        />
-       );
+        return (
+          <BoundariesForm
+            boundary={boundary}
+            location={location}
+            years={years}
+            areaName={areaName}
+            onReset={handleReset}
+            onSubmitted={() => setStep(5)}
+          />
+        );
       })()}
-
 
       {step === 5 && (
         <div className="overlay overlay-enter">
