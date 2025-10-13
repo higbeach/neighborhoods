@@ -119,4 +119,6 @@ button.secondary {
   width: 32px;
   height: auto;
   display: block;
+  border: 2px solid red; /* temporary debug border */
+
 }

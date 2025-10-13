@@ -13,7 +13,7 @@ const NeighborhoodMap = () => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const drawRef = useRef(null);
-  const markerRef = useRef(null); // Track the fixed marker
+  const markerRef = useRef(null);
 
   const [step, setStep] = useState(0);
   const [location, setLocation] = useState(null);
@@ -71,15 +71,24 @@ const NeighborhoodMap = () => {
     setLocation(center);
     setStep(2);
 
-    // Remove previous marker if it exists
     if (markerRef.current) {
       markerRef.current.remove();
     }
 
-    // Add new marker at selected location
-    markerRef.current = new mapboxgl.Marker()
+    markerRef.current = new mapboxgl.Marker({
+      element: createCustomMarker(),
+    })
       .setLngLat(center)
       .addTo(mapRef.current);
+  };
+
+  const createCustomMarker = () => {
+    const img = document.createElement('img');
+    img.src = '/pin-icon.svg';
+    img.alt = 'Selected location';
+    img.style.width = '32px';
+    img.style.height = 'auto';
+    return img;
   };
 
   const handleReset = () => {
@@ -100,7 +109,18 @@ const NeighborhoodMap = () => {
     <div className="map-wrapper">
       <div ref={mapContainer} className="map-container" />
 
-      {step === 1 && <div className="map-pin" />}
+      {step === 1 && (
+        <div className="map-pin">
+          <svg viewBox="0 0 16 16" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M3.37892 10.2236L8 16L12.6211 10.2236C13.5137 9.10788 14 7.72154 14 6.29266V6C14 2.68629 11.3137 0 8 0C4.68629 0 2 2.68629 2 6V6.29266C2 7.72154 2.4863 9.10788 3.37892 10.2236ZM8 8C9.10457 8 10 7.10457 10 6C10 4.89543 9.10457 4 8 4C6.89543 4 6 4.89543 6 6C6 7.10457 6.89543 8 8 8Z"
+              fill="#ff0000"
+            />
+          </svg>
+        </div>
+      )}
 
       {step === 0 && (
         <div className="overlay overlay-intro">
