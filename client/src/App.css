@@ -104,3 +104,12 @@ button.secondary {
   background: #eee;
   border: 1px solid #ccc;
 }
+
+.map-pin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  z-index: 9;
+  pointer-events: none;
+}

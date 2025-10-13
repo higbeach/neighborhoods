@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -14,8 +14,7 @@ const NeighborhoodMap = () => {
   const mapRef = useRef(null);
   const drawRef = useRef(null);
 
-  const [step, setStep] = useState(0); // Start at intro screen
-  const [marker, setMarker] = useState(null);
+  const [step, setStep] = useState(0);
   const [location, setLocation] = useState(null);
   const [years, setYears] = useState(0);
   const [areaName, setAreaName] = useState('');
@@ -27,8 +26,8 @@ const NeighborhoodMap = () => {
     mapRef.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v10',
-      center: [-122.33, 47.61],
-      zoom: 11,
+      center: [-122.2868, 47.5609], // Columbia City
+      zoom: 13,
     });
 
     drawRef.current = new MapboxDraw({
@@ -41,6 +40,13 @@ const NeighborhoodMap = () => {
     mapRef.current.on('draw.create', updateBoundary);
     mapRef.current.on('draw.update', updateBoundary);
     mapRef.current.on('draw.delete', () => setBoundary(null));
+
+    mapRef.current.on('load', () => {
+      const layerId = 'neighborhood-label';
+      if (mapRef.current.getLayer(layerId)) {
+        mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -58,30 +64,14 @@ const NeighborhoodMap = () => {
     }
   };
 
-  const handleMapClick = useCallback((e) => {
-    if (step !== 1) return;
-    if (marker) marker.remove();
-
-    const newMarker = new mapboxgl.Marker()
-      .setLngLat(e.lngLat)
-      .addTo(mapRef.current);
-
-    setMarker(newMarker);
-    setLocation(e.lngLat);
-    setStep(2);
-  }, [step, marker]);
-
-  useEffect(() => {
+  const handleConfirmLocation = () => {
     if (!mapRef.current) return;
-    mapRef.current.on('click', handleMapClick);
-    return () => {
-      mapRef.current.off('click', handleMapClick);
-    };
-  }, [handleMapClick]);
+    const center = mapRef.current.getCenter();
+    setLocation(center);
+    setStep(2);
+  };
 
   const handleReset = () => {
-    if (marker) marker.remove();
-    setMarker(null);
     setLocation(null);
     setYears(0);
     setAreaName('');
@@ -92,18 +82,16 @@ const NeighborhoodMap = () => {
 
   return (
     <div className="map-wrapper">
-      <div
-        ref={mapContainer}
-        className="map-container"
-        style={
-          step === 1
-            ? {
-                cursor:
-                  'url("https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi-dotless_hdpi.png") 10 32, pointer',
-              }
-            : {}
-        }
-      />
+      <div ref={mapContainer} className="map-container" />
+
+      {step === 1 && (
+        <div className="map-pin">
+          <img
+            src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi-dotless_hdpi.png"
+            alt="Map pin"
+          />
+        </div>
+      )}
 
       {step === 0 && (
         <div className="overlay overlay-intro">
@@ -116,7 +104,8 @@ const NeighborhoodMap = () => {
       {step === 1 && (
         <div className="overlay overlay-enter">
           <h2>Step 1: Mark Where You Live!</h2>
-          <p>Click anywhere on the map to drop a pin</p>
+          <p>Pan the map until the pin is centered over your home.</p>
+          <button onClick={handleConfirmLocation}>I live here!</button>
         </div>
       )}
 
