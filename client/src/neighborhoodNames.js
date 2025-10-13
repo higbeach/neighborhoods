@@ -2,7 +2,7 @@
 const neighborhoodNames = [
   "Columbia City",
   "Brighton",
-  "Hitt's Hill"
+  "Hitt's Hill",
   "Lakewood",
   "Lakewood-Seward Park",
   "Seward Park",
