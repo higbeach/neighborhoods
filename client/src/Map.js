@@ -84,13 +84,8 @@ const NeighborhoodMap = () => {
     <div className="map-wrapper">
       <div ref={mapContainer} className="map-container" />
 
-      {step === 1 && (
-        <div className="map-pin">
-          <img
-            src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi-dotless_hdpi.png"
-            alt="Map pin"
-          />
-        </div>
+      {(step === 1 || step === 2 || step === 3) && (
+        <div className="map-pin" />
       )}
 
       {step === 0 && (
