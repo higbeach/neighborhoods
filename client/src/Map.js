@@ -13,6 +13,7 @@ const NeighborhoodMap = () => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const drawRef = useRef(null);
+  const markerRef = useRef(null); // Track the fixed marker
 
   const [step, setStep] = useState(0);
   const [location, setLocation] = useState(null);
@@ -69,6 +70,16 @@ const NeighborhoodMap = () => {
     const center = mapRef.current.getCenter();
     setLocation(center);
     setStep(2);
+
+    // Remove previous marker if it exists
+    if (markerRef.current) {
+      markerRef.current.remove();
+    }
+
+    // Add new marker at selected location
+    markerRef.current = new mapboxgl.Marker()
+      .setLngLat(center)
+      .addTo(mapRef.current);
   };
 
   const handleReset = () => {
@@ -78,15 +89,18 @@ const NeighborhoodMap = () => {
     setBoundary(null);
     drawRef.current.deleteAll();
     setStep(0);
+
+    if (markerRef.current) {
+      markerRef.current.remove();
+      markerRef.current = null;
+    }
   };
 
   return (
     <div className="map-wrapper">
       <div ref={mapContainer} className="map-container" />
 
-      {(step === 1 || step === 2 || step === 3) && (
-        <div className="map-pin" />
-      )}
+      {step === 1 && <div className="map-pin" />}
 
       {step === 0 && (
         <div className="overlay overlay-intro">
