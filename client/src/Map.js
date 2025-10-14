@@ -43,10 +43,21 @@ const NeighborhoodMap = () => {
     mapRef.current.on('draw.delete', () => setBoundary(null));
 
     mapRef.current.on('load', () => {
-      const layerId = 'neighborhood-label';
-      if (mapRef.current.getLayer(layerId)) {
-        mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
-      }
+      const layersToHide = [
+        'neighborhood-label',
+        'place-label',
+        'place-city-lg-n',
+        'place-city-lg-s',
+        'place-city-md-n',
+        'place-city-md-s',
+        'place-city-sm'
+      ];
+
+      layersToHide.forEach((layerId) => {
+        if (mapRef.current.getLayer(layerId)) {
+          mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
+        }
+      });
     });
   }, []);
 
@@ -132,17 +143,17 @@ const NeighborhoodMap = () => {
 
       {step === 1 && (
         <div className="overlay overlay-enter">
-          <h2>Step 1: Mark Where You Live!</h2>
-          <p>Pan the map until the pin is centered over your home.</p>
+          <h2>Mark Where You Live</h2>
+          <p>Pan the map until the pin is centered over where you live.</p>
           <button onClick={handleConfirmLocation}>I live here!</button>
         </div>
       )}
 
       {step === 2 && (
         <div className="overlay overlay-enter">
-          <h2>Step 2: Years & Name</h2>
+          <h2>What do you call this area?</h2>
 
-          <label>What do you call this area?</label>
+          <label>Type the neigbhood name</label>
           <input
             type="text"
             placeholder="Neighborhood name"
@@ -156,7 +167,7 @@ const NeighborhoodMap = () => {
             ))}
           </datalist>
 
-          <label>How long have you lived here?</label>
+          <label>How many years have you lived here?</label>
           <input
             type="range"
             min="0"
@@ -179,10 +190,10 @@ const NeighborhoodMap = () => {
 
       {step === 3 && (
         <div className="overlay overlay-enter">
-          <h2>Step 3: Where would you mark this neighborhood's boundaries?</h2>
+          <h2>Where would you mark this neighborhood's boundaries?</h2>
           <p>
             The polygon tool is active -- tap to add a starting point, tap again to add more points,
-            doubleclick to close the shape.
+            double-click to close the shape.
           </p>
           <div className="overlay-actions">
             <button onClick={() => setStep(4)} disabled={!boundary}>
