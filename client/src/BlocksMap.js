@@ -45,24 +45,38 @@ const BlocksMap = ({ blocks }) => {
         console.error('❌ Failed to fit bounds:', err);
       }
 
-      // Color ramp by vote_count
+      // 🎨 Dynamically generate colors for each dominant_neighborhood
+      const neighborhoods = Array.from(
+        new Set(blocks.features.map(f => f.properties.dominant_neighborhood).filter(Boolean))
+      );
+
+      const generateColor = (i) => {
+        const palette = [
+          '#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
+          '#ff7f00', '#ffff33', '#a65628', '#f781bf', '#999999'
+        ];
+        return palette[i % palette.length];
+      };
+
+      const neighborhoodColors = neighborhoods.reduce((acc, name, i) => {
+        acc[name] = generateColor(i);
+        return acc;
+      }, {});
+
+      const matchExpression = ['match', ['get', 'dominant_neighborhood']];
+      neighborhoods.forEach(name => {
+        matchExpression.push(name, neighborhoodColors[name]);
+      });
+      matchExpression.push('#cccccc'); // fallback
+
       mapRef.current.addLayer({
         id: 'blocks-fill',
         type: 'fill',
         source: 'blocks',
         paint: {
-          'fill-color': [
-            'step',
-            ['get', 'vote_count'],
-            '#f0f9e8',
-            1, '#ccebc5',
-            3, '#a8ddb5',
-            5, '#7bccc4',
-            10, '#43a2ca',
-            20, '#0868ac'
-          ],
-          'fill-opacity': 0.6
-        }
+          'fill-color': matchExpression,
+          'fill-opacity': 0.6,
+        },
       });
 
       mapRef.current.addLayer({
@@ -71,8 +85,8 @@ const BlocksMap = ({ blocks }) => {
         source: 'blocks',
         paint: {
           'line-color': '#333',
-          'line-width': 0.5
-        }
+          'line-width': 0.5,
+        },
       });
 
       // Popups
@@ -84,7 +98,6 @@ const BlocksMap = ({ blocks }) => {
         const lastUpdated = p.last_updated || '';
         const blockId = p.BLOCK_ID || '—';
 
-        // Extract all neighborhood percentages
         const neighborhoodDetails = Object.entries(p)
           .filter(([key, value]) => key.endsWith('_pct') && value > 0)
           .map(([key, pct]) => {

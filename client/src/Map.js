@@ -134,7 +134,7 @@ const NeighborhoodMap = () => {
       )}
 
       {step === 0 && (
-        <div className="overlay overlay-intro">
+        <div className="overlay overlay-enter">
           <h2>Help Us Map Your Neighborhood</h2>
           <p>This is a beta-test focused on Columbia City, Seattle and its adjacent neighborhoods.</p>
           <button onClick={() => setStep(1)}>Let's Go</button>
@@ -153,7 +153,7 @@ const NeighborhoodMap = () => {
         <div className="overlay overlay-enter">
           <h2>What do you call this area?</h2>
 
-          <label>Type the neigbhood name</label>
+          <label>Type the neighborhood name</label>
           <input
             type="text"
             placeholder="Neighborhood name"

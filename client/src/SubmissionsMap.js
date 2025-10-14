@@ -10,7 +10,6 @@ const SubmissionsMap = ({ submissions }) => {
   const [selectedFeatureId, setSelectedFeatureId] = useState(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Initialize map
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -27,12 +26,35 @@ const SubmissionsMap = ({ submissions }) => {
     });
   }, []);
 
-  // Add/update submissions layer
   useEffect(() => {
     if (!mapRef.current || !submissions || !mapLoaded) return;
 
     const map = mapRef.current;
 
+    // 🔴 Extract home location pins
+    const locationFeatures = submissions.features
+      .filter((f) => f.properties.location?.lat && f.properties.location?.lng)
+      .map((f, idx) => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [f.properties.location.lng, f.properties.location.lat],
+        },
+        properties: {
+          neighborhood: f.properties.name,
+          years: f.properties.years,
+          comments: f.properties.comments,
+          timestamp: f.properties.timestamp,
+        },
+        id: `loc-${idx}`,
+      }));
+
+    const locationGeoJSON = {
+      type: 'FeatureCollection',
+      features: locationFeatures,
+    };
+
+    // 🟦 Add or update polygon boundaries
     if (map.getSource('submissions')) {
       map.getSource('submissions').setData(submissions);
     } else {
@@ -100,7 +122,7 @@ const SubmissionsMap = ({ submissions }) => {
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
           .setHTML(`
-            <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+            <strong>${props.name || 'Unnamed'}</strong><br/>
             ${props.years || ''} years<br/>
             ${props.comments || 'No comments'}<br/>
             <small>${props.timestamp || ''}</small>
@@ -114,6 +136,27 @@ const SubmissionsMap = ({ submissions }) => {
 
       map.on('mouseleave', 'submissions-fill', () => {
         map.getCanvas().style.cursor = '';
+      });
+    }
+
+    // 🔴 Add or update location pin layer
+    if (map.getSource('home-locations')) {
+      map.getSource('home-locations').setData(locationGeoJSON);
+    } else {
+      map.addSource('home-locations', {
+        type: 'geojson',
+        data: locationGeoJSON,
+      });
+
+      map.addLayer({
+        id: 'home-location-pins',
+        type: 'symbol',
+        source: 'home-locations',
+        layout: {
+          'icon-image': 'marker-15',
+          'icon-size': 1.2,
+          'icon-allow-overlap': true,
+        },
       });
     }
   }, [submissions, mapLoaded, selectedFeatureId]);
