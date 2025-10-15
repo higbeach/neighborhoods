@@ -72,13 +72,20 @@ const NeighborhoodMap = () => {
     }
   }, [step]);
 
+  useEffect(() => {
+    console.log('📍 Step changed to:', step); // Debug log
+  }, [step]);
+
+
   const updateBoundary = () => {
-    const data = drawRef.current.getAll();
+   const data = drawRef.current.getAll();
     if (data.features.length > 0) {
+      console.log('✅ Boundary created:', data.features[0]); // Debug log
       setBoundary(data.features[0]);
-    } else {
-      setBoundary(null);
-    }
+   } else {
+      console.log('⚠️ Boundary cleared or invalid'); // Debug log
+     setBoundary(null);
+   }
   };
 
   const handleConfirmLocation = () => {
