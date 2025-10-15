@@ -22,7 +22,7 @@ const NeighborhoodMap = () => {
   const [areaName, setAreaName] = useState('');
   const [boundary, setBoundary] = useState(null);
 
-  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
+ // const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
 
@@ -114,7 +114,7 @@ const NeighborhoodMap = () => {
     setBoundary(null);
     drawRef.current.deleteAll();
     setStep(0);
-    setShowSurveyPrompt(false);
+   // setShowSurveyPrompt(false);
     setShowSurveyForm(false);
     setSurveyComplete(false);
 
@@ -223,7 +223,7 @@ const NeighborhoodMap = () => {
           onReset={handleReset}
           onSubmitted={() => {
             setStep(5);
-            setShowSurveyPrompt(true);
+           // setShowSurveyPrompt(true);
           }}
         />
             )}
