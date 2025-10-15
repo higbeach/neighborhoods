@@ -1,12 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import NeighborhoodMap from './Map';               // Public-facing mapping flow
-import AdminMap from './AdminMap';                 // Admin-only view
-import SubmissionsViewer from './SubmissionsViewer'; // Viewer for all submissions
-import BlocksViewer from './BlocksViewer';         // Block-level votes viewer
+import NeighborhoodMap from './Map';
+import AdminMap from './AdminMap';
+import SubmissionsViewer from './SubmissionsViewer';
+import BlocksViewer from './BlocksViewer';
+import Login from './Login';
+import PrivateRoute from './PrivateRoute';
 import './App.css';
 
-// Wrapper to access location inside Router
 const AppRoutes = () => {
   const location = useLocation();
   const showNavbar = location.pathname !== '/';
@@ -24,9 +25,10 @@ const AppRoutes = () => {
 
       <Routes>
         <Route path="/" element={<NeighborhoodMap />} />
-        <Route path="/admin" element={<AdminMap />} />
-        <Route path="/submissions" element={<SubmissionsViewer />} />
-        <Route path="/blocks" element={<BlocksViewer />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/admin" element={<PrivateRoute><AdminMap /></PrivateRoute>} />
+        <Route path="/submissions" element={<PrivateRoute><SubmissionsViewer /></PrivateRoute>} />
+        <Route path="/blocks" element={<PrivateRoute><BlocksViewer /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
