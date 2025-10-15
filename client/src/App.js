@@ -1,36 +1,43 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
-import NeighborhoodMap from './Map';          // Public-facing mapping flow
-import AdminMap from './AdminMap';            // Admin-only view
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import NeighborhoodMap from './Map';               // Public-facing mapping flow
+import AdminMap from './AdminMap';                 // Admin-only view
 import SubmissionsViewer from './SubmissionsViewer'; // Viewer for all submissions
-import BlocksViewer from './BlocksViewer';    // ✅ New block-level votes viewer
+import BlocksViewer from './BlocksViewer';         // Block-level votes viewer
 import './App.css';
 
-// Triggering rebuild for /submissions route
-// ✅ Triggering rebuild with timestamp: Oct 7, 2025
+// Wrapper to access location inside Router
+const AppRoutes = () => {
+  const location = useLocation();
+  const showNavbar = location.pathname !== '/';
 
-
-function App() {
   return (
-    <div className="App">
-      <Router>
-        {/* Simple navigation bar */}
+    <>
+      {showNavbar && (
         <nav style={{ padding: '1rem', background: '#f5f5f5' }}>
           <Link to="/" style={{ marginRight: '1rem' }}>Neighborhood Map</Link>
           <Link to="/submissions" style={{ marginRight: '1rem' }}>Submissions Viewer</Link>
           <Link to="/blocks" style={{ marginRight: '1rem' }}>Blocks with Votes</Link>
           <Link to="/admin">Admin</Link>
         </nav>
+      )}
 
-        <Routes>
-          <Route path="/" element={<NeighborhoodMap />} />
-          <Route path="/admin" element={<AdminMap />} />
-          <Route path="/submissions" element={<SubmissionsViewer />} />
-          <Route path="/blocks" element={<BlocksViewer />} /> {/* ✅ New route */}
+      <Routes>
+        <Route path="/" element={<NeighborhoodMap />} />
+        <Route path="/admin" element={<AdminMap />} />
+        <Route path="/submissions" element={<SubmissionsViewer />} />
+        <Route path="/blocks" element={<BlocksViewer />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
+  );
+};
 
-          {/* Redirect unknown routes to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+function App() {
+  return (
+    <div className="App">
+      <Router>
+        <AppRoutes />
       </Router>
     </div>
   );
