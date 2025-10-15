@@ -5,7 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 
 import BoundariesForm from './BoundariesForm';
-import NeighborhoodSurvey from './NeighborhoodSurvey'; // ✅ NEW
+import NeighborhoodSurvey from './NeighborhoodSurvey';
 import neighborhoodNames from './neighborhoodNames';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
@@ -22,7 +22,7 @@ const NeighborhoodMap = () => {
   const [areaName, setAreaName] = useState('');
   const [boundary, setBoundary] = useState(null);
 
- // const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
+  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false); // ✅ NEW
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
 
@@ -73,23 +73,22 @@ const NeighborhoodMap = () => {
   }, [step]);
 
   useEffect(() => {
-    console.log('📍 Step changed to:', step); // Debug log
+    console.log('📍 Step changed to:', step);
   }, [step]);
 
-
   useEffect(() => {
-  console.log('🧾 Survey form visibility:', showSurveyForm);
-}, [showSurveyForm]);
+    console.log('🧾 Survey form visibility:', showSurveyForm);
+  }, [showSurveyForm]);
 
   const updateBoundary = () => {
-   const data = drawRef.current.getAll();
+    const data = drawRef.current.getAll();
     if (data.features.length > 0) {
-      console.log('✅ Boundary created:', data.features[0]); // Debug log
+      console.log('✅ Boundary created:', data.features[0]);
       setBoundary(data.features[0]);
-   } else {
-      console.log('⚠️ Boundary cleared or invalid'); // Debug log
-     setBoundary(null);
-   }
+    } else {
+      console.log('⚠️ Boundary cleared or invalid');
+      setBoundary(null);
+    }
   };
 
   const handleConfirmLocation = () => {
@@ -125,7 +124,7 @@ const NeighborhoodMap = () => {
     setBoundary(null);
     drawRef.current.deleteAll();
     setStep(0);
-   // setShowSurveyPrompt(false);
+    setShowSurveyPrompt(false);
     setShowSurveyForm(false);
     setSurveyComplete(false);
 
@@ -134,23 +133,9 @@ const NeighborhoodMap = () => {
       markerRef.current = null;
     }
   };
-
-  return (
+    return (
     <div className="map-wrapper">
       <div ref={mapContainer} className="map-container" />
-
-      {step === 1 && (
-        <div className="map-pin">
-          <svg viewBox="0 0 16 16" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M3.37892 10.2236L8 16L12.6211 10.2236C13.5137 9.10788 14 7.72154 14 6.29266V6C14 2.68629 11.3137 0 8 0C4.68629 0 2 2.68629 2 6V6.29266C2 7.72154 2.4863 9.10788 3.37892 10.2236ZM8 8C9.10457 8 10 7.10457 10 6C10 4.89543 9.10457 4 8 4C6.89543 4 6 4.89543 6 6C6 7.10457 6.89543 8 8 8Z"
-              fill="#ff0000"
-            />
-          </svg>
-        </div>
-      )}
 
       {step === 0 && (
         <div className="overlay overlay-enter">
@@ -171,7 +156,6 @@ const NeighborhoodMap = () => {
       {step === 2 && (
         <div className="overlay overlay-enter">
           <h2>What do you call this area?</h2>
-
           <label>Type the neighborhood name</label>
           <input
             type="text"
@@ -197,12 +181,8 @@ const NeighborhoodMap = () => {
           <p>{years} years</p>
 
           <div className="overlay-actions">
-            <button onClick={() => setStep(3)} disabled={!areaName}>
-              Next
-            </button>
-            <button className="secondary" onClick={handleReset}>
-              Reset
-            </button>
+            <button onClick={() => setStep(3)} disabled={!areaName}>Next</button>
+            <button className="secondary" onClick={handleReset}>Reset</button>
           </div>
         </div>
       )}
@@ -210,17 +190,10 @@ const NeighborhoodMap = () => {
       {step === 3 && (
         <div className="overlay overlay-enter">
           <h2>Where would you mark this neighborhood's boundaries?</h2>
-          <p>
-            The polygon tool is active -- tap to add a starting point, tap again to add more points,
-            double-click to close the shape.
-          </p>
+          <p>The polygon tool is active -- tap to add a starting point, tap again to add more points, double-click to close the shape.</p>
           <div className="overlay-actions">
-            <button onClick={() => setStep(4)} disabled={!boundary}>
-              Next
-            </button>
-            <button className="secondary" onClick={handleReset}>
-              Reset
-            </button>
+            <button onClick={() => setStep(4)} disabled={!boundary}>Next</button>
+            <button className="secondary" onClick={handleReset}>Reset</button>
           </div>
         </div>
       )}
@@ -234,10 +207,19 @@ const NeighborhoodMap = () => {
           onReset={handleReset}
           onSubmitted={() => {
             setStep(5);
-            setShowSurveyForm(true); // ✅ This triggers the survey modal
+            setShowSurveyPrompt(true); // ✅ Show intermediate prompt
           }}
         />
-            )}
+      )}
+
+      {step === 5 && showSurveyPrompt && !showSurveyForm && (
+        <div className="overlay overlay-enter">
+          <h2>Thank you for your submission!</h2>
+          <p>Do you have 1–2 minutes to answer some additional survey questions about your feelings toward your neighborhood?</p>
+          <button onClick={() => setShowSurveyForm(true)}>Yes — take me to the survey</button>
+          <button className="secondary" onClick={handleReset}>No thanks</button>
+        </div>
+      )}
 
       {step === 5 && showSurveyForm && !surveyComplete && (
         <NeighborhoodSurvey
