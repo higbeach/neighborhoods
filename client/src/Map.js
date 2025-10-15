@@ -230,7 +230,7 @@ const NeighborhoodMap = () => {
           onReset={handleReset}
           onSubmitted={() => {
             setStep(5);
-           // setShowSurveyPrompt(true);
+            setShowSurveyForm(true); // ✅ This triggers the survey modal
           }}
         />
             )}
