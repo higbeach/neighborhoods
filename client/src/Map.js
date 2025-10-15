@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 
 import BoundariesForm from './BoundariesForm';
+import NeighborhoodSurvey from './NeighborhoodSurvey'; // ✅ NEW
 import neighborhoodNames from './neighborhoodNames';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
@@ -21,13 +22,17 @@ const NeighborhoodMap = () => {
   const [areaName, setAreaName] = useState('');
   const [boundary, setBoundary] = useState(null);
 
+  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
+  const [showSurveyForm, setShowSurveyForm] = useState(false);
+  const [surveyComplete, setSurveyComplete] = useState(false);
+
   useEffect(() => {
     if (mapRef.current) return;
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v10',
-      center: [-122.2868, 47.5609], // Columbia City
+      center: [-122.2868, 47.5609],
       zoom: 13,
     });
 
@@ -50,7 +55,7 @@ const NeighborhoodMap = () => {
         'place-city-lg-s',
         'place-city-md-n',
         'place-city-md-s',
-        'place-city-sm'
+        'place-city-sm',
       ];
 
       layersToHide.forEach((layerId) => {
@@ -109,6 +114,9 @@ const NeighborhoodMap = () => {
     setBoundary(null);
     drawRef.current.deleteAll();
     setStep(0);
+    setShowSurveyPrompt(false);
+    setShowSurveyForm(false);
+    setSurveyComplete(false);
 
     if (markerRef.current) {
       markerRef.current.remove();
@@ -206,30 +214,36 @@ const NeighborhoodMap = () => {
         </div>
       )}
 
-      {step === 4 && (() => {
-        console.log('🧭 Rendering BoundariesForm with:', {
-          boundary,
-          location,
-          years,
-          areaName,
-        });
+      {step === 4 && (
+        <BoundariesForm
+          boundary={boundary}
+          location={location}
+          years={years}
+          areaName={areaName}
+          onReset={handleReset}
+          onSubmitted={() => {
+            setStep(5);
+            setShowSurveyPrompt(true);
+          }}
+        />
+            )}
 
-        return (
-          <BoundariesForm
-            boundary={boundary}
-            location={location}
-            years={years}
-            areaName={areaName}
-            onReset={handleReset}
-            onSubmitted={() => setStep(5)}
-          />
-        );
-      })()}
+      {step === 5 && showSurveyForm && !surveyComplete && (
+        <NeighborhoodSurvey
+          location={location}
+          years={years}
+          areaName={areaName}
+          boundary={boundary}
+          onComplete={() => {
+            setSurveyComplete(true);
+          }}
+        />
+      )}
 
-      {step === 5 && (
+      {step === 5 && surveyComplete && (
         <div className="overlay overlay-enter">
           <h2>Thank you!</h2>
-          <p>Your submission has been recorded.</p>
+          <p>Your survey responses have been recorded.</p>
           <button onClick={handleReset}>Start Over</button>
         </div>
       )}
