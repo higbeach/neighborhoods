@@ -1,0 +1,36 @@
+.survey-modal {
+  position: fixed;
+  top: 10%;
+  left: 10%;
+  width: 80vw;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  z-index: 1000;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+
+}
+
+.survey-modal h2 {
+  margin-top: 0;
+}
+
+.survey-modal label {
+  display: block;
+  margin-top: 1rem;
+}
+
+.survey-modal input,
+.survey-modal select {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.survey-actions {
+  margin-top: 2rem;
+  text-align: right;
+}

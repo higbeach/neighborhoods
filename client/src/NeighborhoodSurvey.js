@@ -3,6 +3,8 @@ import './NeighborhoodSurvey.css';
 import { supabase } from './supabaseClient'; // Make sure this path matches your project
 
 const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete }) => {
+    console.log('📋 Survey component mounted'); // ✅ Debug log
+
   const [page, setPage] = useState(1);
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);

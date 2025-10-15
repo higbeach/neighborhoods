@@ -77,6 +77,10 @@ const NeighborhoodMap = () => {
   }, [step]);
 
 
+  useEffect(() => {
+  console.log('🧾 Survey form visibility:', showSurveyForm);
+}, [showSurveyForm]);
+
   const updateBoundary = () => {
    const data = drawRef.current.getAll();
     if (data.features.length > 0) {
