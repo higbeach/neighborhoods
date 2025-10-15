@@ -31,18 +31,17 @@ const SubmissionsMap = ({ submissions }) => {
 
     const map = mapRef.current;
 
-    // 🔴 Extract home location pins
+    // 🔴 Extract home location pins from lat/lon
     const locationFeatures = submissions.features
-      .filter((f) => f.properties.location?.lat && f.properties.location?.lng)
+      .filter((f) => typeof f.properties.lat === 'number' && typeof f.properties.lon === 'number')
       .map((f, idx) => ({
         type: 'Feature',
         geometry: {
           type: 'Point',
-          coordinates: [f.properties.location.lng, f.properties.location.lat],
+          coordinates: [f.properties.lon, f.properties.lat],
         },
         properties: {
-          neighborhood: f.properties.name,
-          years: f.properties.years,
+          neighborhood: f.properties.neighborhood,
           comments: f.properties.comments,
           timestamp: f.properties.timestamp,
         },
@@ -106,27 +105,30 @@ const SubmissionsMap = ({ submissions }) => {
       map.on('click', 'submissions-fill', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
-        const props = feature.properties;
+        const props = feature.properties || {};
         const id = feature.id;
 
-        if (selectedFeatureId !== null) {
+        if (selectedFeatureId !== null && selectedFeatureId !== id) {
           map.setFeatureState(
             { source: 'submissions', id: selectedFeatureId },
             { selected: false }
           );
         }
 
-        setSelectedFeatureId(id);
-        map.setFeatureState({ source: 'submissions', id }, { selected: true });
+        if (id !== undefined && id !== null) {
+          setSelectedFeatureId(id);
+          map.setFeatureState({ source: 'submissions', id }, { selected: true });
+        }
+
+        const popupHTML = `
+          <strong>${props.neighborhood || props.location || 'Unnamed'}</strong><br/>
+          ${props.comments ? `${props.comments} comment${props.comments > 1 ? 's' : ''}` : 'No comments'}<br/>
+          <small>${props.timestamp || ''}</small>
+        `;
 
         new mapboxgl.Popup()
           .setLngLat(e.lngLat)
-          .setHTML(`
-            <strong>${props.name || 'Unnamed'}</strong><br/>
-            ${props.years || ''} years<br/>
-            ${props.comments || 'No comments'}<br/>
-            <small>${props.timestamp || ''}</small>
-          `)
+          .setHTML(popupHTML)
           .addTo(map);
       });
 
