@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmitted }) => {
+const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartOver, onSubmitted }) => {
   console.log('📦 BoundariesForm loaded');
 
   const [comments, setComments] = useState('');
@@ -73,7 +73,10 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onSubmit
         <div className="overlay-actions">
           <button type="submit">Submit</button>
           <button type="button" className="secondary" onClick={onReset}>
-            Reset
+            Clear Drawing
+          </button>
+          <button type="button" className="secondary" onClick={onStartOver}>
+            Start Over
           </button>
         </div>
       </form>

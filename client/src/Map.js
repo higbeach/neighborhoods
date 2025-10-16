@@ -133,6 +133,15 @@ const NeighborhoodMap = () => {
       markerRef.current = null;
     }
   };
+  const clearBoundary = () => {
+  setBoundary(null);
+  drawRef.current.deleteAll();
+  setStep(3); // stay on drawing step
+};
+
+const startOver = () => {
+  handleReset(); // reuse your full reset logic
+};
     return (
     <div className="map-wrapper">
       <div ref={mapContainer} className="map-container" />
@@ -159,7 +168,7 @@ const NeighborhoodMap = () => {
          </div>
 
           <div className="overlay overlay-enter">
-            <h2>Mark SWhere You Live</h2>
+            <h2>Mark Where You Live</h2>
             <p>Pan the map until the pin is centered over where you live.</p>
             <button onClick={handleConfirmLocation}>I live here!</button>
           </div>
@@ -217,10 +226,11 @@ const NeighborhoodMap = () => {
           location={location}
           years={years}
           areaName={areaName}
-          onReset={handleReset}
+          onReset={clearBoundary}       // ✅ Clears drawing only
+          onStartOver={startOver}       // ✅ Full reset
           onSubmitted={() => {
             setStep(5);
-            setShowSurveyPrompt(true); // ✅ Show intermediate prompt
+            setShowSurveyPrompt(true);
           }}
         />
       )}

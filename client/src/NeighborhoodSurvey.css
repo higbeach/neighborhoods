@@ -3,7 +3,10 @@
   position: fixed;
   top: 5%;
   left: 5%;
-  width: 90vw;
+  right: 5%;
+  margin: 0 auto;
+  max-width: 800px; /* ✅ Controls max width on desktop */
+  width: 90vw;       /* ✅ Responsive on mobile/tablet */
   height: 90vh;
   overflow-y: auto;
   background: #fff;
