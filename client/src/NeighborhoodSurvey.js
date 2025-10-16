@@ -10,12 +10,12 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
 
-  // ✅ Debug logging to confirm render and state
+  // ✅ Debug logging on page or response change
   useEffect(() => {
-    console.log('✅ NeighborhoodSurvey mounted');
+    console.log('✅ NeighborhoodSurvey active');
     console.log('🧭 Current page:', page);
-    console.log('🧾 Initial responses:', responses);
-  }, []);
+    console.log('🧾 Responses:', responses);
+  }, [page, responses]);
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
