@@ -215,12 +215,8 @@ const startOver = () => {
           <p>The polygon tool is active — tap to add a starting point, tap again to add more points, double-click to close the shape.</p>
           <div className="overlay-actions">
             <button onClick={() => setStep(4)} disabled={!boundary}>Next</button>
-            <button className="secondary" onClick={() => {
-              setBoundary(null);
-              drawRef.current.deleteAll();
-              drawRef.current.changeMode('draw_polygon');
-            }}>
-              Clear Drawing
+           <button className="secondary" onClick={clearBoundary}>
+            Clear Drawing
             </button>
           </div>
         </div>
