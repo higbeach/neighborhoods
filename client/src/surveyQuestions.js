@@ -60,17 +60,27 @@ export const page1Questions = [
     type: 'rank',
     min: 1,
     max: 5,
+    leftLabel: 'Conflict',
+    rightLabel: 'Harmony'
+
   },
   {
     key: 'positiveFeelings',
-    label: 'How much do you feel positively or negatively toward your neighbors?',
+    label: 'How much do you feel negatively or positiively toward your neighbors?',
     type: 'rank',
     min: 1,
     max: 5,
+    leftLabel: 'Negatively',
+    rightLabel: 'Positively'
   },
   {
     key: 'acceptance',
-    label: 'People in my neighborhood are willing to accept people from different racial and ethnic groups.',
+    label: 'People in my neighborhood are willing to accept people from different racial and ethnic groups as neighbors.',
+    type: 'likert',
+  },
+   {
+    key: 'acceptance',
+    label: 'People in my neighborhood are willing to accept people with different political viewpoints as neighbors',
     type: 'likert',
   },
   {

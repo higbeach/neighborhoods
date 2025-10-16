@@ -124,18 +124,20 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                   </div>
                 )}
 
-                {q.type === 'rank' && (
-                  <div className="rank-scale">
-                    {[1, 2, 3, 4, 5].map((num) => (
-                      <button
-                        key={num}
-                        className={value === num ? 'selected' : ''}
-                        onClick={() => handleChange(q.key, num)}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
+               {q.type === 'rank' && (
+                <div className="rank-scale">
+                  <span className="rank-label left">{q.leftLabel}</span>
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      className={responses[q.key] === num ? 'selected' : ''}
+                      onClick={() => handleChange(q.key, num)}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                  <span className="rank-label right">{q.rightLabel}</span>
+                </div>
                 )}
               </div>
             );
