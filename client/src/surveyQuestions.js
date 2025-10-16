@@ -74,12 +74,12 @@ export const page1Questions = [
     rightLabel: 'Positively'
   },
   {
-    key: 'acceptance',
+    key: 'acceptanceRace',
     label: 'People in my neighborhood are willing to accept people from different racial and ethnic groups as neighbors.',
     type: 'likert',
   },
    {
-    key: 'acceptance',
+    key: 'acceptancePolitics',
     label: 'People in my neighborhood are willing to accept people with different political viewpoints as neighbors',
     type: 'likert',
   },
