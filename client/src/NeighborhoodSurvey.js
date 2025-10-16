@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './NeighborhoodSurvey.css';
 import { supabase } from './supabaseClient';
-import { page1Questions, page2Questions } from './surveyQuestions'; // ✅ Import both pages
+import { page1Questions, page2Questions } from './surveyQuestions';
 
 const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete }) => {
   console.log('📋 Survey component mounted');
@@ -9,6 +9,13 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const [page, setPage] = useState(1);
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
+
+  // ✅ Debug logging to confirm render and state
+  useEffect(() => {
+    console.log('✅ NeighborhoodSurvey mounted');
+    console.log('🧭 Current page:', page);
+    console.log('🧾 Initial responses:', responses);
+  }, []);
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
@@ -59,7 +66,6 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
       {page === 1 && (
         <>
           <h2>Neighborhood Experience</h2>
-
           {page1Questions.map((q) => {
             const value = responses[q.key] || '';
             return (
@@ -136,7 +142,6 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
       {page === 2 && (
         <>
           <h2>Neighborhood Background</h2>
-
           {page2Questions.map((q) => {
             const value = responses[q.key] || '';
             return (

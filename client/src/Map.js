@@ -234,6 +234,10 @@ const NeighborhoodMap = () => {
         </div>
       )}
 
+        console.log('🧭 Survey render check — step:', step);
+        console.log('🧭 showSurveyForm:', showSurveyForm);
+        console.log('🧭 surveyComplete:', surveyComplete);
+
       {step === 5 && showSurveyForm && !surveyComplete && (
         <NeighborhoodSurvey
           location={location}
