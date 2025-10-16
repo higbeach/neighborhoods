@@ -72,9 +72,6 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
         </label>
         <div className="overlay-actions">
           <button type="submit">Submit</button>
-          <button type="button" className="secondary" onClick={onReset}>
-            Clear Drawing
-          </button>
           <button type="button" className="secondary" onClick={onStartOver}>
             Start Over
           </button>

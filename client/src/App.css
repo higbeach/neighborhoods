@@ -29,19 +29,20 @@ body {
 .overlay {
   position: absolute;
   top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 20px;
   background: white;
   padding: 2rem;
   border-radius: 8px;
   max-width: 600px;
-  width: 90vw;
+  width: calc(100vw - 40px); /* ensures right margin matches left */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
 
 .overlay h2 {
   margin-top: 0;
+  margin-bottom: 0.5rem; /* tighten spacing below title */
+  line-height: 1.2;       /* reduce vertical spacing */
   font-size: 24px;
   font-weight: 700;
 }
@@ -113,13 +114,15 @@ body {
 }
 
 .overlay-actions button {
-  padding: 12px 20px;
+  padding: 14px 24px;
   font-size: 16px;
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
   border: none;
   transition: background 0.2s ease;
+  min-width: 120px;
+  text-align: center;
 }
 
 .overlay-actions button:not(.secondary) {

@@ -232,7 +232,6 @@ const startOver = () => {
           location={location}
           years={years}
           areaName={areaName}
-          onReset={clearBoundary}       // ✅ Clears drawing only
           onStartOver={startOver}       // ✅ Full reset
           onSubmitted={() => {
             setStep(5);
