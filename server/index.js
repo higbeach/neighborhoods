@@ -11,9 +11,15 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// ✅ CORS fix: allow frontend domain
+// ✅ CORS fix: allow both dev and production domains
 app.use(cors({
-  origin: 'https://neighborhoods-dxab.onrender.com',
+  origin: [
+    'https://neighborhoods-dxab.onrender.com',
+    'https://ourlivingneighborhoods.org',
+    'http://localhost:3000'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
 }));
 
 app.use(bodyParser.json());
@@ -24,11 +30,9 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-// Force update (temp)
-
 // Paths to static files
 const dataDir = path.join(__dirname, 'data');
-const blocksFile = path.join(dataDir, 'blocks_with_votes.geojson'); // ✅ updated
+const blocksFile = path.join(dataDir, 'blocks_with_votes.geojson');
 
 // -------------------- API ROUTES --------------------
 
