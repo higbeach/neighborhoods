@@ -212,10 +212,16 @@ const startOver = () => {
       {step === 3 && (
         <div className="overlay overlay-enter">
           <h2>Where would you mark this neighborhood's boundaries?</h2>
-          <p>The polygon tool is active -- tap to add a starting point, tap again to add more points, double-click to close the shape.</p>
+          <p>The polygon tool is active — tap to add a starting point, tap again to add more points, double-click to close the shape.</p>
           <div className="overlay-actions">
             <button onClick={() => setStep(4)} disabled={!boundary}>Next</button>
-            <button className="secondary" onClick={handleReset}>Reset</button>
+            <button className="secondary" onClick={() => {
+              setBoundary(null);
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_polygon');
+            }}>
+              Clear Drawing
+            </button>
           </div>
         </div>
       )}
