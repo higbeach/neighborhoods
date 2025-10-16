@@ -10,6 +10,8 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
 
+  console.log('📦 page1Questions:', page1Questions);
+
   // ✅ Debug logging on page or response change
   useEffect(() => {
     console.log('✅ NeighborhoodSurvey active');

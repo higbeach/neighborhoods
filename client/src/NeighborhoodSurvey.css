@@ -1,5 +1,18 @@
 .survey-modal {
   position: fixed;
+  top: 5%;
+  left: 5%;
+  width: 90vw;
+  height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+/*.survey-modal {
+  position: fixed;
   top: 10%;
   left: 10%;
   width: 80vw;
@@ -11,8 +24,9 @@
   display: block !important;
   opacity: 1 !important;
   visibility: visible !important;
-
-}
+  max-height: 90vh;
+  overflow-y: auto;
+} */
 
 .survey-modal h2 {
   margin-top: 0;
@@ -34,3 +48,99 @@
   margin-top: 2rem;
   text-align: right;
 }
+
+/* Each question block */
+.survey-question {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+.survey-question label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 16px;
+}
+
+/* Likert and rank buttons */
+.likert-scale,
+.rank-scale {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.likert-scale button,
+.rank-scale button {
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  background: #f0f0f0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background 0.2s ease;
+}
+
+.likert-scale button:hover,
+.rank-scale button:hover {
+  background: #e0e0e0;
+}
+
+.likert-scale button.selected,
+.rank-scale button.selected {
+  background: #0078d4;
+  color: white;
+  border-color: #0078d4;
+}
+
+/* Radio options */
+.radio-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 0.5rem;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+/* Action buttons */
+.survey-actions {
+  margin-top: 2rem;
+  text-align: right;
+}
+
+.survey-actions button {
+  padding: 10px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+.survey-actions button.secondary {
+  background: #eee;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+select {
+  padding: 8px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 100%;
+  max-width: 400px;
+}
+
+input[type="range"] {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 0.5rem;
+}
+
