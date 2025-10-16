@@ -134,8 +134,9 @@ const NeighborhoodMap = () => {
     }
   };
   const clearBoundary = () => {
-  setBoundary(null);
   drawRef.current.deleteAll();
+  setBoundary(null);
+  drawRef.current.changeMode('draw_polygon'); // ✅ Re-enable drawing
   setStep(3); // stay on drawing step
 };
 
@@ -150,7 +151,9 @@ const startOver = () => {
         <div className="overlay overlay-enter">
           <h2>Help Us Map Your Neighborhood</h2>
           <p>This is a beta-test focused on Columbia City, Seattle and its adjacent neighborhoods.</p>
-          <button onClick={() => setStep(1)}>Let's Go</button>
+           <div className="overlay-actions">
+            <button onClick={() => setStep(1)}>Let's Go</button>
+           </div>
         </div>
       )}
 

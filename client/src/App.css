@@ -33,7 +33,7 @@ body {
   background: white;
   padding: 2rem;
   border-radius: 8px;
-  max-width: 600px;
+  max-width:  320px; /* ✅ Narrower, vertical layout */
   width: calc(100vw - 40px); /* ensures right margin matches left */
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   z-index: 10;
