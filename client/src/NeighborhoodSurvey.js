@@ -88,17 +88,23 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                 )}
 
                 {q.type === 'likert' && (
-                  <div className="likert-scale">
-                    {[1, 2, 3, 4, 5].map((num) => (
-                      <button
-                        key={num}
-                        className={value === num ? 'selected' : ''}
+                 <div className="likert-scale">
+                  {[
+                    { label: 'Strongly Disagree', value: 1 },
+                    { label: 'Disagree', value: 2 },
+                    { label: 'Neither Agree nor Disagree', value: 3 },
+                    { label: 'Agree', value: 4 },
+                    { label: 'Strongly Agree', value: 5 },
+                    ].map(({ label, value: num }) => (
+                    <button
+                        key={label}
+                        className={responses[q.key] === num ? 'selected' : ''}
                         onClick={() => handleChange(q.key, num)}
-                      >
-                        {num}
-                      </button>
+                    >
+                        {label}
+                    </button>
                     ))}
-                  </div>
+                </div>
                 )}
 
                 {q.type === 'radio' && (
@@ -196,8 +202,9 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
           })}
 
           <div className="survey-actions">
+            <button className="secondary" onClick={() => setPage(1)}>Back</button>
             <button onClick={handleSubmit}>Submit</button>
-          </div>
+        </div>
         </>
       )}
     </div>
