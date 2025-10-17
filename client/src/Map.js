@@ -68,11 +68,11 @@ const NeighborhoodMap = () => {
     });
   }, []);
 
-  useEffect(() => {
-    if (step === 3 && drawRef.current) {
-      drawRef.current.changeMode('draw_polygon');
-    }
-  }, [step]);
+ // useEffect(() => {
+ //   if (step === 3 && drawRef.current) {
+ //     drawRef.current.changeMode('draw_polygon');
+ //   }
+ // }, [step]);
 
   useEffect(() => {
     console.log('📍 Step changed to:', step);

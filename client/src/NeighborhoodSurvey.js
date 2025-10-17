@@ -105,8 +105,11 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
 
                 {q.type === 'radio' && Array.isArray(q.options) && (
                   q.key === 'attendReligious' ||
+                  q.key === 'housingStatus' ||
                   (q.options.length === 2 &&
-                    q.options.every((opt) => ['yes', 'no'].includes(opt.toLowerCase()))) ? (
+                    q.options.every((opt) =>
+                      ['yes', 'no', 'rent', 'own'].includes(opt.toLowerCase())
+                    )) ? (
                     <div className="likert-scale">
                       {q.options.map((opt) => (
                         <button
@@ -136,6 +139,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                     </div>
                   )
                 )}
+
 
                 {q.type === 'rank' && (
                   <div className="rank-scale">
