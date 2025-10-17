@@ -223,3 +223,40 @@ input[type="range"] {
   background-color: #eee;
 
 }
+/* Custom select wrapper */
+.custom-select {
+  position: relative;
+  max-width: 400px;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.custom-select select {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  color: #333;
+  cursor: pointer;
+  appearance: none;
+  box-sizing: border-box;
+  transition: background 0.2s ease;
+}
+
+.custom-select select:hover {
+  background-color: #eee;
+}
+
+/* Triangle arrow */
+.select-arrow {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 16px;
+  color: #555;
+}

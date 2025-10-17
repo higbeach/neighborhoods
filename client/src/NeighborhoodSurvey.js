@@ -99,9 +99,8 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   };
 
   const renderDropdown = (q, value) => (
-    <div className="likert-scale">
+    <div className="custom-select">
       <select
-        className="dropdown"
         value={value}
         onChange={(e) => handleChange(q.key, e.target.value)}
       >
@@ -112,8 +111,10 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
           </option>
         ))}
       </select>
+      <span className="select-arrow">▾</span>
     </div>
   );
+
 
   return (
     <div className="survey-modal">

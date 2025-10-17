@@ -52,7 +52,9 @@ const NeighborhoodMap = () => {
     mapRef.current.on('load', () => {
       const layersToHide = [
         'neighborhood-label',
+        'neighborhood_label',
         'place-label',
+        'place_label',
         'place-city-lg-n',
         'place-city-lg-s',
         'place-city-md-n',
