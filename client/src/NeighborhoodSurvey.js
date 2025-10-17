@@ -63,7 +63,8 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
     <div className="survey-modal">
       {page === 1 && (
         <>
-          <h2>Neighborhood Experience</h2>
+          <h2>Survey: Your Neighborhood Experience</h2>
+          <p>Below are 20 questions about your neighborhood experience. The second page has 8 questions about your background. All information will be kept confidential.</p>
           {page1Questions.map((q) => {
             const value = responses[q.key] || '';
             return (
@@ -108,7 +109,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                   q.key === 'housingStatus' ||
                   (q.options.length === 2 &&
                     q.options.every((opt) =>
-                      ['yes', 'no', 'rent', 'own'].includes(opt.toLowerCase())
+                      ['yes', 'no', 'Rent', 'Own'].includes(opt.toLowerCase())
                     )) ? (
                     <div className="likert-scale">
                       {q.options.map((opt) => (

@@ -61,10 +61,10 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
 
   return (
     <div className="overlay overlay-enter">
-      <h2>Step 4: Confirm & Submit</h2>
+      <h2>Confirm & Submit</h2>
       <form onSubmit={handleSubmit}>
         <label>
-          Comments:
+          How would you say these boundaries have changed over the year? Does this neighborhood go by any other names, or has it gone by other names in the past? (optional)
           <textarea
             value={comments}
             onChange={(e) => setComments(e.target.value)}

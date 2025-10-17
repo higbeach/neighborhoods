@@ -156,7 +156,7 @@ const startOver = () => {
           <p>All of your information will be kept confidential.</p>
           <p>Please use this contact form for any questions or feedback.</p>
            <div className="overlay-actions">
-            <button onClick={() => setStep(1)}>Let's Go</button>
+            <button onClick={() => setStep(1)}>Let's Get Started</button>
            </div>
         </div>
       )}
@@ -209,7 +209,7 @@ const startOver = () => {
             value={years}
             onChange={(e) => setYears(e.target.value)}
           />
-          <p>{years} years</p>
+          <p>{years} <strong>years</strong></p>
 
           <div className="overlay-actions">
             <button onClick={() => setStep(3)} disabled={!areaName}>Next</button>
@@ -234,7 +234,6 @@ const startOver = () => {
             }}>
               Start Drawing
             </button>
-            <button className="secondary" onClick={clearBoundary}>Clear Drawing</button>
           </div>
         </div>
       )}
