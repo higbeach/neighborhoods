@@ -1,3 +1,11 @@
+const likertOptions = [
+  { label: 'Strongly Disagree', value: 1 },
+  { label: 'Disagree', value: 2 },
+  { label: 'Neither Agree nor Disagree', value: 3 },
+  { label: 'Agree', value: 4 },
+  { label: 'Strongly Agree', value: 5 },
+];
+
 export const page1Questions = [
   {
     key: 'knownNeighbors',
@@ -17,11 +25,13 @@ export const page1Questions = [
     key: 'talkRegularly',
     label: 'I regularly stop and talk with people in my neighborhood.',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'civicGroups',
     label: 'I take part in some social or civic groups in my neighborhood.',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'attendReligious',
@@ -33,26 +43,31 @@ export const page1Questions = [
     key: 'wishMoreContact',
     label: 'I wish I had more contact with people in my neighborhood.',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'senseOfCommunity',
     label: 'Living in this neighborhood gives me a sense of community.',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'belonging',
     label: 'I feel like I belong in my neighborhood.',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'identity',
     label: 'Being of this neighborhood is an important part of who I am.',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'empathy',
     label: 'I am motivated to understand the thoughts and feelings of people who are my neighbors.',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'conflictHarmony',
@@ -62,7 +77,6 @@ export const page1Questions = [
     max: 5,
     leftLabel: 'Conflict',
     rightLabel: 'Harmony'
-
   },
   {
     key: 'positiveFeelings',
@@ -77,46 +91,50 @@ export const page1Questions = [
     key: 'acceptanceRace',
     label: 'People in my neighborhood are willing to accept people from different racial and ethnic groups as neighbors.',
     type: 'likert',
+    options: likertOptions,
   },
    {
     key: 'acceptancePolitics',
     label: 'People in my neighborhood are willing to accept people with different political viewpoints as neighbors',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'satisfaction',
     label: 'Taking everything into account, how satisfied are you with this neighborhood as a place to live?',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'planToStay',
     label: 'I plan to remain a resident of this neighborhood for a number of years.',
     type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'trust',
     label: 'People in my neighborhood can be trusted.',
-    type: 'likert',
+    type: 'likert',options: likertOptions,
   },
   {
     key: 'awareOfEvents',
     label: 'If something happens that affects my neighborhood, I usually find out about it right away.',
-    type: 'likert',
+    type: 'likert',options: likertOptions,
   },
   {
     key: 'helpfulNeighbors',
     label: 'People around here are willing to help their neighbors.',
-    type: 'likert',
+    type: 'likert',options: likertOptions,
   },
   {
     key: 'problemSolving',
     label: 'If there is a problem around here, the neighbors get together to deal with it.',
-    type: 'likert',
+    type: 'likert',options: likertOptions,
   },
   {
     key: 'willingToImprove',
     label: 'I would be willing to work together with others on something to improve my neighborhood.',
-    type: 'likert',
+    type: 'likert',options: likertOptions,
   },
 ];
 export const page2Questions = [

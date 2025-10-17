@@ -262,7 +262,7 @@ const startOver = () => {
       {step === 5 && showSurveyPrompt && !showSurveyForm && (
         <div className="overlay overlay-enter">
           <h2>Thank you for your submission!</h2>
-          <p>Do you have 1–2 minutes to answer some additional survey questions about your feelings toward your neighborhood?</p>
+          <p>Do you have 1–2 minutes to answer some additional questions about your feelings toward your neighborhood?</p>
           <div className="overlay-actions">
             <button onClick={() => setShowSurveyForm(true)}>Yes — take me to the survey</button>
             <button className="secondary" onClick={handleReset}>No thanks</button>
