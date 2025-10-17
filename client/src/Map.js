@@ -26,6 +26,8 @@ const NeighborhoodMap = () => {
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
 
+  const [drawingStarted, setDrawingStarted] = useState(false);
+
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -214,18 +216,34 @@ const startOver = () => {
         </div>
       )}
 
-      {step === 3 && (
+      {step === 3 && !drawingStarted && (
         <div className="overlay overlay-enter">
-          <h2>Where would you mark this neighborhood's boundaries?</h2>
-          <p>The polygon tool is active — tap to add a starting point, tap again to add more points, double-click to close the shape.</p>
+          <h2>Where would you mark this neighborhood’s boundaries?</h2>
+          <p>
+            1. Tap/click to add a starting point<br />
+            2. Tap/click again to add more points<br />
+            3. Double click/tap to close the shape.<br /><br />
+            <strong>Note:</strong> The entirety of a block needs to be within your neighborhood boundary in order to be included. Drawing your boundary along street centerlines will increase accuracy.
+          </p>
           <div className="overlay-actions">
-            <button onClick={() => setStep(4)} disabled={!boundary}>Next</button>
-           <button className="secondary" onClick={clearBoundary}>
-            Clear Drawing
+            <button onClick={() => {
+              setDrawingStarted(true);
+              drawRef.current.changeMode('draw_polygon');
+            }}>
+              Start Drawing
             </button>
+            <button className="secondary" onClick={clearBoundary}>Clear Drawing</button>
           </div>
         </div>
       )}
+
+      {step === 3 && drawingStarted && (
+        <div className="floating-actions">
+          <button onClick={() => setStep(4)} disabled={!boundary}>Finish Drawing</button>
+          <button className="secondary" onClick={clearBoundary}>Clear Drawing</button>
+        </div>
+      )}
+
 
       {step === 4 && (
         <BoundariesForm

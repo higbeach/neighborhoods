@@ -108,6 +108,24 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                 )}
 
                 {q.type === 'radio' && (
+                  q.key === 'religiousAttendance' || (
+                    q.options.length === 2 &&
+                    q.options.every(opt => ['yes', 'no'].includes(opt.toLowerCase()))
+                  )
+                ) ? (
+                  <div className="likert-scale">
+                    {q.options.map((opt) => (
+                      <button
+                        key={opt}
+                        className={value === opt ? 'selected' : ''}
+                        onClick={() => handleChange(q.key, opt)}
+                        type="button"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
                   <div className="radio-group">
                     {q.options.map((opt) => (
                       <label key={opt}>
@@ -123,6 +141,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                     ))}
                   </div>
                 )}
+
 
                {q.type === 'rank' && (
                 <div className="rank-scale">
