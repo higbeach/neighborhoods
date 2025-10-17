@@ -152,7 +152,9 @@ const startOver = () => {
       {step === 0 && (
         <div className="overlay overlay-enter">
           <h2>Help Us Map Your Neighborhood</h2>
-          <p>This is a beta-test focused on Columbia City, Seattle and its adjacent neighborhoods.</p>
+          <p>This is a beta-test focused on Seattle's Columbia City and its adjacent neighborhoods.</p>
+          <p>All of your information will be kept confidential.</p>
+          <p>Please use this contact form for any questions or feedback.</p>
            <div className="overlay-actions">
             <button onClick={() => setStep(1)}>Let's Go</button>
            </div>
