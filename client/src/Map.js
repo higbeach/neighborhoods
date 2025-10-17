@@ -167,7 +167,10 @@ const startOver = () => {
           <h2>Help Us Map Our Neighborhood.</h2>
           <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
           <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
-          <p>Please use this contact form for any questions or feedback.</p>
+          <p>Please use <a href="https://www.convenepllc.com/contact-us/" target="_blank" rel="noopener noreferrer">
+              this contact form
+            </a> for any questions or feedback.
+          </p>
            <div className="overlay-actions">
             <button onClick={() => setStep(1)}>Let's Get Started</button>
            </div>
