@@ -114,27 +114,32 @@ export const page1Questions = [
   {
     key: 'trust',
     label: 'People in my neighborhood can be trusted.',
-    type: 'likert',options: likertOptions,
+    type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'awareOfEvents',
     label: 'If something happens that affects my neighborhood, I usually find out about it right away.',
-    type: 'likert',options: likertOptions,
+    type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'helpfulNeighbors',
     label: 'People around here are willing to help their neighbors.',
-    type: 'likert',options: likertOptions,
+    type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'problemSolving',
     label: 'If there is a problem around here, the neighbors get together to deal with it.',
-    type: 'likert',options: likertOptions,
+    type: 'likert',
+    options: likertOptions,
   },
   {
     key: 'willingToImprove',
     label: 'I would be willing to work together with others on something to improve my neighborhood.',
-    type: 'likert',options: likertOptions,
+    type: 'likert',
+    options: likertOptions,
   },
 ];
 export const page2Questions = [
