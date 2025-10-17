@@ -1,4 +1,3 @@
-// [imports unchanged]
 import React, { useState, useEffect } from 'react';
 import './NeighborhoodSurvey.css';
 import { supabase } from './supabaseClient';
@@ -59,12 +58,71 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
     );
   }
 
+  const renderRadioButtons = (q, value) => {
+    const binaryKeys = ['attendReligious', 'housingStatus', 'grewUpHere'];
+    const isBinary =
+      binaryKeys.includes(q.key) ||
+      (q.options.length === 2 &&
+        q.options.every((opt) =>
+          ['yes', 'no', 'rent', 'own'].includes(opt.toLowerCase())
+        ));
+
+    return isBinary ? (
+      <div className="likert-scale">
+        {q.options.map((opt) => (
+          <button
+            key={opt}
+            className={value === opt ? 'selected' : ''}
+            onClick={() => handleChange(q.key, opt)}
+            type="button"
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    ) : (
+      <div className="radio-group">
+        {q.options.map((opt) => (
+          <label key={opt}>
+            <input
+              type="radio"
+              name={q.key}
+              value={opt}
+              checked={value === opt}
+              onChange={(e) => handleChange(q.key, e.target.value)}
+            />
+            {opt}
+          </label>
+        ))}
+      </div>
+    );
+  };
+
+  const renderDropdown = (q, value) => (
+    <div className="likert-scale">
+      <select
+        className="dropdown"
+        value={value}
+        onChange={(e) => handleChange(q.key, e.target.value)}
+      >
+        <option value="">Select</option>
+        {q.options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div className="survey-modal">
       {page === 1 && (
         <>
           <h2>Survey: Your Neighborhood Experience</h2>
-          <p>Below are 20 questions about your neighborhood experience. The second page has 8 questions about your background. All information will be kept confidential.</p>
+          <p>
+            Below are 20 questions about your neighborhood experience. The second page has 8 questions about your background. All information will be kept confidential.
+          </p>
           {page1Questions.map((q) => {
             const value = responses[q.key] || '';
             return (
@@ -104,43 +162,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                   </div>
                 )}
 
-                {q.type === 'radio' && Array.isArray(q.options) && (
-                  q.key === 'attendReligious' ||
-                  q.key === 'housingStatus' ||
-                  (q.options.length === 2 &&
-                    q.options.every((opt) =>
-                      ['yes', 'no', 'Rent', 'Own'].includes(opt.toLowerCase())
-                    )) ? (
-                    <div className="likert-scale">
-                      {q.options.map((opt) => (
-                        <button
-                          key={opt}
-                          className={value === opt ? 'selected' : ''}
-                          onClick={() => handleChange(q.key, opt)}
-                          type="button"
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="radio-group">
-                      {q.options.map((opt) => (
-                        <label key={opt}>
-                          <input
-                            type="radio"
-                            name={q.key}
-                            value={opt}
-                            checked={value === opt}
-                            onChange={(e) => handleChange(q.key, e.target.value)}
-                          />
-                          {opt}
-                        </label>
-                      ))}
-                    </div>
-                  )
-                )}
-
+                {q.type === 'radio' && Array.isArray(q.options) && renderRadioButtons(q, value)}
 
                 {q.type === 'rank' && (
                   <div className="rank-scale">
@@ -189,56 +211,9 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                   </>
                 )}
 
-                {q.type === 'dropdown' && Array.isArray(q.options) && (
-                  <div className="dropdown-wrapper">
-                    <select
-                      className="dropdown"
-                      value={value}
-                      onChange={(e) => handleChange(q.key, e.target.value)}
-                    >
-                      <option value="">Select</option>
-                      {q.options.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                {q.type === 'dropdown' && Array.isArray(q.options) && renderDropdown(q, value)}
 
-                {q.type === 'radio' && Array.isArray(q.options) && (
-                  q.key === 'attendReligious' ||
-                  (q.options.length === 2 &&
-                    q.options.every((opt) => ['yes', 'no'].includes(opt.toLowerCase()))) ? (
-                    <div className="likert-scale">
-                      {q.options.map((opt) => (
-                        <button
-                          key={opt}
-                          className={value === opt ? 'selected' : ''}
-                          onClick={() => handleChange(q.key, opt)}
-                          type="button"
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="radio-group">
-                      {q.options.map((opt) => (
-                        <label key={opt}>
-                          <input
-                            type="radio"
-                            name={q.key}
-                            value={opt}
-                            checked={value === opt}
-                            onChange={(e) => handleChange(q.key, e.target.value)}
-                          />
-                          {opt}
-                        </label>
-                      ))}
-                    </div>
-                  )
-                )}
+                {q.type === 'radio' && Array.isArray(q.options) && renderRadioButtons(q, value)}
               </div>
             );
           })}

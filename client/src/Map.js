@@ -209,7 +209,7 @@ const startOver = () => {
             value={years}
             onChange={(e) => setYears(e.target.value)}
           />
-          <p>{years} <strong>years</strong></p>
+          <p>{years} years</p>
 
           <div className="overlay-actions">
             <button onClick={() => setStep(3)} disabled={!areaName}>Next</button>
@@ -222,6 +222,7 @@ const startOver = () => {
         <div className="overlay overlay-enter">
           <h2>Where would you mark this neighborhood’s boundaries?</h2>
           <p>
+            Here's how to draw: <br />
             1. Tap/click to add a starting point<br />
             2. Tap/click again to add more points<br />
             3. Double click/tap to close the shape.<br /><br />
