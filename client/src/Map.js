@@ -272,7 +272,9 @@ const startOver = () => {
         <div className="overlay overlay-enter">
           <h2>Thank you!</h2>
           <p>Your survey responses have been recorded.</p>
-          <button onClick={handleReset}>Start Over</button>
+          <div className="overlay-actions">
+            <button onClick={handleReset}>Start Over</button>
+          </div>
         </div>
       )}
     </div>
