@@ -64,9 +64,9 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
       <h2>Confirm & Submit</h2>
       <form onSubmit={handleSubmit}>
         <p>
-          How would you say these boundaries have changed over the year? <br />
-          Does this neighborhood go by any other names, or has it gone by other names in the past? <br />
-          Leave your commments here. (optional)
+          How would you say these boundaries have changed over the year? <br /><br />
+          Does this neighborhood go by any other names, or has it gone by other names in the past? <br /><br />
+          Leave your commments here. (optional)<br />
           <textarea
             value={comments}
             onChange={(e) => setComments(e.target.value)}

@@ -1,7 +1,7 @@
 /* Modal container */
 
 .survey-modal {
-  position: absolute;
+  position: fixed;
   top: 20px;
   left: 20px;
   background: #fff;
@@ -233,10 +233,10 @@ input[type="range"] {
 
 .custom-select select {
   width: 100%;
-  padding: 14px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 400;
+  border-radius: 4px;
   border: 1px solid #ccc;
   background-color: #f9f9f9;
   color: #333;
