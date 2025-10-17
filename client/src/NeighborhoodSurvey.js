@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './NeighborhoodSurvey.css';
 import { supabase } from './supabaseClient';
 import { page1Questions, page2Questions } from './surveyQuestions';
@@ -7,12 +7,21 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const [page, setPage] = useState(1);
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const modalRef = useRef();
+
 
   useEffect(() => {
     console.log('✅ NeighborhoodSurvey active');
     console.log('🧭 Current page:', page);
     console.log('🧾 Responses:', responses);
   }, [page, responses]);
+
+  useEffect(() => {
+  if (modalRef.current) {
+    modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}, [page]);
+
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
@@ -117,7 +126,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
 
 
   return (
-    <div className="survey-modal">
+    <div className="survey-modal" ref={modalRef}>
       {page === 1 && (
         <>
           <h2>Survey: Your Neighborhood Experience</h2>
