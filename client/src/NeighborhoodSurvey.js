@@ -12,7 +12,6 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
 
   console.log('📦 page1Questions:', page1Questions);
 
-  // ✅ Debug logging on page or response change
   useEffect(() => {
     console.log('✅ NeighborhoodSurvey active');
     console.log('🧭 Current page:', page);
@@ -88,75 +87,75 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                 )}
 
                 {q.type === 'likert' && (
-                 <div className="likert-scale">
-                  {[
-                    { label: 'Strongly Disagree', value: 1 },
-                    { label: 'Disagree', value: 2 },
-                    { label: 'Neither Agree nor Disagree', value: 3 },
-                    { label: 'Agree', value: 4 },
-                    { label: 'Strongly Agree', value: 5 },
-                    ].map(({ label, value: num }) => (
-                    <button
+                  <div className="likert-scale">
+                    {(q.options || [
+                      { label: 'Strongly Disagree', value: 1 },
+                      { label: 'Disagree', value: 2 },
+                      { label: 'Neither Agree nor Disagree', value: 3 },
+                      { label: 'Agree', value: 4 },
+                      { label: 'Strongly Agree', value: 5 },
+                    ]).map(({ label, value: num }) => (
+                      <button
                         key={label}
                         className={responses[q.key] === num ? 'selected' : ''}
                         onClick={() => handleChange(q.key, num)}
-                    >
-                        {label}
-                    </button>
-                    ))}
-                </div>
-                )}
-
-                {q.type === 'radio' && (
-                  q.key === 'religiousAttendance' || (
-                    q.options.length === 2 &&
-                    q.options.every(opt => ['yes', 'no'].includes(opt.toLowerCase()))
-                  )
-                ) ? (
-                  <div className="likert-scale">
-                    {q.options.map((opt) => (
-                      <button
-                        key={opt}
-                        className={value === opt ? 'selected' : ''}
-                        onClick={() => handleChange(q.key, opt)}
-                        type="button"
                       >
-                        {opt}
+                        {label}
                       </button>
                     ))}
                   </div>
-                ) : (
-                  <div className="radio-group">
-                    {q.options.map((opt) => (
-                      <label key={opt}>
-                        <input
-                          type="radio"
-                          name={q.key}
-                          value={opt}
-                          checked={value === opt}
-                          onChange={(e) => handleChange(q.key, e.target.value)}
-                        />
-                        {opt}
-                      </label>
-                    ))}
-                  </div>
                 )}
 
+                {q.type === 'radio' && Array.isArray(q.options) ? (
+                  q.key === 'religiousAttendance' ||
+                  (q.options.length === 2 &&
+                    q.options.every((opt) => ['yes', 'no'].includes(opt.toLowerCase()))) ? (
+                    <div className="likert-scale">
+                      {q.options.map((opt) => (
+                        <button
+                          key={opt}
+                          className={value === opt ? 'selected' : ''}
+                          onClick={() => handleChange(q.key, opt)}
+                          type="button"
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="radio-group">
+                      {q.options.map((opt) => (
+                        <label key={opt}>
+                          <input
+                            type="radio"
+                            name={q.key}
+                            value={opt}
+                            checked={value === opt}
+                            onChange={(e) => handleChange(q.key, e.target.value)}
+                          />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  <p style={{ color: 'red' }}>⚠️ This radio question is missing options.</p>
+                )}
 
-               {q.type === 'rank' && (
-                <div className="rank-scale">
-                  <span className="rank-label left">{q.leftLabel}</span>
-                  {[1, 2, 3, 4, 5].map((num) => (
-                    <button
-                      key={num}
-                      className={responses[q.key] === num ? 'selected' : ''}
-                      onClick={() => handleChange(q.key, num)}
-                    >
-                      {num}
-                    </button>
-                  ))}
-                  <span className="rank-label right">{q.rightLabel}</span>
-                </div>
+                {q.type === 'rank' && (
+                  <div className="rank-scale">
+                    <span className="rank-label left">{q.leftLabel}</span>
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <button
+                        key={num}
+                        className={responses[q.key] === num ? 'selected' : ''}
+                        onClick={() => handleChange(q.key, num)}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                    <span className="rank-label right">{q.rightLabel}</span>
+                  </div>
                 )}
               </div>
             );
@@ -190,19 +189,23 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                   </>
                 )}
 
-                {q.type === 'dropdown' && (
+                {q.type === 'dropdown' && Array.isArray(q.options) ? (
                   <select
                     value={value}
                     onChange={(e) => handleChange(q.key, e.target.value)}
                   >
                     <option value="">Select</option>
                     {q.options.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
                     ))}
                   </select>
+                ) : (
+                  <p style={{ color: 'red' }}>⚠️ This dropdown question is missing options.</p>
                 )}
 
-                {q.type === 'radio' && (
+                {q.type === 'radio' && Array.isArray(q.options) ? (
                   <div className="radio-group">
                     {q.options.map((opt) => (
                       <label key={opt}>
@@ -217,15 +220,19 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
                       </label>
                     ))}
                   </div>
+                ) : (
+                  <p style={{ color: 'red' }}>⚠️ This radio question is missing options.</p>
                 )}
               </div>
             );
           })}
 
           <div className="survey-actions">
-            <button className="secondary" onClick={() => setPage(1)}>Back</button>
+            <button className="secondary" onClick={() => setPage(1)}>
+              Back
+            </button>
             <button onClick={handleSubmit}>Submit</button>
-        </div>
+          </div>
         </>
       )}
     </div>
