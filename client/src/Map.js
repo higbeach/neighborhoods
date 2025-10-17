@@ -151,9 +151,9 @@ const startOver = () => {
 
       {step === 0 && (
         <div className="overlay overlay-enter">
-          <h2>Help Us Map Your Neighborhood</h2>
-          <p>This is a beta-test focused on Seattle's Columbia City and its adjacent neighborhoods.</p>
-          <p>All of your information will be kept confidential.</p>
+          <h2>Help Us Map Our Neighborhood.</h2>
+          <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
+          <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
           <p>Please use this contact form for any questions or feedback.</p>
            <div className="overlay-actions">
             <button onClick={() => setStep(1)}>Let's Get Started</button>
@@ -222,7 +222,7 @@ const startOver = () => {
         <div className="overlay overlay-enter">
           <h2>Where would you mark this neighborhood’s boundaries?</h2>
           <p>
-            Here's how to draw: <br />
+            Here's how to draw: <br /><br />
             1. Tap/click to add a starting point<br />
             2. Tap/click again to add more points<br />
             3. Double click/tap to close the shape.<br /><br />
