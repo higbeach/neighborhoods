@@ -50,10 +50,10 @@ const NeighborhoodMap = () => {
     mapRef.current.on('draw.delete', () => setBoundary(null));
 
     mapRef.current.on('load', () => {
+      // Attempt to hide known label layers
       const layersToHide = [
         'neighborhood-label',
         'neighborhood_label',
-        'place-label',
         'place_label',
         'place-city-lg-n',
         'place-city-lg-s',
@@ -67,7 +67,18 @@ const NeighborhoodMap = () => {
           mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
         }
       });
+
+      // Filter out neighborhood and locality labels from 'place-label' layer
+      const labelLayer = 'place-label';
+      if (mapRef.current.getLayer(labelLayer)) {
+        mapRef.current.setFilter(labelLayer, [
+          'all',
+          ['!=', ['get', 'place_type'], 'neighborhood'],
+          ['!=', ['get', 'place_type'], 'locality'],
+        ]);
+      }
     });
+
   }, []);
 
  // useEffect(() => {
@@ -227,7 +238,8 @@ const startOver = () => {
             Here's how to draw: <br /><br />
             1. Tap/click to add a starting point<br />
             2. Tap/click again to add more points<br />
-            3. Double click/tap to close the shape.<br /><br />
+            3. Double click/tap to close the shape.<br />
+            4. Click the "Finish Drawing" button when you are done.<br /><br />
             <strong>Note:</strong> The entirety of a block needs to be within your neighborhood boundary in order to be included. Drawing your boundary along street centerlines will increase accuracy.
           </p>
           <div className="overlay-actions">
