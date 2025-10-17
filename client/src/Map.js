@@ -258,7 +258,9 @@ const startOver = () => {
 
       {step === 3 && drawingStarted && (
         <div className="drawing-controls-top-left">
-          <button onClick={() => setStep(4)} disabled={!boundary}>Finish Drawing</button>
+          <button onClick={() => setStep(4)}
+          onTouchStart={() => setStep(4)}
+          disabled={!boundary}>Finish Drawing</button>
           <button className="secondary" onClick={clearBoundary}>Clear Drawing</button>
         </div>
       )}
