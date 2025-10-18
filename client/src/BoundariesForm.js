@@ -13,6 +13,11 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
       return;
     }
 
+    const ip = await fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => data.ip)
+      .catch(() => null); // fallback if it fails
+
     // Build GeoJSON Feature (backend will add id + timestamp)
     const feature = {
       type: 'Feature',
@@ -22,6 +27,7 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
         years,
         comments,
         location,
+        ip_address: ip, // ✅ this is the new line
       },
     };
 

@@ -48,14 +48,21 @@ app.post('/api/submissions', async (req, res) => {
 
   try {
     const id = crypto.randomUUID();
-    const timestamp = new Date().toISOString();
+    const timestamp = new Date().toLocaleString('sv-SE', {
+      timeZone: 'America/Los_Angeles',
+      hour12: false,
+    });
+
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
 
     const { data, error } = await supabase
       .from('submissions')
       .insert([
         {
           geometry,
-          properties: { ...properties, id, timestamp },
+          properties: { ...properties, id, timestamp, },
+          ip_address: ip,
         },
       ]);
 
