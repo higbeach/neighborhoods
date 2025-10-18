@@ -8,7 +8,8 @@ const neighborhoodNames = [
   "Seward Park",
   "Genessee",
   "Mt. Baker",
-  "Beacon Hill",
+  "Beacon Hill", 
+  "South Beacon Hill",
   "Hillman City",
   "Rainier Valley",
   "Rainier Vista"

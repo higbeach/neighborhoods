@@ -287,3 +287,11 @@ input[type="range"]::-moz-range-thumb {
   font-size: 16px;
   color: #555;
 }
+.survey-question textarea {
+  width: 100%;
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+}

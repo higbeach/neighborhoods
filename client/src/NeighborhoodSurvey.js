@@ -9,19 +9,9 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const [submitted, setSubmitted] = useState(false);
   const modalRef = useRef();
 
-
   useEffect(() => {
-    console.log('✅ NeighborhoodSurvey active');
-    console.log('🧭 Current page:', page);
-    console.log('🧾 Responses:', responses);
-  }, [page, responses]);
-
-  useEffect(() => {
-  if (modalRef.current) {
-    modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-}, [page]);
-
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [page]);
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
@@ -123,7 +113,6 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
       <span className="select-arrow">▾</span>
     </div>
   );
-
 
   return (
     <div className="survey-modal" ref={modalRef}>
@@ -229,9 +218,29 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
           })}
 
           <div className="survey-actions">
-            <button className="secondary" onClick={() => setPage(1)}>
-              Back
-            </button>
+            <button className="secondary" onClick={() => setPage(1)}>Back</button>
+            <button onClick={() => setPage(3)}>Next</button>
+          </div>
+        </>
+      )}
+
+      {page === 3 && (
+        <>
+          <h2>Additional Comments</h2>
+          <div className="survey-question">
+            <label>
+              Do you have any additional comments you would like to share about your feelings or experience living in your neighborhood?
+            </label>
+            <textarea
+              value={responses.additionalComments || ''}
+              onChange={(e) => handleChange('additionalComments', e.target.value)}
+              rows={6}
+              style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
+            />
+          </div>
+
+          <div className="survey-actions">
+            <button className="secondary" onClick={() => setPage(2)}>Back</button>
             <button onClick={handleSubmit}>Submit</button>
           </div>
         </>

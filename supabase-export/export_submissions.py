@@ -34,6 +34,7 @@ COLUMN_LABELS = {
     "survey_helpfulNeighbors": "Neighbors Willing to Help",
     "survey_problemSolving": "Deal with Problems",
     "survey_willingtoImrpove": "Would be willing to Work Together",
+    "additionalComments": "Additional Comments",
 
     "location_lat": "Latitude",
     "location_lng": "Longitude",
