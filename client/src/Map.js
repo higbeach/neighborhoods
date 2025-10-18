@@ -158,6 +158,36 @@ const NeighborhoodMap = () => {
       markerRef.current = null;
     }
   };
+
+  const validateAndFinishDrawing = () => {
+    const drawn = drawRef.current?.getAll();
+    const feature = drawn?.features?.[0];
+    const geometry = feature?.geometry;
+
+    if (!geometry || geometry.type !== 'Polygon') {
+      alert('Please draw a polygon before finishing.');
+      return;
+    }
+
+    const coords = geometry.coordinates?.[0];
+    if (!coords || coords.length < 4) {
+      alert('Please double-click/tap to close the boundary.');
+      return;
+    }
+
+    const first = coords[0];
+    const last = coords[coords.length - 1];
+    const isClosed = first[0] === last[0] && first[1] === last[1];
+
+    if (!isClosed) {
+      alert('Please double-click/tap to close the boundary.');
+      return;
+    }
+
+    setBoundary(feature);
+    setStep(4);
+  };
+
   const clearBoundary = () => {
   drawRef.current.deleteAll();
   setBoundary(null);
@@ -244,87 +274,13 @@ const startOver = () => {
         </div>
       )}
 
-      {step === 3 && !drawingStarted && (
-        <div className="overlay overlay-enter">
-          <h2>Where would you mark this neighborhood’s boundaries?</h2>
-          <p>
-            Here's how to draw: <br /><br />
-            1. Tap/click to add a starting point<br />
-            2. Tap/click again to add more points<br />
-            3. Double click/tap to close the shape.<br />
-            4. Click the "Finish Drawing" button when you are done.<br /><br />
-            <strong>Note:</strong> The entirety of a block needs to be within your neighborhood boundary in order to be included. Drawing your boundary along street centerlines will increase accuracy.
-          </p>
-          <div className="overlay-actions">
-            <button onClick={() => {
-              setDrawingStarted(true);
-              drawRef.current.changeMode('draw_polygon');
-            }}>
-              Start Drawing
-            </button>
-          </div>
-        </div>
-      )}
-
       {step === 3 && drawingStarted && (
         <div className="drawing-controls-top-left">
           <button
-            onClick={() => {
-              const drawn = drawRef.current?.getAll();
-              const feature = drawn?.features?.[0];
-              const geometry = feature?.geometry;
-
-              if (!geometry || geometry.type !== 'Polygon') {
-                alert('Please draw a polygon before finishing.');
-                return;
-              }
-
-              const coords = geometry.coordinates?.[0];
-              if (!coords || coords.length < 4) {
-                alert('Please double-click/tap to close the boundary.');
-                return;
-              }
-
-              const first = coords[0];
-              const last = coords[coords.length - 1];
-              const isClosed = first[0] === last[0] && first[1] === last[1];
-
-              if (!isClosed) {
-                alert('Please double-click/tap to close the boundary.');
-                return;
-              }
-
-              setBoundary(feature);
-              setStep(4);
-            }}
+            onClick={validateAndFinishDrawing}
             onTouchStart={(e) => {
               e.preventDefault(); // prevent double trigger
-              const drawn = drawRef.current?.getAll();
-              const feature = drawn?.features?.[0];
-              const geometry = feature?.geometry;
-
-              if (!geometry || geometry.type !== 'Polygon') {
-                alert('Please draw a polygon before finishing.');
-                return;
-              }
-
-              const coords = geometry.coordinates?.[0];
-              if (!coords || coords.length < 4) {
-                alert('Please double-click/tap to close the boundary.');
-                return;
-              }
-
-              const first = coords[0];
-              const last = coords[coords.length - 1];
-              const isClosed = first[0] === last[0] && first[1] === last[1];
-
-              if (!isClosed) {
-                alert('Please double-click/tap to close the boundary.');
-                return;
-              }
-
-              setBoundary(feature);
-              setStep(4);
+              validateAndFinishDrawing();
             }}
             disabled={!boundary}
           >
@@ -333,8 +289,6 @@ const startOver = () => {
           <button className="secondary" onClick={clearBoundary}>Clear Drawing</button>
         </div>
       )}
-
-
 
       {step === 4 && (
         <BoundariesForm
