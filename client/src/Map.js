@@ -277,11 +277,13 @@ const startOver = () => {
           </p>
           <div className="overlay-actions">
             <button onClick={() => {
-              setDrawingStarted(true);
-              drawRef.current.changeMode('draw_polygon');
+              drawRef.current.deleteAll(); // Clear any stuck shapes
+              drawRef.current.changeMode('draw_polygon'); // Force drawing mode
+              setDrawingStarted(true); // Show drawing controls
             }}>
               Start Drawing
             </button>
+
           </div>
         </div>
       )}
