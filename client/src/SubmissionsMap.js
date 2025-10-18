@@ -37,21 +37,25 @@ const SubmissionsMap = ({ submissions }) => {
     const map = mapRef.current;
 
     // 🔴 Extract home location pins from lat/lon
-    const locationFeatures = submissions.features
-      .filter((f) => typeof f.properties.lat === 'number' && typeof f.properties.lon === 'number')
-      .map((f, idx) => ({
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [f.properties.lon, f.properties.lat],
-        },
-        properties: {
-          neighborhood: f.properties.neighborhood,
-          comments: f.properties.comments,
-          timestamp: f.properties.timestamp,
-        },
-        id: `loc-${idx}`,
-      }));
+  const locationFeatures = submissions.features
+    .filter((f) =>
+      f.properties.location &&
+      typeof f.properties.location.lat === 'number' &&
+      typeof f.properties.location.lng === 'number'
+    )
+    .map((f, idx) => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [f.properties.location.lng, f.properties.location.lat],
+      },
+      properties: {
+        neighborhood: f.properties.neighborhood,
+        comments: f.properties.comments,
+        timestamp: f.properties.timestamp,
+      },
+      id: `loc-${idx}`,
+    }));
 
     const locationGeoJSON = {
       type: 'FeatureCollection',
