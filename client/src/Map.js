@@ -132,6 +132,16 @@ const NeighborhoodMap = () => {
     return img;
   };
 
+  const isPolygonClosed = (geometry) => {
+    if (!geometry || geometry.type !== 'Polygon') return false;
+    const coords = geometry.coordinates?.[0];
+    if (!coords || coords.length < 4) return false;
+
+    const first = coords[0];
+    const last = coords[coords.length - 1];
+    return first[0] === last[0] && first[1] === last[1];
+  };
+
   const handleReset = () => {
     setLocation(null);
     setYears(0);
@@ -258,12 +268,72 @@ const startOver = () => {
 
       {step === 3 && drawingStarted && (
         <div className="drawing-controls-top-left">
-          <button onClick={() => setStep(4)}
-          onTouchStart={() => setStep(4)}
-          disabled={!boundary}>Finish Drawing</button>
+          <button
+            onClick={() => {
+              const drawn = drawRef.current?.getAll();
+              const feature = drawn?.features?.[0];
+              const geometry = feature?.geometry;
+
+              if (!geometry || geometry.type !== 'Polygon') {
+                alert('Please draw a polygon before finishing.');
+                return;
+              }
+
+              const coords = geometry.coordinates?.[0];
+              if (!coords || coords.length < 4) {
+                alert('Please double-click/tap to close the boundary.');
+                return;
+              }
+
+              const first = coords[0];
+              const last = coords[coords.length - 1];
+              const isClosed = first[0] === last[0] && first[1] === last[1];
+
+              if (!isClosed) {
+                alert('Please double-click/tap to close the boundary.');
+                return;
+              }
+
+              setBoundary(feature);
+              setStep(4);
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault(); // prevent double trigger
+              const drawn = drawRef.current?.getAll();
+              const feature = drawn?.features?.[0];
+              const geometry = feature?.geometry;
+
+              if (!geometry || geometry.type !== 'Polygon') {
+                alert('Please draw a polygon before finishing.');
+                return;
+              }
+
+              const coords = geometry.coordinates?.[0];
+              if (!coords || coords.length < 4) {
+                alert('Please double-click/tap to close the boundary.');
+                return;
+              }
+
+              const first = coords[0];
+              const last = coords[coords.length - 1];
+              const isClosed = first[0] === last[0] && first[1] === last[1];
+
+              if (!isClosed) {
+                alert('Please double-click/tap to close the boundary.');
+                return;
+              }
+
+              setBoundary(feature);
+              setStep(4);
+            }}
+            disabled={!boundary}
+          >
+            Finish Drawing
+          </button>
           <button className="secondary" onClick={clearBoundary}>Clear Drawing</button>
         </div>
       )}
+
 
 
       {step === 4 && (
@@ -311,6 +381,7 @@ const startOver = () => {
         <div className="overlay overlay-enter">
           <h2>Thank you!</h2>
           <p>Your survey responses have been recorded.</p>
+          <p>Please share this with other people you know who live in Columbia City or surrounding neighborhoods.</p>
           <div className="overlay-actions">
             <button onClick={handleReset}>Start Over</button>
           </div>

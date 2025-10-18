@@ -154,6 +154,7 @@ export const page2Questions = [
       'Asian',
       'Native American or Alaska Native',
       'Middle Eastern or North African',
+      'Native Hawaiian or Other Pacific Islander',
       'Multiracial',
       'Other',
       'Prefer not to say',
