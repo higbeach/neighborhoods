@@ -9,14 +9,14 @@ const likertOptions = [
 export const page1Questions = [
   {
     key: 'knownNeighbors',
-    label: 'How many neighbors would you say you know personally, at least as acquaintances?',
+    label: 'Approximately how many neighbors would you say you know personally, at least as acquaintances?',
     type: 'slider',
     min: 0,
     max: 500,
   },
   {
     key: 'friendNeighbors',
-    label: 'Of your neighborhood acquaintances, how many of these would you consider to be friends?',
+    label: 'Of your neighborhood acquaintances, about how many of these would you consider to be friends?',
     type: 'slider',
     min: 0,
     max: 500,
@@ -96,6 +96,12 @@ export const page1Questions = [
    {
     key: 'acceptancePolitics',
     label: 'People in my neighborhood are willing to accept people with different political viewpoints as neighbors',
+    type: 'likert',
+    options: likertOptions,
+  },
+   {
+    key: 'acceptanceClass',
+    label: 'People in my neighborhood are willing to accept people with different income levels as neighbors',
     type: 'likert',
     options: likertOptions,
   },
