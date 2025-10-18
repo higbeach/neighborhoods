@@ -54,9 +54,13 @@ const BlocksMap = ({ blocks }) => {
         console.error('❌ Failed to fit bounds:', err);
       }
 
-      // 🎨 Generate colors for each dominant neighborhood
+      // 🎨 Generate colors for each neighborhood
       const neighborhoods = Array.from(
-        new Set(blocks.features.map(f => f.properties.dominant_neighborhood).filter(Boolean))
+        new Set(
+          blocks.features.flatMap(f =>
+            Object.keys(f.properties).filter(k => k.endsWith('_pct')).map(k => k.replace('_pct', ''))
+          )
+        )
       );
 
       const generateColor = (i) => {
@@ -72,30 +76,43 @@ const BlocksMap = ({ blocks }) => {
         return acc;
       }, {});
 
-      // 🌀 Gradient fill based on percentage
-      const colorExpression = ['case'];
+      // 🌀 Blended color expression
+      const blendedColorExpression = ['case'];
       blocks.features.forEach((feature) => {
         const props = feature.properties;
-        const name = props.dominant_neighborhood;
-        const pct = props[`${name}_pct`] ?? 0;
+        const voteKeys = Object.keys(props).filter(k => k.endsWith('_pct') && props[k] > 0);
 
-        if (name && neighborhoodColors[name]) {
-          const intensity = Math.max(0.3, Math.min(1, pct / 100));
+        let totalWeight = 0;
+        let r = 0, g = 0, b = 0;
+
+        voteKeys.forEach((key) => {
+          const name = key.replace('_pct', '');
+          const pct = props[key];
           const baseHex = neighborhoodColors[name];
-          const rgb = hexToRgb(baseHex);
-          const rgba = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${intensity})`;
+          if (!baseHex) return;
 
-          colorExpression.push(['==', ['get', 'BLOCK_ID'], props.BLOCK_ID], rgba);
+          const rgb = hexToRgb(baseHex);
+          const weight = pct / 100;
+          totalWeight += weight;
+          r += rgb.r * weight;
+          g += rgb.g * weight;
+          b += rgb.b * weight;
+        });
+
+        if (totalWeight > 0) {
+          const finalColor = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+          blendedColorExpression.push(['==', ['get', 'BLOCK_ID'], props.BLOCK_ID], finalColor);
         }
       });
-      colorExpression.push('#cccccc'); // fallback
+
+      blendedColorExpression.push('#cccccc'); // fallback
 
       mapRef.current.addLayer({
         id: 'blocks-fill',
         type: 'fill',
         source: 'blocks',
         paint: {
-          'fill-color': colorExpression,
+          'fill-color': blendedColorExpression,
           'fill-opacity': 1,
         },
       });
