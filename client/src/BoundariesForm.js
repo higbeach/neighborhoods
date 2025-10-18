@@ -13,6 +13,19 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
       return;
     }
 
+    const coords = boundary.geometry?.coordinates;
+      const isValidPolygon =
+        boundary.geometry?.type === 'Polygon' &&
+        Array.isArray(coords) &&
+        coords.length > 0 &&
+        coords[0].length >= 4;
+
+      if (!isValidPolygon) {
+        alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
+        return;
+      }
+
+
     const ip = await fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
       .then(data => data.ip)
