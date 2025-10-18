@@ -26,7 +26,7 @@ const NeighborhoodMap = () => {
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
 
-  const [drawingStarted, setDrawingStarted] = useState(false);
+  const [drawingStarted] = useState(false);
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -130,16 +130,6 @@ const NeighborhoodMap = () => {
     img.style.width = '32px';
     img.style.height = 'auto';
     return img;
-  };
-
-  const isPolygonClosed = (geometry) => {
-    if (!geometry || geometry.type !== 'Polygon') return false;
-    const coords = geometry.coordinates?.[0];
-    if (!coords || coords.length < 4) return false;
-
-    const first = coords[0];
-    const last = coords[coords.length - 1];
-    return first[0] === last[0] && first[1] === last[1];
   };
 
   const handleReset = () => {
