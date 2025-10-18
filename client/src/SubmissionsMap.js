@@ -29,6 +29,11 @@ const SubmissionsMap = ({ submissions }) => {
   useEffect(() => {
     if (!mapRef.current || !submissions || !mapLoaded) return;
 
+    if (!submissions.type || !Array.isArray(submissions.features)) {
+      console.warn('⚠️ Submissions data is malformed:', submissions);
+      return;
+    }
+
     const map = mapRef.current;
 
     // 🔴 Extract home location pins from lat/lon

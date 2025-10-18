@@ -26,7 +26,43 @@ const SubmissionsViewer = () => {
         }
 
         console.log('📦 Loaded submissions:', data);
-        setSubmissions(data);
+
+          const validFeatures = data.features.filter((f, i) => {
+            const isValid =
+              f &&
+              f.type === 'Feature' &&
+              f.geometry &&
+              typeof f.geometry.type === 'string' &&
+              Array.isArray(f.geometry.coordinates);
+
+            if (!isValid) {
+              console.warn(`⚠️ Feature ${i} is invalid:`, f);
+            }
+
+            return isValid;
+          });
+
+          console.log(`✅ Valid features: ${validFeatures.length}`);
+
+          if (
+            !data ||
+            data.type !== 'FeatureCollection' ||
+            !Array.isArray(data.features)
+          ) {
+            console.error('❌ Top-level GeoJSON structure is invalid:', data);
+            return;
+          }
+
+          const cleanedData = {
+            type: 'FeatureCollection',
+            features: validFeatures,
+          };
+
+          console.log('🧼 Cleaned GeoJSON:', cleanedData);
+
+          setSubmissions(cleanedData);
+
+
       } catch (err) {
         console.error('🚨 Error fetching submissions:', err.message);
       } finally {
