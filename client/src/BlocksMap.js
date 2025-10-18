@@ -9,6 +9,15 @@ const BlocksMap = ({ blocks }) => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
 
+  const hexToRgb = (hex) => {
+    const bigint = parseInt(hex.replace('#', ''), 16);
+    return {
+      r: (bigint >> 16) & 255,
+      g: (bigint >> 8) & 255,
+      b: bigint & 255,
+    };
+  };
+
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -45,7 +54,7 @@ const BlocksMap = ({ blocks }) => {
         console.error('❌ Failed to fit bounds:', err);
       }
 
-      // 🎨 Dynamically generate colors for each dominant_neighborhood
+      // 🎨 Generate colors for each dominant neighborhood
       const neighborhoods = Array.from(
         new Set(blocks.features.map(f => f.properties.dominant_neighborhood).filter(Boolean))
       );
@@ -63,19 +72,31 @@ const BlocksMap = ({ blocks }) => {
         return acc;
       }, {});
 
-      const matchExpression = ['match', ['get', 'dominant_neighborhood']];
-      neighborhoods.forEach(name => {
-        matchExpression.push(name, neighborhoodColors[name]);
+      // 🌀 Gradient fill based on percentage
+      const colorExpression = ['case'];
+      blocks.features.forEach((feature) => {
+        const props = feature.properties;
+        const name = props.dominant_neighborhood;
+        const pct = props[`${name}_pct`] ?? 0;
+
+        if (name && neighborhoodColors[name]) {
+          const intensity = Math.max(0.3, Math.min(1, pct / 100));
+          const baseHex = neighborhoodColors[name];
+          const rgb = hexToRgb(baseHex);
+          const rgba = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${intensity})`;
+
+          colorExpression.push(['==', ['get', 'BLOCK_ID'], props.BLOCK_ID], rgba);
+        }
       });
-      matchExpression.push('#cccccc'); // fallback
+      colorExpression.push('#cccccc'); // fallback
 
       mapRef.current.addLayer({
         id: 'blocks-fill',
         type: 'fill',
         source: 'blocks',
         paint: {
-          'fill-color': matchExpression,
-          'fill-opacity': 0.6,
+          'fill-color': colorExpression,
+          'fill-opacity': 1,
         },
       });
 
@@ -89,7 +110,7 @@ const BlocksMap = ({ blocks }) => {
         },
       });
 
-      // Popups
+      // 🧠 Popup with sorted neighborhood percentages
       mapRef.current.on('click', 'blocks-fill', (e) => {
         const f = e.features[0];
         const p = f.properties || {};
@@ -103,8 +124,12 @@ const BlocksMap = ({ blocks }) => {
           .map(([key, pct]) => {
             const name = key.replace('_pct', '');
             const count = p[name] ?? 0;
-            return `<li><strong>${name}</strong>: ${count} votes (${pct.toFixed(1)}%)</li>`;
+            return { name, count, pct };
           })
+          .sort((a, b) => b.pct - a.pct)
+          .map(({ name, count, pct }) =>
+            `<li><strong>${name}</strong>: ${count} votes (${pct.toFixed(1)}%)</li>`
+          )
           .join('');
 
         const popupHTML = `
