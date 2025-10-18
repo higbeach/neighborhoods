@@ -144,6 +144,17 @@ export const page1Questions = [
 ];
 export const page2Questions = [
   {
+    key: 'gender',
+    label: 'What is your gender?',
+    type: 'dropdown',
+    options: [
+      'Male',
+      'Female',
+      'Non-binary',
+      'Prefer not to say',
+    ],
+  },
+  {
     key: 'raceEthnicity',
     label: 'What race or ethnicity best describes you?',
     type: 'dropdown',
