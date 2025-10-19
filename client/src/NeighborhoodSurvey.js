@@ -15,11 +15,8 @@ useEffect(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   };
-
   scrollToTop();
 }, [page]);
-
-
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
@@ -191,7 +188,14 @@ useEffect(() => {
           })}
 
           <div className="survey-actions">
-            <button onClick={() => setPage(2)}>Next</button>
+            <button
+              onClick={() => {
+                setPage(2);
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // ✅ immediate scroll
+              }}
+            >
+              Next
+            </button>
           </div>
         </>
       )}
@@ -225,10 +229,18 @@ useEffect(() => {
             );
           })}
 
-          <div className="survey-actions">
-            <button className="secondary" onClick={() => setPage(1)}>Back</button>
-            <button onClick={() => setPage(3)}>Next</button>
-          </div>
+         <div className="survey-actions">
+          <button className="secondary" onClick={() => setPage(1)}>Back</button>
+          <button
+            onClick={() => {
+              setPage(3);
+              window.scrollTo({ top: 0, behavior: 'smooth' }); // ✅ immediate scroll
+            }}
+          >
+            Next
+          </button>
+        </div>
+
         </>
       )}
 
