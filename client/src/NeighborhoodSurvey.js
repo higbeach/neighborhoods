@@ -12,11 +12,10 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
 useEffect(() => {
   requestAnimationFrame(() => {
     if (modalRef.current) {
-      modalRef.current.scrollTop = 0; // ✅ Firefox-friendly
+      modalRef.current.scrollTop = 0;
     }
   });
 }, [page]);
-
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
@@ -188,14 +187,17 @@ useEffect(() => {
           })}
 
           <div className="survey-actions">
-            <button
-              onClick={() => {
-                setPage(2);
-                modalRef.current?.scrollTop = 0; // ✅ works in Firefox
-              }}
-            >
-              Next
-            </button>
+           <button
+            onClick={() => {
+              setPage(2);
+              if (modalRef.current) {
+                modalRef.current.scrollTop = 0;
+              }
+            }}
+          >
+            Next
+          </button>
+
           </div>
         </>
       )}
@@ -233,10 +235,11 @@ useEffect(() => {
           <button className="secondary" onClick={() => setPage(1)}>Back</button>
           <button
             onClick={() => {
-              setPage(2);
-              modalRef.current?.scrollTop = 0; // ✅ works in Firefox
+              setPage(3); // ✅ advance to Page 3
+              if (modalRef.current) {
+                modalRef.current.scrollTop = 0;
+              }
             }}
-
           >
             Next
           </button>
