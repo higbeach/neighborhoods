@@ -69,24 +69,15 @@ export const page1Questions = [
     type: 'likert',
     options: likertOptions,
   },
-  {
-    key: 'conflictHarmony',
-    label: 'Generally, how much do you perceive relations in your neighborhood to be in conflict or in harmony?',
-    type: 'rank',
-    min: 1,
-    max: 5,
-    leftLabel: 'Conflict',
-    rightLabel: 'Harmony'
-  },
-  {
-    key: 'positiveFeelings',
-    label: 'How much do you feel negatively or positiively toward your neighbors?',
-    type: 'rank',
-    min: 1,
-    max: 5,
-    leftLabel: 'Negatively',
-    rightLabel: 'Positively'
-  },
+ // {
+ //   key: 'conflictHarmony',
+ //   label: 'Generally, how much do you perceive relations in your neighborhood to be in conflict or in harmony?',
+ //   type: 'rank',
+ //   min: 1,
+ //   max: 5,
+ //   leftLabel: 'Conflict',
+ //   rightLabel: 'Harmony'
+ // },
   {
     key: 'acceptanceRace',
     label: 'People in my neighborhood are willing to accept people from different racial and ethnic groups as neighbors.',
