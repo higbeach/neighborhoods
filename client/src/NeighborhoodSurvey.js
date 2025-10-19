@@ -9,9 +9,14 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const [submitted, setSubmitted] = useState(false);
   const modalRef = useRef();
 
-  useEffect(() => {
+useEffect(() => {
+  const scrollTimeout = setTimeout(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [page]);
+  }, 100); // Delay ensures content is rendered before scroll
+
+  return () => clearTimeout(scrollTimeout); // Clean up on unmount
+}, [page]);
+
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
