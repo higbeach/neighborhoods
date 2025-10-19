@@ -8,11 +8,12 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const modalRef = useRef();
+  const scrollAnchorRef = useRef();
 
   useEffect(() => {
     requestAnimationFrame(() => {
-      if (modalRef.current) {
-        modalRef.current.scrollTop = 0;
+      if (scrollAnchorRef.current) {
+        scrollAnchorRef.current.scrollIntoView({ behavior: 'instant' });
       }
     });
   }, [page]);
@@ -120,7 +121,8 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
 
   return (
     <div className="survey-modal" ref={modalRef}>
-      {page === 1 && (
+      <div ref={scrollAnchorRef} style={{ height: 0, overflow: 'hidden' }}></div>
+            {page === 1 && (
         <>
           <h2>Survey: Your Neighborhood Experience</h2>
           <p>
@@ -187,16 +189,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
           })}
 
           <div className="survey-actions">
-            <button
-              onClick={() => {
-                setPage(2);
-                if (modalRef.current) {
-                  modalRef.current.scrollTop = 0;
-                }
-              }}
-            >
-              Next
-            </button>
+            <button onClick={() => setPage(2)}>Next</button>
           </div>
         </>
       )}
@@ -232,16 +225,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
 
           <div className="survey-actions">
             <button className="secondary" onClick={() => setPage(1)}>Back</button>
-            <button
-              onClick={() => {
-                setPage(3);
-                if (modalRef.current) {
-                  modalRef.current.scrollTop = 0;
-                }
-              }}
-            >
-              Next
-            </button>
+            <button onClick={() => setPage(3)}>Next</button>
           </div>
         </>
       )}
