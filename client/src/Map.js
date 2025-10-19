@@ -222,7 +222,7 @@ const startOver = () => {
 
           <div className="overlay overlay-enter">
             <h2>Mark Where You Live</h2>
-            <p>Pan the map until the pin is centered over where you live.</p>
+            <p>Pan the map until the pin is centered over where you live, then click the "I Live here!" button</p>
             <div className="overlay-actions">
               <button onClick={handleConfirmLocation}>I live here!</button>
             </div>
@@ -321,7 +321,7 @@ const startOver = () => {
       {step === 5 && showSurveyPrompt && !showSurveyForm && (
         <div className="overlay overlay-enter">
           <h2>Thank you for your submission!</h2>
-          <p>Do you have 1–2 minutes to answer some additional questions about your feelings toward your neighborhood?</p>
+          <p>Do you have 2–3 minutes to answer some additional questions about your feelings toward your neighborhood?</p>
           <div className="overlay-actions">
             <button onClick={() => setShowSurveyForm(true)}>Yes — take me to the survey</button>
             <button className="secondary" onClick={handleReset}>No thanks</button>

@@ -187,13 +187,17 @@ body {
   border: 1px solid #ccc;
 }
 .drawing-controls-top-left {
-  position: absolute;
-  top: 20px;
+  position: fixed;
+  top: env(safe-area-inset-top, 20px); /* respects iOS notch and toolbar */
   left: 20px;
-  z-index: 1001; /* Raise above mapbox layers */
+  z-index: 1001;
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  padding-top: calc(env(safe-area-inset-top, 0px)); /* extra buffer for iOS */
+  background: rgba(255, 255, 255, 0.9); /* optional: improve contrast */
+  backdrop-filter: blur(10px);         /* optional: match civic-grade polish */
+  border-radius: 8px;                  /* optional: soften edges */
 }
 
 .drawing-controls-top-left button {
