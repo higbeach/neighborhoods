@@ -12,7 +12,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
 useEffect(() => {
   requestAnimationFrame(() => {
     if (modalRef.current) {
-      modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      modalRef.current.scrollTop = 0; // ✅ Firefox-friendly
     }
   });
 }, [page]);
@@ -191,9 +191,8 @@ useEffect(() => {
             <button
               onClick={() => {
                 setPage(2);
-                modalRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                modalRef.current?.scrollTop = 0; // ✅ works in Firefox
               }}
-
             >
               Next
             </button>
@@ -235,8 +234,9 @@ useEffect(() => {
           <button
             onClick={() => {
               setPage(2);
-              modalRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+              modalRef.current?.scrollTop = 0; // ✅ works in Firefox
             }}
+
           >
             Next
           </button>
