@@ -11,9 +11,8 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
 
 useEffect(() => {
   requestAnimationFrame(() => {
-    if (modalRef.current) {
-      modalRef.current.scrollTop = 0;
-    }
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   });
 }, [page]);
 
@@ -188,15 +187,15 @@ useEffect(() => {
 
           <div className="survey-actions">
            <button
-            onClick={() => {
-              setPage(2);
-              if (modalRef.current) {
-                modalRef.current.scrollTop = 0;
-              }
-            }}
-          >
-            Next
-          </button>
+              onClick={() => {
+                setPage(2);
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+              }}
+            >
+              Next
+            </button>
+
 
           </div>
         </>
@@ -235,10 +234,9 @@ useEffect(() => {
           <button className="secondary" onClick={() => setPage(1)}>Back</button>
           <button
             onClick={() => {
-              setPage(3); // ✅ advance to Page 3
-              if (modalRef.current) {
-                modalRef.current.scrollTop = 0;
-              }
+              setPage(3);
+              document.documentElement.scrollTop = 0;
+              document.body.scrollTop = 0;
             }}
           >
             Next
