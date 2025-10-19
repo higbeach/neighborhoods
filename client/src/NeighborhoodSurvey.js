@@ -10,12 +10,15 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const modalRef = useRef();
 
 useEffect(() => {
-  const scrollTimeout = setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, 100); // Delay ensures content is rendered before scroll
+  const scrollToTop = () => {
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  };
 
-  return () => clearTimeout(scrollTimeout); // Clean up on unmount
+  scrollToTop();
 }, [page]);
+
 
 
   const handleChange = (key, value) => {
