@@ -28,9 +28,12 @@ const NeighborhoodMap = () => {
   const [drawingStarted, setDrawingStarted] = useState(false);
 
   // ✅ Scroll to top on step change
-  useEffect(() => {
+useEffect(() => {
+  setTimeout(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [step]);
+  }, 100); // 100ms delay
+}, [step]);
+
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -226,7 +229,8 @@ const startOver = () => {
 
           <div className="overlay overlay-enter">
             <h2>Mark Where You Live</h2>
-            <p>Pan the map until the pin is centered over where you live, then click the "I Live here!" button</p>
+            <p>1.Pan the map until the pin is centered over where you live.<br />
+              2. Click the "I Live here!" button</p>
             <div className="overlay-actions">
               <button onClick={handleConfirmLocation}>I live here!</button>
             </div>
@@ -281,9 +285,12 @@ const startOver = () => {
           </p>
           <div className="overlay-actions">
             <button onClick={() => {
-              drawRef.current.deleteAll(); // Clear any stuck shapes
-              drawRef.current.changeMode('draw_polygon'); // Force drawing mode
-              setDrawingStarted(true); // Show drawing controls
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_polygon');
+              setDrawingStarted(true);
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 100);
             }}>
               Start Drawing
             </button>
