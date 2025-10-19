@@ -8,20 +8,6 @@ const likertOptions = [
 
 export const page1Questions = [
   {
-    key: 'knownNeighbors',
-    label: 'Approximately how many neighbors would you say you know personally, at least as acquaintances?',
-    type: 'slider',
-    min: 0,
-    max: 500,
-  },
-  {
-    key: 'friendNeighbors',
-    label: 'Of your neighborhood acquaintances, about how many of these would you consider to be friends?',
-    type: 'slider',
-    min: 0,
-    max: 500,
-  },
-  {
     key: 'talkRegularly',
     label: 'I regularly stop and talk with people in my neighborhood.',
     type: 'likert',
@@ -38,6 +24,20 @@ export const page1Questions = [
     label: 'I attend religious services in my neighborhood.',
     type: 'radio',
     options: ['Yes', 'No', 'In another neighborhood'],
+  },
+    {
+    key: 'knownNeighbors',
+    label: 'Approximately how many neighbors would you say you know personally, at least as acquaintances?',
+    type: 'slider',
+    min: 0,
+    max: 500,
+  },
+  {
+    key: 'friendNeighbors',
+    label: 'Of your neighborhood acquaintances, about how many of these would you consider to be friends?',
+    type: 'slider',
+    min: 0,
+    max: 500,
   },
   {
     key: 'wishMoreContact',
