@@ -10,13 +10,13 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const modalRef = useRef();
 
 useEffect(() => {
-  const scrollToTop = () => {
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  };
-  scrollToTop();
+  requestAnimationFrame(() => {
+    if (modalRef.current) {
+      modalRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
 }, [page]);
+
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
@@ -191,8 +191,9 @@ useEffect(() => {
             <button
               onClick={() => {
                 setPage(2);
-                window.scrollTo({ top: 0, behavior: 'smooth' }); // ✅ immediate scroll
+                modalRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
               }}
+
             >
               Next
             </button>
@@ -233,8 +234,8 @@ useEffect(() => {
           <button className="secondary" onClick={() => setPage(1)}>Back</button>
           <button
             onClick={() => {
-              setPage(3);
-              window.scrollTo({ top: 0, behavior: 'smooth' }); // ✅ immediate scroll
+              setPage(2);
+              modalRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           >
             Next
