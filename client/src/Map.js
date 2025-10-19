@@ -25,8 +25,12 @@ const NeighborhoodMap = () => {
   const [showSurveyPrompt, setShowSurveyPrompt] = useState(false); // ✅ NEW
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
-
   const [drawingStarted, setDrawingStarted] = useState(false);
+
+  // ✅ Scroll to top on step change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -273,7 +277,7 @@ const startOver = () => {
             2. Tap/click again to add more points<br />
             3. Double click/tap to close the shape.<br />
             4. Click the "Finish Drawing" button when you are done.<br /><br />
-            <strong>Note:</strong> The entirety of a block needs to be within your neighborhood boundary in order to be included. Drawing your boundary along street centerlines will increase accuracy.
+            <strong>Note:</strong> The entirety of a block needs to be within your neighborhood boundary in order to be included. Zooming in or drawing your boundary along street centerlines will increase accuracy.
           </p>
           <div className="overlay-actions">
             <button onClick={() => {

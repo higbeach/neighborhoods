@@ -188,16 +188,18 @@ body {
 }
 .drawing-controls-top-left {
   position: fixed;
-  top: env(safe-area-inset-top, 20px); /* respects iOS notch and toolbar */
+  top: calc(env(safe-area-inset-top, 0px) + 12px); /* ✅ buffer below notch */
   left: 20px;
   z-index: 1001;
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  padding-top: calc(env(safe-area-inset-top, 0px)); /* extra buffer for iOS */
-  background: rgba(255, 255, 255, 0.9); /* optional: improve contrast */
-  backdrop-filter: blur(10px);         /* optional: match civic-grade polish */
-  border-radius: 8px;                  /* optional: soften edges */
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+
 }
 
 .drawing-controls-top-left button {
