@@ -281,7 +281,7 @@ const startOver = () => {
             2. Tap/click again to add more points<br />
             3. Double click/tap to close the shape.<br />
             4. Click the "Finish Drawing" button when you are done.<br /><br />
-            <strong>Note:</strong> The entirety of a block needs to be within your neighborhood boundary in order to be included. Zooming in or drawing your boundary along street centerlines will increase accuracy.
+            <strong>Note:</strong> To be included, the entirety of a block needs to be within your neighborhood boundary. Zooming in or drawing your boundary along street centerlines will increase accuracy.
           </p>
           <div className="overlay-actions">
             <button onClick={() => {

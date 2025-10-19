@@ -187,34 +187,34 @@ body {
   border: 1px solid #ccc;
 }
 .drawing-controls-top-left {
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 12px); /* ✅ buffer below notch */
-  left: 20px;
-  z-index: 1001;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-
+  position: fixed; /* Pins the button group to the viewport, not the document flow */
+  top: calc(env(safe-area-inset-top, 0px) + 12px); /* Adds 12px buffer below iOS notch or dynamic toolbar */
+  left: 20px; /* Keeps buttons aligned with left margin of map overlay */
+  z-index: 1001; /* Ensures buttons appear above Mapbox layers and other UI elements */
+  display: flex; /* Lays out buttons horizontally */
+  gap: 10px; /* Adds spacing between buttons (was 12)*/
+  flex-wrap: wrap; /* Allows buttons to wrap to next line on smaller screens */
+  padding: 6px 8px; /* Adds internal spacing around the button group (was 8&12) */
+  background: rgba(255, 255, 255, 0.95); /* Semi-transparent white background for readability over map */
+  backdrop-filter: blur(10px); /* Adds subtle blur behind buttons for visual polish */
+  border-radius: 8px; /* Softens corners for a modern, touch-friendly look */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* Adds gentle shadow for depth and separation from map */
 }
 
+
 .drawing-controls-top-left button {
-  padding: 14px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-  border: none;
-  background-color: #0078d4;
-  color: white;
+  padding: 14px 24px; /* Comfortable touch target size for mobile users */
+  font-size: 16px; /* Matches civic-grade readability standards */
+  font-weight: 600; /* Emphasizes button text for clarity */
+  border-radius: 6px; /* Rounded corners for visual consistency */
+  cursor: pointer; /* Shows pointer on hover for desktop users */
+  border: none; /* Removes default browser border */
+  background-color: #0078d4; /* Primary blue for action buttons (Microsoft brand tone) */
+  color: white; /* High contrast text for accessibility */
 }
 
 .drawing-controls-top-left button.secondary {
-  background-color: #f0f0f0;
-  color: #333;
-  border: 1px solid #ccc;
+  background-color: #f0f0f0; /* Neutral background for secondary actions */
+  color: #333; /* Dark text for readability */
+  border: 1px solid #ccc; /* Light border to distinguish from primary button */
 }
