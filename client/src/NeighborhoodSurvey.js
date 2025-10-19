@@ -9,12 +9,13 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   const [submitted, setSubmitted] = useState(false);
   const modalRef = useRef();
 
-useEffect(() => {
-  requestAnimationFrame(() => {
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-  });
-}, [page]);
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      if (modalRef.current) {
+        modalRef.current.scrollTop = 0;
+      }
+    });
+  }, [page]);
 
   const handleChange = (key, value) => {
     setResponses((prev) => ({ ...prev, [key]: value }));
@@ -186,17 +187,16 @@ useEffect(() => {
           })}
 
           <div className="survey-actions">
-           <button
+            <button
               onClick={() => {
                 setPage(2);
-                document.documentElement.scrollTop = 0;
-                document.body.scrollTop = 0;
+                if (modalRef.current) {
+                  modalRef.current.scrollTop = 0;
+                }
               }}
             >
               Next
             </button>
-
-
           </div>
         </>
       )}
@@ -230,19 +230,19 @@ useEffect(() => {
             );
           })}
 
-         <div className="survey-actions">
-          <button className="secondary" onClick={() => setPage(1)}>Back</button>
-          <button
-            onClick={() => {
-              setPage(3);
-              document.documentElement.scrollTop = 0;
-              document.body.scrollTop = 0;
-            }}
-          >
-            Next
-          </button>
-        </div>
-
+          <div className="survey-actions">
+            <button className="secondary" onClick={() => setPage(1)}>Back</button>
+            <button
+              onClick={() => {
+                setPage(3);
+                if (modalRef.current) {
+                  modalRef.current.scrollTop = 0;
+                }
+              }}
+            >
+              Next
+            </button>
+          </div>
         </>
       )}
 
