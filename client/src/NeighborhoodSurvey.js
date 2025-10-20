@@ -246,8 +246,13 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUui
               Do you have any additional comments you would like to share about your feelings or experience living in your neighborhood?
             </label>
             <textarea
-              value={responses.additionalComments || ''}
-              onChange={(e) => handleChange('additionalComments', e.target.value)}
+              value={responses.survey?.additionalComments || ''}
+              onChange={(e) =>
+                handleChange('survey', {
+                  ...responses.survey,
+                  additionalComments: e.target.value,
+                })
+              }
               rows={6}
               style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
             />
