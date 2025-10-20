@@ -91,7 +91,7 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
     const { data: existingRows, error: fetchError } = await supabase
       .from('submissions')
       .select('properties')
-      .eq('uuid', uuid)
+      .eq('id', uuid)
       .limit(1);
 
     if (fetchError) throw fetchError;
@@ -108,7 +108,7 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
     const { data: updateResult, error: updateError } = await supabase
       .from('submissions')
       .update({ properties: mergedProps })
-      .eq('uuid', uuid)
+      .eq('id', uuid)
       .select();
 
     console.log('🧾 Supabase update result:', { updateResult, updateError });
