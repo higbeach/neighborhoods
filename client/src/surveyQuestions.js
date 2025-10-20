@@ -156,7 +156,6 @@ export const page2Questions = [
     label: 'What race or ethnicity best describes you?',
     type: 'dropdown',
     options: [
-      'White',
       'Black or African American',
       'Hispanic or Latino',
       'Asian',
@@ -164,6 +163,7 @@ export const page2Questions = [
       'Middle Eastern or North African',
       'Native Hawaiian or Other Pacific Islander',
       'Multiracial',
+      'White',
       'Other',
       'Prefer not to say',
     ],

@@ -137,7 +137,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUui
             Below are 20 questions about your neighborhood experience and feelings. The second page has 8 questions about your background. All information will be kept confidential.
           </p>
           {page1Questions.map((q) => {
-            const value = responses[q.key] || '';
+            const value = responses[q.key] ?? '';
             return (
               <div key={q.key} className="survey-question">
                 <label>{q.label}</label>
