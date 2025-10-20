@@ -3,7 +3,7 @@ import './NeighborhoodSurvey.css';
 import { supabase } from './supabaseClient';
 import { page1Questions, page2Questions } from './surveyQuestions';
 
-const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete }) => {
+const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUuid, onComplete }) => {
   const [page, setPage] = useState(1);
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -23,29 +23,26 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   };
 
   const handleSubmit = async () => {
-    const feature = {
-      type: 'Feature',
-      geometry: boundary,
-      properties: {
-        id: crypto.randomUUID(),
-        location: areaName,
-        years: parseInt(years),
-        timestamp: new Date().toISOString(),
-        neighborhood: areaName,
-        survey: responses,
-      },
+    if (!submissionUuid) {
+      alert('Missing submission ID. Cannot update survey.');
+      console.error('🚨 No submissionId provided to NeighborhoodSurvey.');
+      return;
+    }
+
+    const updatePayload = {
+      survey: responses,
+      comments: responses.additionalComments || '',
+      timestamp: new Date().toISOString(),
     };
 
-    const { error } = await supabase.from('submissions').insert([
-      {
-        geometry: feature.geometry,
-        properties: feature.properties,
-      },
-    ]);
+    const { error } = await supabase
+      .from('submissions')
+      .update({ properties: updatePayload })
+      .eq('uuid', submissionUuid);
 
     if (error) {
-      console.error('❌ Supabase insert error:', error.message);
-      alert('There was a problem saving your submission. Please try again.');
+      console.error('❌ Supabase update error:', error.message);
+      alert('There was a problem saving your survey. Please try again.');
       return;
     }
 
@@ -122,7 +119,8 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, onComplete })
   return (
     <div className="survey-modal" ref={modalRef}>
       <div ref={scrollAnchorRef} style={{ height: 0, overflow: 'hidden' }}></div>
-            {page === 1 && (
+
+      {page === 1 && (
         <>
           <h2>Survey: Your Neighborhood Experience</h2>
           <p>

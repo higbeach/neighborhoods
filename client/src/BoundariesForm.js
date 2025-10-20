@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 
-const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartOver, onSubmitted }) => {
+const BoundariesForm = ({
+  boundary,
+  location,
+  years,
+  areaName,
+  onReset,
+  onStartOver,
+  onSubmitted, // now expects an ID
+}) => {
   console.log('📦 BoundariesForm loaded');
 
   const [comments, setComments] = useState('');
@@ -14,24 +22,22 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
     }
 
     const coords = boundary.geometry?.coordinates;
-      const isValidPolygon =
-        boundary.geometry?.type === 'Polygon' &&
-        Array.isArray(coords) &&
-        coords.length > 0 &&
-        coords[0].length >= 4;
+    const isValidPolygon =
+      boundary.geometry?.type === 'Polygon' &&
+      Array.isArray(coords) &&
+      coords.length > 0 &&
+      coords[0].length >= 4;
 
-      if (!isValidPolygon) {
-        alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
-        return;
-      }
-
+    if (!isValidPolygon) {
+      alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
+      return;
+    }
 
     const ip = await fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => data.ip)
-      .catch(() => null); // fallback if it fails
+      .then((res) => res.json())
+      .then((data) => data.ip)
+      .catch(() => null);
 
-    // Build GeoJSON Feature (backend will add id + timestamp)
     const feature = {
       type: 'Feature',
       geometry: boundary.geometry,
@@ -40,19 +46,16 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
         years,
         comments,
         location,
-        ip_address: ip, // ✅ this is the new line
+        ip_address: ip,
       },
     };
 
     try {
-      const res = await fetch(
-        'https://neighborhoods-server.onrender.com/api/submissions',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(feature),
-        }
-      );
+      const res = await fetch('https://neighborhoods-server.onrender.com/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(feature),
+      });
 
       const text = await res.text();
       let data;
@@ -68,10 +71,16 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
         throw new Error(data.error || res.statusText);
       }
 
+     const insertedUuid = data.feature?.uuid || data.uuid;
+      if (!insertedUuid) {
+        console.warn('⚠️ No UUID returned from backend. Survey update may fail.');
+      }
+
+
       console.log('✅ Full backend response:', data);
       console.log('📍 Saved feature:', data.feature || '(no feature returned)');
 
-      onSubmitted(); // advance to thank‑you step
+      onSubmitted(insertedUuid);  // ✅ pass ID to parent
     } catch (err) {
       console.error('🚨 Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
@@ -85,7 +94,7 @@ const BoundariesForm = ({ boundary, location, years, areaName, onReset, onStartO
         <p>
           How would you say these boundaries have changed over the year? <br /><br />
           Does this neighborhood go by any other names, or has it gone by other names in the past? <br /><br />
-          Leave your commments here. (optional)<br />
+          Leave your comments here. (optional)<br />
           <textarea
             value={comments}
             onChange={(e) => setComments(e.target.value)}

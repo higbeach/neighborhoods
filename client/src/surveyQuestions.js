@@ -98,7 +98,7 @@ export const page1Questions = [
   },
   {
     key: 'satisfaction',
-    label: 'Taking everything into account, how satisfied are you with this neighborhood as a place to live?',
+    label: 'Taking everything into account, I am satisfied with this neighborhood as a place to live?',
     type: 'likert',
     options: likertOptions,
   },

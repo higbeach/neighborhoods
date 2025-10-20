@@ -26,6 +26,9 @@ const NeighborhoodMap = () => {
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
   const [drawingStarted, setDrawingStarted] = useState(false);
+  const [submissionUuid, setSubmissionUuid] = useState(null);
+
+
 
   // ✅ Scroll to top on step change
 useEffect(() => {
@@ -322,10 +325,12 @@ const startOver = () => {
           years={years}
           areaName={areaName}
           onStartOver={startOver}       // ✅ Full reset
-          onSubmitted={() => {
+            onSubmitted={(uuid) => {
+            setSubmissionUuid(uuid); // ✅ store the UUID
             setStep(5);
             setShowSurveyPrompt(true);
           }}
+
         />
       )}
 
@@ -350,10 +355,13 @@ const startOver = () => {
           years={years}
           areaName={areaName}
           boundary={boundary}
+          submissionUuid={submissionUuid} // ✅ pass the UUID
           onComplete={() => {
             setSurveyComplete(true);
           }}
         />
+
+
       )}
 
       {step === 5 && surveyComplete && (
