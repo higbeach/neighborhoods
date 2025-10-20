@@ -87,15 +87,25 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
   console.log('📦 Update payload:', updates);
 
   try {
-    const { error } = await supabase
+    // Fetch existing properties
+    const { data: existingRows, error: fetchError } = await supabase
       .from('submissions')
-      .update({ properties: updates })
+      .select('properties')
+      .eq('uuid', uuid)
+      .single();
+
+    if (fetchError) throw fetchError;
+    const existingProps = existingRows?.properties || {};
+
+    // Merge new updates into existing properties
+    const mergedProps = { ...existingProps, ...updates };
+
+    const { error: updateError } = await supabase
+      .from('submissions')
+      .update({ properties: mergedProps })
       .eq('uuid', uuid);
 
-    if (error) {
-      console.error('❌ Supabase update error:', error);
-      throw error;
-    }
+    if (updateError) throw updateError;
 
     res.json({ status: 'ok' });
   } catch (err) {
