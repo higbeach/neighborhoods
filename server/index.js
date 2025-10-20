@@ -18,7 +18,7 @@ app.use(cors({
     'https://ourlivingneighborhoods.org',
     'http://localhost:3000'
   ],
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'PATCH'],
   credentials: true
 }));
 
@@ -78,6 +78,37 @@ app.post('/api/submissions', async (req, res) => {
   }
 });
 
+// ✅ PATCH: update survey data for a submission
+app.patch('/api/submissions/:uuid', async (req, res) => {
+  const { uuid } = req.params;
+  const updates = req.body;
+
+  console.log('📬 Survey update received for UUID:', uuid);
+  console.log('📦 Update payload:', updates);
+
+  try {
+    const { error } = await supabase
+      .from('submissions')
+      .update({ properties: updates })
+      .eq('uuid', uuid);
+
+    if (error) {
+      console.error('❌ Supabase update error:', error);
+      throw error;
+    }
+
+    res.json({ status: 'ok' });
+  } catch (err) {
+    console.error('❌ Survey update failed:', {
+      message: err.message,
+      details: err.details,
+      hint: err.hint,
+      code: err.code,
+    });
+    res.status(500).json({ error: 'Failed to update survey' });
+  }
+});
+
 // ✅ GET: return all submissions from Supabase
 app.get('/api/submissions', async (req, res) => {
   try {
@@ -120,22 +151,15 @@ app.get('/api/submissions', async (req, res) => {
       type: 'FeatureCollection',
       features,
     });
-
-    console.log('📤 Insert payload:', {
-      geometry,
-      properties: { ...properties, id, timestamp },
-      ip_address: ip,
-    });
-
   } catch (err) {
-  console.error('❌ Supabase insert failed:', {
-    message: err.message,
-    details: err.details,
-    hint: err.hint,
-    code: err.code,
-  });
-  res.status(500).json({ error: 'Failed to save submission' });
-}
+    console.error('❌ Supabase insert failed:', {
+      message: err.message,
+      details: err.details,
+      hint: err.hint,
+      code: err.code,
+    });
+    res.status(500).json({ error: 'Failed to save submission' });
+  }
 });
 
 // ✅ GET: serve enriched blocks with votes

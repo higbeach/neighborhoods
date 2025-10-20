@@ -25,7 +25,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUui
   const handleSubmit = async () => {
     if (!submissionUuid) {
       alert('Missing submission ID. Cannot update survey.');
-      console.error('🚨 No submissionId provided to NeighborhoodSurvey.');
+      console.error('🚨 No submissionUuid provided to NeighborhoodSurvey.');
       return;
     }
 
@@ -35,20 +35,31 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUui
       timestamp: new Date().toISOString(),
     };
 
-    const { error } = await supabase
-      .from('submissions')
-      .update({ properties: updatePayload })
-      .eq('uuid', submissionUuid);
+    console.log('📤 Sending PATCH to backend for UUID:', submissionUuid);
+    console.log('📦 Payload:', updatePayload);
 
-    if (error) {
-      console.error('❌ Supabase update error:', error.message);
+    try {
+      const res = await fetch(`https://neighborhoods-server.onrender.com/api/submissions/${submissionUuid}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload),
+      });
+
+      const result = await res.json();
+      console.log('✅ Backend response:', result);
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Survey update failed');
+      }
+
+      setSubmitted(true);
+      onComplete();
+    } catch (err) {
+      console.error('❌ Survey update error:', err.message);
       alert('There was a problem saving your survey. Please try again.');
-      return;
     }
-
-    setSubmitted(true);
-    onComplete();
   };
+
 
   if (submitted) {
     return (
