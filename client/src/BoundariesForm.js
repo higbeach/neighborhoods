@@ -71,7 +71,13 @@ const BoundariesForm = ({
         throw new Error(parsed.error || res.statusText);
       }
 
-      const insertedUuid = parsed?.data?.[0]?.uuid;
+      console.log('📦 Raw backend data:', parsed.data);
+
+      const insertedUuid =
+        Array.isArray(parsed.data) && parsed.data.length > 0
+          ? parsed.data[0].uuid
+          : undefined;
+
       if (!insertedUuid) {
         console.warn('⚠️ No UUID returned from backend. Survey update may fail.');
       }
