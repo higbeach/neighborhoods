@@ -91,7 +91,7 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
     const { data: existingRows, error: fetchError } = await supabase
       .from('submissions')
       .select('properties')
-      .eq('id', uuid)
+      .eq('uuid', uuid)
       .limit(1);
 
     if (fetchError) throw fetchError;
@@ -105,13 +105,26 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
     // Merge new updates into existing properties
     const mergedProps = { ...existingProps, ...updates };
 
+    // 🔍 Confirm Supabase can match the UUID
+    const { data: matchTest, error: matchError } = await supabase
+      .from('submissions')
+      .select('uuid')
+      .eq('uuid', uuid);
+
+    console.log('🔍 Match test result:', { matchTest, matchError });
+
+    
     const { data: updateResult, error: updateError } = await supabase
       .from('submissions')
       .update({ properties: mergedProps })
-      .eq('id', uuid)
+      .eq('uuid', uuid)
       .select();
 
     console.log('🧾 Supabase update result:', { updateResult, updateError });
+
+    if (updateResult.length === 0) {
+     console.warn('⚠️ No rows were updated. UUID may not match any record.');
+}
 
     if (updateError) throw updateError;
 
