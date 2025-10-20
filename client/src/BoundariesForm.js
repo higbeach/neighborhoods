@@ -77,6 +77,9 @@ const BoundariesForm = ({
         Array.isArray(parsed.data) && parsed.data.length > 0
           ? parsed.data[0].uuid
           : undefined;
+          
+          console.log('📦 Inserted row:', parsed.data?.[0]);
+
 
       if (!insertedUuid) {
         console.warn('⚠️ No UUID returned from backend. Survey update may fail.');
