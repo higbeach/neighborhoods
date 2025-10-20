@@ -120,10 +120,22 @@ app.get('/api/submissions', async (req, res) => {
       type: 'FeatureCollection',
       features,
     });
+
+    console.log('📤 Insert payload:', {
+      geometry,
+      properties: { ...properties, id, timestamp },
+      ip_address: ip,
+    });
+
   } catch (err) {
-    console.error('❌ /api/submissions failed:', err);
-    res.status(500).json({ error: 'Failed to load submissions' });
-  }
+  console.error('❌ Supabase insert failed:', {
+    message: err.message,
+    details: err.details,
+    hint: err.hint,
+    code: err.code,
+  });
+  res.status(500).json({ error: 'Failed to save submission' });
+}
 });
 
 // ✅ GET: serve enriched blocks with votes
