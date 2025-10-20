@@ -7,7 +7,7 @@ const BoundariesForm = ({
   areaName,
   onReset,
   onStartOver,
-  onSubmitted, // now expects an ID
+  onSubmitted, // now expects a UUID
 }) => {
   console.log('📦 BoundariesForm loaded');
 
@@ -71,16 +71,15 @@ const BoundariesForm = ({
         throw new Error(data.error || res.statusText);
       }
 
-     const insertedUuid = data.feature?.uuid || data.uuid;
+      const insertedUuid = data?.[0]?.uuid;
       if (!insertedUuid) {
         console.warn('⚠️ No UUID returned from backend. Survey update may fail.');
       }
 
-
       console.log('✅ Full backend response:', data);
-      console.log('📍 Saved feature:', data.feature || '(no feature returned)');
+      console.log('📦 Inserted UUID:', insertedUuid);
 
-      onSubmitted(insertedUuid);  // ✅ pass ID to parent
+      onSubmitted(insertedUuid); // ✅ pass UUID to parent
     } catch (err) {
       console.error('🚨 Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
