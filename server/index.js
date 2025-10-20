@@ -105,10 +105,13 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
     // Merge new updates into existing properties
     const mergedProps = { ...existingProps, ...updates };
 
-    const { error: updateError } = await supabase
+    const { data: updateResult, error: updateError } = await supabase
       .from('submissions')
       .update({ properties: mergedProps })
-      .eq('uuid', uuid);
+      .eq('uuid', uuid)
+      .select();
+
+    console.log('🧾 Supabase update result:', { updateResult, updateError });
 
     if (updateError) throw updateError;
 
