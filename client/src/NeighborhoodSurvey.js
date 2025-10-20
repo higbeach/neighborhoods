@@ -249,9 +249,10 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUui
               value={responses.survey?.additionalComments || ''}
               onChange={(e) =>
                 handleChange('survey', {
-                  ...responses.survey,
-                  additionalComments: e.target.value,
-                })
+                ...responses.survey,
+                additionalComments: e.target.value
+              })
+
               }
               rows={6}
               style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
