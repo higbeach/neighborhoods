@@ -206,7 +206,7 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUui
         <>
           <h2>Please tell us a little more about you</h2>
           {page2Questions.map((q) => {
-            const value = responses[q.key] || '';
+            const value = responses[q.key] ?? '';
             return (
               <div key={q.key} className="survey-question">
                 <label>{q.label}</label>
