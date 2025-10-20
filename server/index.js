@@ -81,10 +81,10 @@ app.post('/api/submissions', async (req, res) => {
 // ✅ PATCH: update survey data for a submission
 app.patch('/api/submissions/:uuid', async (req, res) => {
   const { uuid } = req.params;
-  const updates = req.body;
+  const { survey, comments, timestamp, ...restUpdates } = req.body;
 
   console.log('📬 Survey update received for UUID:', uuid);
-  console.log('📦 Update payload:', updates);
+  console.log('📦 Update payload:', req.body);
 
   try {
     // Fetch existing properties
@@ -102,12 +102,24 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
 
     console.log('🔍 Existing properties:', existingProps);
 
+    console.log('📦 Incoming update pieces:', {
+      survey,
+      comments,
+      timestamp,
+      restUpdates
+    });
+
     // Merge new updates into existing properties
-    const mergedProps = {
-      ...existingProps,
-      ...restUpdates,
-      comments: existingProps.comments ?? null
-    };
+      const mergedProps = {
+    ...existingProps,
+    ...restUpdates,
+    survey,
+    comments: comments ?? existingProps.comments ?? null,
+    timestamp: timestamp ?? existingProps.timestamp ?? null
+  };
+
+  // ✅ Optional log goes right here:
+    console.log('🧬 Final mergedProps:', mergedProps);
 
 
     // 🔍 Confirm Supabase can match the UUID
