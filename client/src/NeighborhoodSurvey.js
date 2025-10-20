@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './NeighborhoodSurvey.css';
-import { supabase } from './supabaseClient';
 import { page1Questions, page2Questions } from './surveyQuestions';
 
 const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUuid, onComplete }) => {
