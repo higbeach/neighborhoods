@@ -247,13 +247,15 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUui
             </label>
             <textarea
               value={responses.survey?.additionalComments || ''}
-              onChange={(e) =>
-                handleChange('survey', {
-                ...responses.survey,
-                additionalComments: e.target.value
-              })
-
-              }
+             onChange={(e) =>
+              setResponses((prev) => ({
+                ...prev,
+                survey: {
+                  ...prev.survey,
+                  additionalComments: e.target.value
+                }
+              }))
+            }
               rows={6}
               style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
             />
