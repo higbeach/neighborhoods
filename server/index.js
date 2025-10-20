@@ -113,22 +113,31 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
 
     console.log('🔍 Match test result:', { matchTest, matchError });
 
-    
+    // ✅ Perform the update
     const { data: updateResult, error: updateError } = await supabase
       .from('submissions')
       .update({ properties: mergedProps })
-      .eq('uuid', uuid)
-      .select();
-
-    console.log('🧾 Supabase update result:', { updateResult, updateError });
-
-    if (updateResult.length === 0) {
-     console.warn('⚠️ No rows were updated. UUID may not match any record.');
-}
+      .match({ uuid });
 
     if (updateError) throw updateError;
 
-    console.log('✅ Properties updated successfully');
+    console.log('🧾 Supabase update result:', updateResult);
+
+    if (!updateResult || updateResult.length === 0) {
+      console.warn('⚠️ No rows were updated. UUID may not match any record.');
+    } else {
+      console.log('✅ Properties updated successfully');
+    }
+
+    // Confirm final row state
+    const { data: confirmRow, error: confirmError } = await supabase
+      .from('submissions')
+      .select('properties')
+      .eq('uuid', uuid)
+      .limit(1);
+
+    console.log('🔍 Confirmed updated row:', confirmRow);
+
     res.json({ status: 'ok' });
   } catch (err) {
     console.error('❌ Survey update failed:', {
@@ -140,6 +149,7 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
     res.status(500).json({ error: 'Failed to update survey' });
   }
 });
+
 
 // ✅ GET: return all submissions from Supabase
 app.get('/api/submissions', async (req, res) => {
