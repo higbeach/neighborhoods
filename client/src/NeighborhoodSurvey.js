@@ -29,8 +29,8 @@ const NeighborhoodSurvey = ({ location, years, areaName, boundary, submissionUui
     }
 
     const updatePayload = {
-      survey: responses.survey || {},       // includes additionalComments and all survey answers
-      comments: responses.comments || '',   // boundary comment from earlier
+      survey: responses,
+      comments: responses.additionalComments || '',
       timestamp: new Date().toISOString(),
     };
 
