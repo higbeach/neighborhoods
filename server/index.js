@@ -92,10 +92,15 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
       .from('submissions')
       .select('properties')
       .eq('uuid', uuid)
-      .single();
+      .limit(1);
 
     if (fetchError) throw fetchError;
-    const existingProps = existingRows?.properties || {};
+
+    const existingProps = Array.isArray(existingRows) && existingRows.length > 0
+      ? existingRows[0].properties
+      : {};
+
+    console.log('🔍 Existing properties:', existingProps);
 
     // Merge new updates into existing properties
     const mergedProps = { ...existingProps, ...updates };
@@ -107,6 +112,7 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
 
     if (updateError) throw updateError;
 
+    console.log('✅ Properties updated successfully');
     res.json({ status: 'ok' });
   } catch (err) {
     console.error('❌ Survey update failed:', {
