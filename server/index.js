@@ -103,7 +103,16 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
     console.log('🔍 Existing properties:', existingProps);
 
     // Merge new updates into existing properties
-    const mergedProps = { ...existingProps, ...updates };
+      const mergedProps = {
+        ...existingProps,
+        ...updates,
+        comments: existingProps.comments ?? null,
+        surveycomments:
+          updates.comments && updates.comments.trim().length > 0
+            ? updates.comments
+            : null,
+      };
+
 
     // 🔍 Confirm Supabase can match the UUID
     const { data: matchTest, error: matchError } = await supabase
