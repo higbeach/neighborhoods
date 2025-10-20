@@ -110,13 +110,17 @@ app.patch('/api/submissions/:uuid', async (req, res) => {
     });
 
     // Merge new updates into existing properties
-      const mergedProps = {
-    ...existingProps,
-    ...restUpdates,
-    survey,
-    comments: comments ?? existingProps.comments ?? null,
-    timestamp: timestamp ?? existingProps.timestamp ?? null
-  };
+   const mergedProps = {
+      ...existingProps,
+      ...restUpdates,
+      survey,
+      comments:
+        comments && comments.trim().length > 0
+          ? comments
+          : existingProps.comments ?? null,
+      timestamp: timestamp ?? existingProps.timestamp ?? null
+    };
+
 
   // ✅ Optional log goes right here:
     console.log('🧬 Final mergedProps:', mergedProps);
