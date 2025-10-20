@@ -58,25 +58,25 @@ const BoundariesForm = ({
       });
 
       const text = await res.text();
-      let data;
+      let parsed;
       try {
-        data = JSON.parse(text);
+        parsed = JSON.parse(text);
       } catch {
         console.error('❌ Server did not return valid JSON:', text);
         throw new Error(`Server did not return JSON: ${text}`);
       }
 
       if (!res.ok) {
-        console.error('❌ Submission failed:', data.error || res.statusText);
-        throw new Error(data.error || res.statusText);
+        console.error('❌ Submission failed:', parsed.error || res.statusText);
+        throw new Error(parsed.error || res.statusText);
       }
 
-      const insertedUuid = data?.[0]?.uuid;
+      const insertedUuid = parsed?.data?.[0]?.uuid;
       if (!insertedUuid) {
         console.warn('⚠️ No UUID returned from backend. Survey update may fail.');
       }
 
-      console.log('✅ Full backend response:', data);
+      console.log('✅ Full backend response:', parsed);
       console.log('📦 Inserted UUID:', insertedUuid);
 
       onSubmitted(insertedUuid); // ✅ pass UUID to parent
