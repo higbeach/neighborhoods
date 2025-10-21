@@ -203,14 +203,6 @@ const startOver = () => {
         {/* Map container */}
         <div ref={mapContainer} className="map-container" />
 
-        {/* Custom map controls, only show during drawing step */}
-        {step === 3 && (
-          <div className="map-controls">
-            <button onClick={validateAndFinishDrawing}>Finish Drawing</button>
-            <button onClick={clearBoundary}>Clear Drawing</button>
-          </div>
-        )}
-
         {step === 0 && (
           <div className="overlay overlay-enter">
             <h2>Help Us Map Our Neighborhood.</h2>
@@ -293,39 +285,46 @@ const startOver = () => {
             2. Tap/click again to add more points<br />
             3. Double click/tap to close the shape.<br />
             4. Click the "Finish Drawing" button when you are done.<br /><br />
-            <strong>Note:</strong> To be included, the entirety of a block needs to be within your neighborhood boundary. Zooming in or drawing your boundary along street centerlines will increase accuracy.
+            <strong>Note:</strong> To be included, the entirety of a block needs to be within your neighborhood boundary.
           </p>
           <div className="overlay-actions">
-            <button onClick={() => {
-              drawRef.current.deleteAll();
-              drawRef.current.changeMode('draw_polygon');
-              setDrawingStarted(true);
-              setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }, 100);
-            }}>
+            <button
+              onClick={() => {
+                drawRef.current.deleteAll();
+                drawRef.current.changeMode('draw_polygon');
+                setDrawingStarted(true); // ✅ flip the flag
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
+              }}
+            >
               Start Drawing
             </button>
-
           </div>
         </div>
       )}
 
-    {step === 3 && drawingStarted && (
-      <div className="drawing-controls-top-left">
-        <button
-          onClick={validateAndFinishDrawing}
-          onTouchStart={(e) => {
-            e.preventDefault(); // prevent double trigger
-            validateAndFinishDrawing();
-          }}
-          disabled={!boundary}
-        >
-          Finish Drawing
-        </button>
-        <button className="secondary" onClick={clearBoundary}>Clear Drawing</button>
-      </div>
-    )}
+      {step === 3 && drawingStarted && (
+        <div className="map-controls">
+          <button
+            onClick={validateAndFinishDrawing}
+            onTouchStart={(e) => {
+              e.preventDefault(); // prevent double trigger on iOS
+              validateAndFinishDrawing();
+            }}
+            disabled={!boundary}
+          >
+            Finish Drawing
+          </button>
+          <button
+            className="secondary"
+            onClick={clearBoundary}
+          >
+            Clear Drawing
+          </button>
+        </div>
+      )}
+
 
       {step === 4 && (
         <BoundariesForm

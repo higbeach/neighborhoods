@@ -233,9 +233,22 @@ body {
   font-size: 14px;
   border: none;
   border-radius: 4px;
-  background: #fff;
+  background: #0074D9; /* civic blue */
+  color: white;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   cursor: pointer;
+}
+
+.map-controls button:disabled {
+  background: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
+}
+
+.map-controls button.secondary {
+  background: #ffffff;
+  color: #333333;
+  border: 1px solid #ccc;
 }
 
 .map-controls button:active {
