@@ -304,7 +304,7 @@ const startOver = () => {
               e.preventDefault(); // prevent double trigger on iOS
               validateAndFinishDrawing();
             }}
-            disabled={!boundary}
+           // disabled={!boundary}
           >
             Finish Drawing
           </button>
