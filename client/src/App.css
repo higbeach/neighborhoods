@@ -255,6 +255,7 @@ body {
   background: #eee;
 }
 
+/* */
 /* Hide any leftover Mapbox Draw UI buttons */
 .mapbox-gl-draw_ctrl-draw-btn,
 .mapbox-gl-draw_ctrl-draw-btns,
