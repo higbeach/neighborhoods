@@ -199,22 +199,31 @@ const startOver = () => {
   handleReset(); // reuse your full reset logic
 };
     return (
-    <div className="map-wrapper">
-      <div ref={mapContainer} className="map-container" />
+      <div className="map-wrapper">
+        {/* Map container */}
+        <div ref={mapContainer} className="map-container" />
 
-      {step === 0 && (
-        <div className="overlay overlay-enter">
-          <h2>Help Us Map Our Neighborhood.</h2>
-          <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
-          <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
-          <p>Please use <a href="https://www.convenepllc.com/contact-us/" target="_blank" rel="noopener noreferrer">
-              this contact form
-            </a> for any questions or feedback.
-          </p>
-           <div className="overlay-actions">
-            <button onClick={() => setStep(1)}>Let's Get Started</button>
-           </div>
-        </div>
+        {/* Custom map controls, only show during drawing step */}
+        {step === 3 && (
+          <div className="map-controls">
+            <button onClick={validateAndFinishDrawing}>Finish Drawing</button>
+            <button onClick={clearBoundary}>Clear Drawing</button>
+          </div>
+        )}
+
+        {step === 0 && (
+          <div className="overlay overlay-enter">
+            <h2>Help Us Map Our Neighborhood.</h2>
+            <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
+            <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
+            <p>Please use <a href="https://www.convenepllc.com/contact-us/" target="_blank" rel="noopener noreferrer">
+                this contact form
+              </a> for any questions or feedback.
+            </p>
+            <div className="overlay-actions">
+              <button onClick={() => setStep(1)}>Let's Get Started</button>
+            </div>
+          </div>
       )}
 
       {step === 1 && (
