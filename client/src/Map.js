@@ -160,33 +160,25 @@ useEffect(() => {
   };
 
   const validateAndFinishDrawing = () => {
-    const drawn = drawRef.current?.getAll();
-    const feature = drawn?.features?.[0];
-    const geometry = feature?.geometry;
+  const drawn = drawRef.current?.getAll();
+  const feature = drawn?.features?.[0];
+  const geometry = feature?.geometry;
 
-    if (!geometry || geometry.type !== 'Polygon') {
-      alert('Please draw a polygon before finishing.');
-      return;
-    }
+  if (!geometry || geometry.type !== 'Polygon') {
+    alert('Please draw a polygon before finishing.');
+    return;
+  }
 
-    const coords = geometry.coordinates?.[0];
-    if (!coords || coords.length < 4) {
-      alert('Please double-click/tap to close the boundary.');
-      return;
-    }
+  const coords = geometry.coordinates?.[0];
+  if (!coords || coords.length < 3) {
+    alert('Please add at least three points to define a boundary.');
+    return;
+  }
 
-    const first = coords[0];
-    const last = coords[coords.length - 1];
-    const isClosed = first[0] === last[0] && first[1] === last[1];
-
-    if (!isClosed) {
-      alert('Please double-click/tap to close the boundary.');
-      return;
-    }
-
-    setBoundary(feature);
-    setStep(4);
-  };
+  setBoundary(feature);
+  setDrawingStarted(false); // ✅ hide drawing buttons
+  setStep(4);               // ✅ move to next step
+};
 
   const clearBoundary = () => {
   drawRef.current.deleteAll();
