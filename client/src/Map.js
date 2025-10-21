@@ -49,8 +49,8 @@ useEffect(() => {
     });
 
     drawRef.current = new MapboxDraw({
-      displayControlsDefault: false,
-      controls: { polygon: true, trash: true },
+      displayControlsDefault: false, // disables all default controls
+      controls: {}                   // explicitly no controls
     });
 
     mapRef.current.addControl(drawRef.current);
