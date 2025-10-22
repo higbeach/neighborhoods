@@ -7,7 +7,7 @@ const DrawOpenPolygon = {
 
     const line = this.newFeature({
       type: 'Feature',
-      properties: {},
+      properties: { meta: 'feature' },
       geometry: { type: 'LineString', coordinates: [] }
     });
 
@@ -25,6 +25,9 @@ const DrawOpenPolygon = {
 
     const coords = state.line.coordinates;
 
+    // Expanded tolerance (~50m at Seattle latitude)
+    const tolerance = 0.0005;
+
     // If user clicks near the first point, close polygon
     if (coords.length > 2) {
       const first = coords[0];
@@ -32,17 +35,25 @@ const DrawOpenPolygon = {
       const dy = first[1] - e.lngLat.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < 0.00015) {
+      if (dist < tolerance) {
         console.log('✅ Closing polygon');
-        const polygon = {
+
+        const polygon = this.newFeature({
           type: 'Feature',
-          properties: {},
+          properties: { meta: 'final' },
           geometry: {
             type: 'Polygon',
             coordinates: [[...coords, first]]
           }
-        };
-        this.map.fire('draw.create', { features: [polygon] });
+        });
+
+        this.addFeature(polygon);
+
+        // Fire events
+        this.map.fire('draw.create', { features: [polygon.toGeoJSON()] });
+        this.map.fire('draw.finish', { features: [polygon.toGeoJSON()] });
+
+        // Exit drawing mode
         this.changeMode('simple_select', { featureIds: [] });
         return;
       }
@@ -64,7 +75,7 @@ const DrawOpenPolygon = {
       const dy = first[1] - e.lngLat.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < 0.00015) {
+      if (dist < 0.0005) {
         this.map.getCanvas().style.cursor = 'pointer';
       } else {
         this.map.getCanvas().style.cursor = 'default';
@@ -76,6 +87,18 @@ const DrawOpenPolygon = {
     // Always display the feature itself
     display(geojson);
 
+    // Draw vertices as points with unique IDs
+    if (geojson.geometry.type === 'LineString') {
+      geojson.geometry.coordinates.forEach((coord, idx) => {
+        display({
+          id: `${geojson.id}.${idx}`,
+          type: 'Feature',
+          properties: { meta: 'vertex', parent: geojson.id, coord_path: idx },
+          geometry: { type: 'Point', coordinates: coord }
+        });
+      });
+    }
+
     // Draw ghost line if this is our active line
     if (
       state.currentMousePosition &&
@@ -85,6 +108,7 @@ const DrawOpenPolygon = {
       const coords = geojson.geometry.coordinates;
       if (coords.length > 0) {
         const ghost = {
+          id: `${geojson.id}.ghost`,
           type: 'Feature',
           properties: { meta: 'ghost' },
           geometry: {

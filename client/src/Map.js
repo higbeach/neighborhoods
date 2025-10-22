@@ -103,10 +103,10 @@ const NeighborhoodMap = () => {
     paint: { 'line-color': '#ff0000', 'line-width': 3 },
   },
   {
-  id: 'gl-draw-line-active',
-  type: 'line',
-  filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
-  paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+    id: 'gl-draw-line-active',
+    type: 'line',
+    filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
+    paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
   },
   {
     id: 'gl-draw-vertex-halo',
@@ -126,6 +126,7 @@ const NeighborhoodMap = () => {
     filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
     paint: { 'line-color': '#ff0000', 'line-dasharray': [0.5, 2], 'line-width': 2 }
   }
+
 ],
 
     });
