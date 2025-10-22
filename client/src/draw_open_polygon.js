@@ -4,12 +4,18 @@
 const DrawOpenPolygon = {
   onSetup() {
     console.log('🎬 onSetup fired');
+
+    const line = {
+      type: 'Feature',
+      properties: { id: String(Date.now()) },
+      geometry: { type: 'LineString', coordinates: [] }
+    };
+
+    // ✅ Register the feature with Draw’s internal store
+    this.addFeature(line);
+
     return {
-      line: {
-        type: 'Feature',
-        properties: { id: String(Date.now()) },
-        geometry: { type: 'LineString', coordinates: [] }
-      },
+      line,
       cursor: 'default',
       currentMousePosition: null
     };
@@ -30,7 +36,7 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
-    console.log('🎨 toDisplayFeatures called');
+    console.log('🎨 toDisplayFeatures called for', geojson);
 
     if (!state.line) return;
 
