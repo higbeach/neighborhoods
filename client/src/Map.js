@@ -383,7 +383,6 @@ const NeighborhoodMap = () => {
         location={location}
         years={years}
         areaName={areaName}
-        comments={comments}
         onStartOver={startOver}
         onSubmitted={(uuid) => {
           setSubmissionUuid(uuid);
