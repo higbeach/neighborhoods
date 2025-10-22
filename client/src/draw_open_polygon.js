@@ -1,7 +1,4 @@
 // src/draw_open_polygon.js
-// A debug-friendly custom mode for MapboxDraw that behaves like "open polygon"
-// until the user clicks back on the starting point.
-
 const DrawOpenPolygon = {
   onSetup() {
     console.log('🎬 onSetup fired');
@@ -13,12 +10,13 @@ const DrawOpenPolygon = {
           type: 'LineString',
           coordinates: []
         }
-      }
+      },
+      cursor: 'default'
     };
   },
 
-  clickAnywhere(state, e) {
-    console.log('🖱 clickAnywhere fired at', e.lngLat);
+  onClick(state, e) {
+    console.log('🖱 onClick fired at', e.lngLat);
 
     const coords = state.line.geometry.coordinates;
 
@@ -32,7 +30,8 @@ const DrawOpenPolygon = {
 
       console.log('🔍 distance to first point:', dist);
 
-      if (dist < 0.0001) {
+      // ✅ Increased tolerance for easier closing (about ~10m at lat ~47°)
+      if (dist < 0.00015) {
         console.log('✅ Closing polygon');
         const polygon = {
           type: 'Feature',
@@ -54,15 +53,55 @@ const DrawOpenPolygon = {
     this.map.fire('draw.update', { features: [state.line] });
   },
 
+  onMouseMove(state, e) {
+    const coords = state.line.geometry.coordinates;
+    if (coords.length > 0) {
+      const first = coords[0];
+      const dx = first[0] - e.lngLat.lng;
+      const dy = first[1] - e.lngLat.lat;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      // ✅ Change cursor when hovering near starting point
+      if (dist < 0.00015) {
+        if (state.cursor !== 'pointer') {
+          this.map.getCanvas().style.cursor = 'pointer';
+          state.cursor = 'pointer';
+        }
+      } else {
+        if (state.cursor !== 'default') {
+          this.map.getCanvas().style.cursor = 'default';
+          state.cursor = 'default';
+        }
+      }
+    }
+  },
+
   toDisplayFeatures(state, geojson, display) {
-    // Always display the line being drawn
-    if (state.line && geojson.geometry.type === 'LineString') {
+    if (state.line) {
       display(state.line);
+
+      // Also display each vertex as a Point feature
+      state.line.geometry.coordinates.forEach((coord, idx) => {
+        display({
+          type: 'Feature',
+          properties: {
+            meta: 'vertex',
+            parent: state.line.properties.id,
+            coord_path: idx
+          },
+          geometry: {
+            type: 'Point',
+            coordinates: coord
+          }
+        });
+      });
     }
   },
 
   onStop(state) {
     console.log('🛑 onStop fired');
+    // Reset cursor when mode ends
+    this.map.getCanvas().style.cursor = 'default';
   }
 };
 
