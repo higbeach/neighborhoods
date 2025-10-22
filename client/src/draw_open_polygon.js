@@ -38,7 +38,7 @@ const DrawOpenPolygon = {
         console.log('✅ Closing polygon');
         const polygon = {
           type: 'Feature',
-          properties: {},
+          properties: { meta: 'final' },
           geometry: {
             type: 'Polygon',
             coordinates: [[...coords, first]]
@@ -81,54 +81,37 @@ const DrawOpenPolygon = {
     }
   },
 
-   toDisplayFeatures(state, geojson, display) {
-  if (state.line && state.line.geometry.coordinates.length > 0) {
+  toDisplayFeatures(state, geojson, display) {
+    if (!state.line) return;
+
     // Draw the active line
-    display({
-      type: 'Feature',
-      properties: {
-        id: state.line.properties.id,
-        active: 'true',
-        meta: 'feature'   // <-- important
-      },
-      geometry: state.line.geometry
-    });
-
-    // Draw vertices
-    state.line.geometry.coordinates.forEach((coord, idx) => {
+    if (state.line.geometry.coordinates.length > 0) {
       display({
         type: 'Feature',
-        properties: {
-          meta: 'vertex',   // <-- matches your vertex styles
-          parent: state.line.properties.id,
-          coord_path: idx,
-          active: 'true'
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: coord
-        }
+        properties: { meta: 'feature' },
+        geometry: state.line.geometry
       });
-    });
 
-    // Draw ghost line
-    if (state.currentMousePosition) {
-      const last = state.line.geometry.coordinates[state.line.geometry.coordinates.length - 1];
-      display({
-        type: 'Feature',
-        properties: {
-          meta: 'ghost',   // <-- matches your ghost style
-          parent: state.line.properties.id
-        },
-        geometry: {
-          type: 'LineString',
-          coordinates: [last, state.currentMousePosition]
-        }
+      // Draw vertices
+      state.line.geometry.coordinates.forEach((coord, idx) => {
+        display({
+          type: 'Feature',
+          properties: { meta: 'vertex', coord_path: idx },
+          geometry: { type: 'Point', coordinates: coord }
+        });
       });
+
+      // Draw ghost line
+      if (state.currentMousePosition) {
+        const last = state.line.geometry.coordinates[state.line.geometry.coordinates.length - 1];
+        display({
+          type: 'Feature',
+          properties: { meta: 'ghost' },
+          geometry: { type: 'LineString', coordinates: [last, state.currentMousePosition] }
+        });
+      }
     }
-  }
-}
-,  // ✅ comma here
+  },
 
   onStop(state) {
     console.log('🛑 onStop fired');
