@@ -103,24 +103,29 @@ const NeighborhoodMap = () => {
     paint: { 'line-color': '#ff0000', 'line-width': 3 },
   },
   {
-    id: 'gl-draw-line-active',
-    type: 'line',
-    filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
-    paint: { 'line-color': '#ff0000', 'line-width': 2 }
+  id: 'gl-draw-line-active',
+  type: 'line',
+  filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
+  paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+  },
+  {
+    id: 'gl-draw-vertex-halo',
+    type: 'circle',
+    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+    paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
   },
   {
     id: 'gl-draw-vertex-active',
     type: 'circle',
     filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-    paint: { 'circle-radius': 4, 'circle-color': '#ff0000' }
+    paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
   },
   {
     id: 'gl-draw-ghost-line',
     type: 'line',
     filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
-    paint: { 'line-color': '#ff6666', 'line-dasharray': [0.2, 2], 'line-width': 2 }
-  },
-
+    paint: { 'line-color': '#ff0000', 'line-dasharray': [0.5, 2], 'line-width': 2 }
+  }
 ],
 
     });
