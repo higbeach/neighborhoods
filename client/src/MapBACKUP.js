@@ -16,7 +16,7 @@ const NeighborhoodMap = () => {
   const drawRef = useRef(null);
   const markerRef = useRef(null);
 
-  const [step, setStep] = useState('3A'); // start at instructions
+  const [step, setStep] = useState(0);
   const [location, setLocation] = useState(null);
   const [years, setYears] = useState(0);
   const [areaName, setAreaName] = useState('');
@@ -27,7 +27,7 @@ const NeighborhoodMap = () => {
   const [surveyComplete, setSurveyComplete] = useState(false);
   const [drawingStarted, setDrawingStarted] = useState(false);
   const [submissionUuid, setSubmissionUuid] = useState(null);
-  const [comments, setComments] = useState('');
+
 
 
   // ✅ Scroll to top on step change
@@ -54,52 +54,10 @@ useEffect(() => {
       'bottom-right'
     );
 
-   drawRef.current = new MapboxDraw({
-  displayControlsDefault: false,
-  controls: {},
-  styles: [
-    // Polygon fill (light red, semi-transparent)
-    {
-      id: 'gl-draw-polygon-fill',
-      type: 'fill',
-      filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-      paint: {
-        'fill-color': '#ff0000',
-        'fill-opacity': 0.1
-      }
-    },
-    // Polygon outline (bold red)
-    {
-      id: 'gl-draw-polygon-stroke-active',
-      type: 'line',
-      filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-      paint: {
-        'line-color': '#ff0000',
-        'line-width': 3
-      }
-    },
-    // Vertex halo (white outline around points)
-    {
-      id: 'gl-draw-polygon-and-line-vertex-halo-active',
-      type: 'circle',
-      filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
-      paint: {
-        'circle-radius': 6,
-        'circle-color': '#ffffff'
-      }
-    },
-    // Vertex points (solid red dots)
-    {
-      id: 'gl-draw-polygon-and-line-vertex-active',
-      type: 'circle',
-      filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
-      paint: {
-        'circle-radius': 4,
-        'circle-color': '#ff0000'
-      }
-    }
-  ]
-});
+    drawRef.current = new MapboxDraw({
+      displayControlsDefault: false, // disables all default controls
+      controls: {}                   // explicitly no controls
+    });
 
     mapRef.current.addControl(drawRef.current);
 
@@ -156,35 +114,13 @@ useEffect(() => {
   const updateBoundary = () => {
     const data = drawRef.current.getAll();
     if (data.features.length > 0) {
-      const feature = data.features[0];
-      setBoundary(feature);
-
-      // Check if polygon is closed
-      if (feature.geometry.type === 'Polygon') {
-        const coords = feature.geometry.coordinates?.[0];
-        if (coords && coords.length > 3) {
-          const first = coords[0];
-          const last = coords[coords.length - 1];
-          const isClosed = first[0] === last[0] && first[1] === last[1];
-
-          if (isClosed && step === '3B') {
-            // ✅ Advance to confirmation step
-            setDrawingStarted(false);
-            setStep('3C');
-          }
-        }
-      }
+      console.log('✅ Boundary created:', data.features[0]);
+      setBoundary(data.features[0]);
     } else {
+      console.log('⚠️ Boundary cleared or invalid');
       setBoundary(null);
     }
   };
-
-useEffect(() => {
-  console.log('🧭 Survey render check — step:', step);
-  console.log('🧭 showSurveyForm:', showSurveyForm);
-  console.log('🧭 surveyComplete:', surveyComplete);
-}, [step, showSurveyForm, surveyComplete]);
-
 
   const handleConfirmLocation = () => {
     if (!mapRef.current) return;
@@ -229,16 +165,45 @@ useEffect(() => {
     }
   };
 
+  const validateAndFinishDrawing = () => {
+    const drawn = drawRef.current?.getAll();
+    const feature = drawn?.features?.[0];
+    const geometry = feature?.geometry;
+
+    if (!geometry || geometry.type !== 'Polygon') {
+      alert('Please draw a polygon before finishing.');
+      return;
+    }
+
+    const coords = geometry.coordinates?.[0];
+    if (!coords || coords.length < 4) {
+      alert('Please double-click/tap to close the boundary.');
+      return;
+    }
+
+    const first = coords[0];
+    const last = coords[coords.length - 1];
+    const isClosed = first[0] === last[0] && first[1] === last[1];
+
+    if (!isClosed) {
+      alert('Please double-click/tap to close the boundary.');
+      return;
+    }
+
+  setBoundary(feature);
+  setDrawingStarted(false); // ✅ hide drawing buttons
+  setStep(4);               // ✅ move to next step
+};
+
   const clearBoundary = () => {
   drawRef.current.deleteAll();
   setBoundary(null);
   drawRef.current.changeMode('draw_polygon'); // ✅ Re-enable drawing
-  setStep('3B'); // or '3A' if you want to reset all the way back
+  setStep(3); // stay on drawing step
 };
 
 const startOver = () => {
   handleReset(); // reuse your full reset logic
-    setStep('3A');
 };
     return (
       <div className="map-wrapper">
@@ -312,117 +277,77 @@ const startOver = () => {
           <p>{years} years</p>
 
           <div className="overlay-actions">
-            <button onClick={() => setStep('3A')} disabled={!areaName}>Next</button>
+            <button onClick={() => setStep(3)} disabled={!areaName}>Next</button>
             <button className="secondary" onClick={handleReset}>Reset</button>
           </div>
         </div>
       )}
 
- {/* --- Step 3A: Drawing Instructions --- */}
-{step === '3A' && (
-  <div className="overlay overlay-enter">
-    <h2>Where would you mark this neighborhood’s boundaries?</h2>
-    <div className="drawing-animation">
-      {/* You can drop in a looping GIF or SVG here */}
-      <p className="animation-caption">Tap to add points, then click the first point again to close the shape.</p>
-    </div>
-    <div className="overlay-actions">
-      <button
-        onClick={() => {
-          drawRef.current.deleteAll();
-          drawRef.current.changeMode('draw_polygon');
-          setDrawingStarted(true);
-          setStep('3B');
-          setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }, 100);
-        }}
-      >
-        I’m ready to draw
-      </button>
-    </div>
-  </div>
-)}
+      {step === 3 && !drawingStarted && (
+        <div className="overlay overlay-enter">
+          <h2>Where would you mark this neighborhood’s boundaries?</h2>
+          <p>
+            Here's how to draw: <br /><br />
+            1. Tap/click to add a starting point<br />
+            2. Tap/click again to add more points<br />
+            3. Double click/tap to close the shape.<br />
+            4. Click the "Finish Drawing" button when you are done.<br /><br />
+            <strong>Note:</strong> To be included, the entirety of a block needs to be within your neighborhood boundary.
+          </p>
+          <div className="overlay-actions">
+            <button
+              onClick={() => {
+                drawRef.current.deleteAll();
+                drawRef.current.changeMode('draw_polygon');
+                setDrawingStarted(true); // ✅ flip the flag
+                setTimeout(() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
+              }}
+            >
+              Start Drawing
+            </button>
+          </div>
+        </div>
+      )}
 
-{/* --- Step 3B: Drawing Step --- */}
-{step === '3B' && drawingStarted && (
-  <div className="map-controls">
-    <button onClick={() => {
-      // Undo last point
-      const data = drawRef.current.getAll();
-      if (data.features.length > 0) {
-        const coords = data.features[0].geometry.coordinates[0];
-        coords.pop();
-        drawRef.current.set({ type: 'FeatureCollection', features: [data.features[0]] });
-      }
-    }}>
-      Undo
-    </button>
-    <button className="secondary" onClick={() => setStep('3A')}>
-      Show Instructions
-    </button>
-  </div>
-)}
+      {step === 3 && drawingStarted && (
+        <div className="map-controls">
+          <button
+            onClick={validateAndFinishDrawing}
+            onTouchStart={(e) => {
+              e.preventDefault(); // prevent double trigger on iOS
+              validateAndFinishDrawing();
+            }}
+            disabled={!boundary}
+          >
+            Finish Drawing
+          </button>
+          <button
+            className="secondary"
+            onClick={clearBoundary}
+          >
+            Clear Drawing
+          </button>
+        </div>
+      )}
 
-{/* --- Step 3C: Confirmation ("Looking Good!") --- */}
-{step === '3C' && (
-  <div className="overlay overlay-enter">
-    <h2>Looking good!</h2>
-    <p>If this looks right, press Next. To try again, press Start Over.</p>
-    <div className="overlay-actions">
-      <button onClick={() => setStep('3D')}>Next</button>
-      <button
-        className="secondary"
-        onClick={() => {
-          drawRef.current.deleteAll();
-          setBoundary(null);
-          setStep('3A');
-        }}
-      >
-        Start Over
-      </button>
-    </div>
-  </div>
-)}
 
-{/* --- Step 3D: Additional Comments --- */}
-{step === '3D' && (
-  <div className="overlay overlay-enter">
-    <h2>Any additional comments?</h2>
-    <textarea
-      value={comments}
-      onChange={(e) => setComments(e.target.value)}
-      placeholder="Add your thoughts here..."
-    />
-    <div className="overlay-actions">
-      <button
-        onClick={() => {
-          // Save boundary + comments
-          setStep(4);
-        }}
-      >
-        Submit
-      </button>
-    </div>
-  </div>
-)}
+      {step === 4 && (
+        <BoundariesForm
+          boundary={boundary}
+          location={location}
+          years={years}
+          areaName={areaName}
+          onStartOver={startOver}       // ✅ Full reset
+            onSubmitted={(uuid) => {
+            setSubmissionUuid(uuid); // ✅ store the UUID
+            setStep(5);
+            setShowSurveyPrompt(true);
+          }}
 
-{/* --- Step 4: Boundaries Form --- */}
-{step === 4 && (
-  <BoundariesForm
-    boundary={boundary}
-    location={location}
-    years={years}
-    areaName={areaName}
-    comments={comments}
-    onStartOver={startOver}
-    onSubmitted={(uuid) => {
-      setSubmissionUuid(uuid);
-      setStep(5);
-      setShowSurveyPrompt(true);
-    }}
-  />
-)}
+        />
+      )}
 
       {step === 5 && showSurveyPrompt && !showSurveyForm && (
         <div className="overlay overlay-enter">
@@ -435,6 +360,10 @@ const startOver = () => {
         </div>
       )}
 
+        console.log('🧭 Survey render check — step:', step);
+        console.log('🧭 showSurveyForm:', showSurveyForm);
+        console.log('🧭 surveyComplete:', surveyComplete);
+
       {step === 5 && showSurveyForm && !surveyComplete && (
         <NeighborhoodSurvey
           location={location}
@@ -446,6 +375,7 @@ const startOver = () => {
             setSurveyComplete(true);
           }}
         />
+
 
       )}
 
