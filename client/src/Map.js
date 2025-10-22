@@ -48,6 +48,12 @@ useEffect(() => {
       zoom: 13,
     });
 
+    // ✅ Add zoom controls in lower right, no compass
+    mapRef.current.addControl(
+      new mapboxgl.NavigationControl({ showCompass: false }),
+      'bottom-right'
+    );
+
     drawRef.current = new MapboxDraw({
       displayControlsDefault: false, // disables all default controls
       controls: {}                   // explicitly no controls
