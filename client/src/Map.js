@@ -137,6 +137,15 @@ const NeighborhoodMap = () => {
     mapRef.current.on('draw.update', updateBoundary);
     mapRef.current.on('draw.delete', () => setBoundary(null));
 
+    mapRef.current.on('draw.finish', (e) => {
+      console.log('🎯 Custom finish event fired', e.features);
+      // Advance your flow here
+      updateBoundary(); // reuse your existing boundary update logic
+      setDrawingStarted(false);
+      setStep('3C');
+    });
+
+
     mapRef.current.on('load', () => {
       const layersToHide = [
         'neighborhood-label',
@@ -168,6 +177,8 @@ const NeighborhoodMap = () => {
       if (!mapRef.current) return;
       mapRef.current.off('draw.create', updateBoundary);
       mapRef.current.off('draw.update', updateBoundary);
+      mapRef.current.off('draw.finish'); // 👈 add this
+
     };
   }, [updateBoundary]);
 
