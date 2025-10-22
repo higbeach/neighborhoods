@@ -30,7 +30,7 @@ const NeighborhoodMap = () => {
   const [surveyComplete, setSurveyComplete] = useState(false);
   const [drawingStarted, setDrawingStarted] = useState(false);
   const [submissionUuid, setSubmissionUuid] = useState(null);
-  const [comments, setComments] = useState('');
+
 
   // ✅ Scroll to top on step change
   useEffect(() => {
@@ -52,7 +52,7 @@ const NeighborhoodMap = () => {
         if (coords && coords.length > 3) {
           const first = coords[0];
           const last = coords[coords.length - 1];
-          const isClosed = first[0] === last[0] && first[1] === last[1];
+          // Removed unused isClosed variable
           // Do not setStep here — draw.finish listener handles advancing to 3C
           // Optionally, you could set flags/dialogs based on isClosed
         }
