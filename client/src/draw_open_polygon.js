@@ -1,5 +1,5 @@
 // src/draw_open_polygon.js
-// Custom MapboxDraw mode: open polygon until user clicks back on the starting point
+// Debug-friendly custom mode for MapboxDraw
 
 const DrawOpenPolygon = {
   onSetup() {
@@ -8,10 +8,7 @@ const DrawOpenPolygon = {
       line: {
         type: 'Feature',
         properties: { id: String(Date.now()) },
-        geometry: {
-          type: 'LineString',
-          coordinates: []
-        }
+        geometry: { type: 'LineString', coordinates: [] }
       },
       cursor: 'default',
       currentMousePosition: null
@@ -22,98 +19,57 @@ const DrawOpenPolygon = {
     console.log('🖱 onClick fired at', e.lngLat);
 
     const coords = state.line.geometry.coordinates;
-
-    // If user clicks near the first point, close polygon
-    if (coords.length > 2) {
-      const first = coords[0];
-      const clicked = [e.lngLat.lng, e.lngLat.lat];
-      const dx = first[0] - clicked[0];
-      const dy = first[1] - clicked[1];
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      console.log('🔍 distance to first point:', dist);
-
-      // tolerance ~15m at Seattle latitude
-      if (dist < 0.00015) {
-        console.log('✅ Closing polygon');
-        const polygon = {
-          type: 'Feature',
-          properties: { meta: 'final' },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[...coords, first]]
-          }
-        };
-        this.map.fire('draw.create', { features: [polygon] });
-        this.changeMode('simple_select', { featureIds: [] });
-        return;
-      }
-    }
-
-    // Otherwise add a new point
     coords.push([e.lngLat.lng, e.lngLat.lat]);
     console.log('➕ Added point, total coords:', coords.length);
+
     this.map.fire('draw.update', { features: [state.line] });
   },
 
   onMouseMove(state, e) {
     state.currentMousePosition = [e.lngLat.lng, e.lngLat.lat];
-
-    const coords = state.line.geometry.coordinates;
-    if (coords.length > 0) {
-      const first = coords[0];
-      const dx = first[0] - e.lngLat.lng;
-      const dy = first[1] - e.lngLat.lat;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      // Change cursor when hovering near starting point
-      if (dist < 0.00015) {
-        if (state.cursor !== 'pointer') {
-          this.map.getCanvas().style.cursor = 'pointer';
-          state.cursor = 'pointer';
-        }
-      } else {
-        if (state.cursor !== 'default') {
-          this.map.getCanvas().style.cursor = 'default';
-          state.cursor = 'default';
-        }
-      }
-    }
   },
 
   toDisplayFeatures(state, geojson, display) {
+    console.log('🎨 toDisplayFeatures called');
+
     if (!state.line) return;
 
-    // Draw the active line
+    // Always display the current line
     if (state.line.geometry.coordinates.length > 0) {
-      display({
+      const lineFeature = {
         type: 'Feature',
         properties: { meta: 'feature' },
         geometry: state.line.geometry
-      });
+      };
+      console.log('Displaying line:', lineFeature);
+      display(lineFeature);
 
-      // Draw vertices
+      // Vertices
       state.line.geometry.coordinates.forEach((coord, idx) => {
-        display({
+        const vertex = {
           type: 'Feature',
           properties: { meta: 'vertex', coord_path: idx },
           geometry: { type: 'Point', coordinates: coord }
-        });
+        };
+        console.log('Displaying vertex:', vertex);
+        display(vertex);
       });
 
-      // Draw ghost line
+      // Ghost line
       if (state.currentMousePosition) {
         const last = state.line.geometry.coordinates[state.line.geometry.coordinates.length - 1];
-        display({
+        const ghost = {
           type: 'Feature',
           properties: { meta: 'ghost' },
           geometry: { type: 'LineString', coordinates: [last, state.currentMousePosition] }
-        });
+        };
+        console.log('Displaying ghost line:', ghost);
+        display(ghost);
       }
     }
   },
 
-  onStop(state) {
+  onStop() {
     console.log('🛑 onStop fired');
     this.map.getCanvas().style.cursor = 'default';
   }
