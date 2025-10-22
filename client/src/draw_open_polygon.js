@@ -1,5 +1,5 @@
 // src/draw_open_polygon.js
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
 
 const DrawOpenPolygon = {
   onSetup() {
