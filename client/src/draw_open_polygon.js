@@ -1,6 +1,4 @@
 // src/draw_open_polygon.js
-// Custom MapboxDraw mode: open polygon until user clicks back on the starting point
-
 const DrawOpenPolygon = {
   onSetup() {
     console.log('🎬 onSetup fired');
@@ -13,28 +11,18 @@ const DrawOpenPolygon = {
 
     this.addFeature(line);
 
-    return {
-      line,
-      cursor: 'default',
-      currentMousePosition: null
-    };
+    return { line, cursor: 'default', currentMousePosition: null };
   },
 
-  // Support both click (desktop) and tap (touch)
-  onClick(state, e) {
-    return this._handleAddPoint(state, e);
-  },
-  onTap(state, e) {
-    return this._handleAddPoint(state, e);
-  },
+  onClick(state, e) { return this._handleAddPoint(state, e); },
+  onTap(state, e) { return this._handleAddPoint(state, e); },
 
   _handleAddPoint(state, e) {
     console.log('🖱 onClick/onTap fired at', e.lngLat);
 
     const coords = state.line.coordinates;
-    const tolerance = 0.001; // ~100m, easier for touch devices
+    const tolerance = 0.001; // ~100m for touch
 
-    // If user clicks near the first point, close polygon
     if (coords.length > 2) {
       const first = coords[0];
       const dx = first[0] - e.lngLat.lng;
@@ -47,25 +35,19 @@ const DrawOpenPolygon = {
         const polygon = this.newFeature({
           type: 'Feature',
           properties: { meta: 'final' },
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[...coords, first]]
-          }
+          geometry: { type: 'Polygon', coordinates: [[...coords, first]] }
         });
 
         this.addFeature(polygon);
 
-        // Fire events
         this.map.fire('draw.create', { features: [polygon.toGeoJSON()] });
         this.map.fire('draw.finish', { features: [polygon.toGeoJSON()] });
 
-        // Exit drawing mode
         this.changeMode('simple_select', { featureIds: [] });
         return;
       }
     }
 
-    // Otherwise add a new point
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
     console.log('➕ Added point, total coords:', state.line.coordinates.length);
 
@@ -81,19 +63,14 @@ const DrawOpenPolygon = {
       const dy = first[1] - e.lngLat.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < 0.001) {
-        this.map.getCanvas().style.cursor = 'pointer';
-      } else {
-        this.map.getCanvas().style.cursor = 'default';
-      }
+      this.map.getCanvas().style.cursor = dist < 0.001 ? 'pointer' : 'default';
     }
   },
 
   toDisplayFeatures(state, geojson, display) {
-    // Always display the feature itself
     display(geojson);
 
-    // Draw vertices as points with unique IDs
+    // Vertices (only for our active line)
     if (geojson.geometry.type === 'LineString' && geojson.id === state.line.id) {
       geojson.geometry.coordinates.forEach((coord, idx) => {
         display({
@@ -105,7 +82,7 @@ const DrawOpenPolygon = {
       });
     }
 
-    // Draw ghost line if this is our active line
+    // Ghost line (last vertex → cursor)
     if (
       state.currentMousePosition &&
       geojson.geometry.type === 'LineString' &&
@@ -113,7 +90,7 @@ const DrawOpenPolygon = {
     ) {
       const coords = geojson.geometry.coordinates;
       if (coords.length > 0) {
-        const ghost = {
+        display({
           id: `${geojson.id}.ghost`,
           type: 'Feature',
           properties: { meta: 'ghost' },
@@ -121,8 +98,7 @@ const DrawOpenPolygon = {
             type: 'LineString',
             coordinates: [coords[coords.length - 1], state.currentMousePosition]
           }
-        };
-        display(ghost);
+        });
       }
     }
   },
