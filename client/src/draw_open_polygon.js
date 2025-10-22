@@ -1,4 +1,6 @@
 // src/draw_open_polygon.js
+// Custom MapboxDraw mode: open polygon until user clicks back on the starting point
+
 const DrawOpenPolygon = {
   onSetup() {
     console.log('🎬 onSetup fired');
@@ -11,7 +13,8 @@ const DrawOpenPolygon = {
           coordinates: []
         }
       },
-      cursor: 'default'
+      cursor: 'default',
+      currentMousePosition: null
     };
   },
 
@@ -30,7 +33,7 @@ const DrawOpenPolygon = {
 
       console.log('🔍 distance to first point:', dist);
 
-      // ✅ Increased tolerance for easier closing (about ~10m at lat ~47°)
+      // tolerance ~15m at Seattle latitude
       if (dist < 0.00015) {
         console.log('✅ Closing polygon');
         const polygon = {
@@ -54,6 +57,8 @@ const DrawOpenPolygon = {
   },
 
   onMouseMove(state, e) {
+    state.currentMousePosition = [e.lngLat.lng, e.lngLat.lat];
+
     const coords = state.line.geometry.coordinates;
     if (coords.length > 0) {
       const first = coords[0];
@@ -61,7 +66,7 @@ const DrawOpenPolygon = {
       const dy = first[1] - e.lngLat.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      // ✅ Change cursor when hovering near starting point
+      // Change cursor when hovering near starting point
       if (dist < 0.00015) {
         if (state.cursor !== 'pointer') {
           this.map.getCanvas().style.cursor = 'pointer';
@@ -76,18 +81,28 @@ const DrawOpenPolygon = {
     }
   },
 
-  toDisplayFeatures(state, geojson, display) {
-    if (state.line) {
-      display(state.line);
+    toDisplayFeatures(state, geojson, display) {
+    if (state.line && state.line.geometry.coordinates.length > 0) {
+      // Draw the line so far
+      display({
+        type: 'Feature',
+        properties: {
+          id: state.line.properties.id,
+          active: 'true',
+          meta: 'feature'
+        },
+        geometry: state.line.geometry
+      });
 
-      // Also display each vertex as a Point feature
+      // Draw vertices
       state.line.geometry.coordinates.forEach((coord, idx) => {
         display({
           type: 'Feature',
           properties: {
             meta: 'vertex',
             parent: state.line.properties.id,
-            coord_path: idx
+            coord_path: idx,
+            active: 'true'
           },
           geometry: {
             type: 'Point',
@@ -95,12 +110,27 @@ const DrawOpenPolygon = {
           }
         });
       });
+
+      // Draw ghost line
+      if (state.currentMousePosition) {
+        const last = state.line.geometry.coordinates[state.line.geometry.coordinates.length - 1];
+        display({
+          type: 'Feature',
+          properties: {
+            meta: 'ghost',
+            parent: state.line.properties.id
+          },
+          geometry: {
+            type: 'LineString',
+            coordinates: [last, state.currentMousePosition]
+          }
+        });
+      }
     }
-  },
+  },  // ✅ comma here
 
   onStop(state) {
     console.log('🛑 onStop fired');
-    // Reset cursor when mode ends
     this.map.getCanvas().style.cursor = 'default';
   }
 };

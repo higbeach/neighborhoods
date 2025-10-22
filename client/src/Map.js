@@ -89,44 +89,51 @@ const NeighborhoodMap = () => {
         ...MapboxDraw.modes,
         draw_open_polygon: DrawOpenPolygon, // add custom mode
       },
-      styles: [
-        {
-          id: 'gl-draw-polygon-fill',
-          type: 'fill',
-          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-          paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
-        },
-        {
-          id: 'gl-draw-polygon-stroke-active',
-          type: 'line',
-          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-          paint: { 'line-color': '#ff0000', 'line-width': 3 },
-        },
-        {
-          id: 'gl-draw-polygon-and-line-vertex-halo-active',
-          type: 'circle',
-          filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
-          paint: { 'circle-radius': 6, 'circle-color': '#ffffff' },
-        },
-        {
-          id: 'gl-draw-polygon-and-line-vertex-active',
-          type: 'circle',
-          filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
-          paint: { 'circle-radius': 4, 'circle-color': '#ff0000' },
-        },
-        {
-          id: 'gl-draw-line-active',
-          type: 'line',
-          filter: ['all', ['==', '$type', 'LineString'], ['!=', 'mode', 'static']],
-          paint: { 'line-color': '#ff0000', 'line-width': 2 }
-        },
-        {
-          id: 'gl-draw-line-vertex-active',
-          type: 'circle',
-          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
-          paint: { 'circle-radius': 4, 'circle-color': '#ff0000' }
-        }
-      ],
+     styles: [
+      {
+        id: 'gl-draw-polygon-fill',
+        type: 'fill',
+        filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+        paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
+      },
+      {
+        id: 'gl-draw-polygon-stroke-active',
+        type: 'line',
+        filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+        paint: { 'line-color': '#ff0000', 'line-width': 3 },
+      },
+      {
+        id: 'gl-draw-polygon-and-line-vertex-halo-active',
+        type: 'circle',
+        filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
+        paint: { 'circle-radius': 6, 'circle-color': '#ffffff' },
+      },
+      {
+        id: 'gl-draw-polygon-and-line-vertex-active',
+        type: 'circle',
+        filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
+        paint: { 'circle-radius': 4, 'circle-color': '#ff0000' },
+      },
+      {
+        id: 'gl-draw-line-active',
+        type: 'line',
+        filter: ['all', ['==', '$type', 'LineString'], ['!=', 'mode', 'static']],
+        paint: { 'line-color': '#ff0000', 'line-width': 2 },
+      },
+      {
+        id: 'gl-draw-line-vertex-active',
+        type: 'circle',
+        filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
+        paint: { 'circle-radius': 4, 'circle-color': '#ff0000' },
+      },
+      {
+        id: 'gl-draw-ghost-line',
+        type: 'line',
+        filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
+        paint: { 'line-color': '#ff0000', 'line-dasharray': [0.2, 2], 'line-width': 2 },
+      },
+    ],
+
     });
 
     mapRef.current.addControl(drawRef.current);
