@@ -120,18 +120,6 @@ const NeighborhoodMap = () => {
     filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
     paint: { 'line-color': '#ff6666', 'line-dasharray': [0.2, 2], 'line-width': 2 }
   },
-  {
-    id: 'debug-lines',
-    type: 'line',
-    filter: ['==', '$type', 'LineString'],
-    paint: { 'line-color': '#00ff00', 'line-width': 3 }
-  },
-  {
-    id: 'debug-points',
-    type: 'circle',
-    filter: ['==', '$type', 'Point'],
-    paint: { 'circle-radius': 6, 'circle-color': '#0000ff' }
-  }
 
 ],
 
