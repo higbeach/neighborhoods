@@ -16,7 +16,7 @@ const NeighborhoodMap = () => {
   const drawRef = useRef(null);
   const markerRef = useRef(null);
 
-  const [step, setStep] = useState('3A'); // start at instructions
+  const [step, setStep] = useState(0); // start at intro
   const [location, setLocation] = useState(null);
   const [years, setYears] = useState(0);
   const [areaName, setAreaName] = useState('');
@@ -209,9 +209,9 @@ const NeighborhoodMap = () => {
 
   const startOver = () => {
     handleReset();
-    setStep('3A');
+    setStep('0');
   };
-  
+
     return (
       <div className="map-wrapper">
         {/* Map container */}
