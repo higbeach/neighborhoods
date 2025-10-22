@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -22,22 +22,46 @@ const NeighborhoodMap = () => {
   const [areaName, setAreaName] = useState('');
   const [boundary, setBoundary] = useState(null);
 
-  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false); // ✅ NEW
+  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
   const [drawingStarted, setDrawingStarted] = useState(false);
   const [submissionUuid, setSubmissionUuid] = useState(null);
   const [comments, setComments] = useState('');
 
-
   // ✅ Scroll to top on step change
-useEffect(() => {
-  setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, 100); // 100ms delay
-}, [step]);
+  useEffect(() => {
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  }, [step]);
 
+  // ✅ Boundary update logic wrapped in useCallback
+  const updateBoundary = useCallback(() => {
+    const data = drawRef.current.getAll();
+    if (data.features.length > 0) {
+      const feature = data.features[0];
+      setBoundary(feature);
 
+      if (feature.geometry.type === 'Polygon') {
+        const coords = feature.geometry.coordinates?.[0];
+        if (coords && coords.length > 3) {
+          const first = coords[0];
+          const last = coords[coords.length - 1];
+          const isClosed = first[0] === last[0] && first[1] === last[1];
+
+          if (isClosed && step === '3B') {
+            setDrawingStarted(false);
+            setStep('3C');
+          }
+        }
+      }
+    } else {
+      setBoundary(null);
+    }
+  }, [step]);
+
+  // ✅ Map initialization
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -48,67 +72,51 @@ useEffect(() => {
       zoom: 13,
     });
 
-    // ✅ Add zoom controls in lower right, no compass
+    // Add zoom controls in lower right, no compass
     mapRef.current.addControl(
       new mapboxgl.NavigationControl({ showCompass: false }),
       'bottom-right'
     );
 
-   drawRef.current = new MapboxDraw({
-  displayControlsDefault: false,
-  controls: {},
-  styles: [
-    // Polygon fill (light red, semi-transparent)
-    {
-      id: 'gl-draw-polygon-fill',
-      type: 'fill',
-      filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-      paint: {
-        'fill-color': '#ff0000',
-        'fill-opacity': 0.1
-      }
-    },
-    // Polygon outline (bold red)
-    {
-      id: 'gl-draw-polygon-stroke-active',
-      type: 'line',
-      filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-      paint: {
-        'line-color': '#ff0000',
-        'line-width': 3
-      }
-    },
-    // Vertex halo (white outline around points)
-    {
-      id: 'gl-draw-polygon-and-line-vertex-halo-active',
-      type: 'circle',
-      filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
-      paint: {
-        'circle-radius': 6,
-        'circle-color': '#ffffff'
-      }
-    },
-    // Vertex points (solid red dots)
-    {
-      id: 'gl-draw-polygon-and-line-vertex-active',
-      type: 'circle',
-      filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
-      paint: {
-        'circle-radius': 4,
-        'circle-color': '#ff0000'
-      }
-    }
-  ]
-});
+    drawRef.current = new MapboxDraw({
+      displayControlsDefault: false,
+      controls: {},
+      styles: [
+        {
+          id: 'gl-draw-polygon-fill',
+          type: 'fill',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
+        },
+        {
+          id: 'gl-draw-polygon-stroke-active',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'line-color': '#ff0000', 'line-width': 3 },
+        },
+        {
+          id: 'gl-draw-polygon-and-line-vertex-halo-active',
+          type: 'circle',
+          filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
+          paint: { 'circle-radius': 6, 'circle-color': '#ffffff' },
+        },
+        {
+          id: 'gl-draw-polygon-and-line-vertex-active',
+          type: 'circle',
+          filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
+          paint: { 'circle-radius': 4, 'circle-color': '#ff0000' },
+        },
+      ],
+    });
 
     mapRef.current.addControl(drawRef.current);
 
+    // Attach listeners
     mapRef.current.on('draw.create', updateBoundary);
     mapRef.current.on('draw.update', updateBoundary);
     mapRef.current.on('draw.delete', () => setBoundary(null));
 
     mapRef.current.on('load', () => {
-      // Attempt to hide known label layers
       const layersToHide = [
         'neighborhood-label',
         'neighborhood_label',
@@ -119,14 +127,11 @@ useEffect(() => {
         'place-city-md-s',
         'place-city-sm',
       ];
-
       layersToHide.forEach((layerId) => {
         if (mapRef.current.getLayer(layerId)) {
           mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
         }
       });
-
-      // Filter out neighborhood and locality labels from 'place-label' layer
       const labelLayer = 'place-label';
       if (mapRef.current.getLayer(labelLayer)) {
         mapRef.current.setFilter(labelLayer, [
@@ -137,13 +142,13 @@ useEffect(() => {
       }
     });
 
-  }, []);
-
- // useEffect(() => {
- //   if (step === 3 && drawRef.current) {
- //     drawRef.current.changeMode('draw_polygon');
- //   }
- // }, [step]);
+    // ✅ Cleanup listeners
+    return () => {
+      if (!mapRef.current) return;
+      mapRef.current.off('draw.create', updateBoundary);
+      mapRef.current.off('draw.update', updateBoundary);
+    };
+  }, [updateBoundary]);
 
   useEffect(() => {
     console.log('📍 Step changed to:', step);
@@ -153,38 +158,11 @@ useEffect(() => {
     console.log('🧾 Survey form visibility:', showSurveyForm);
   }, [showSurveyForm]);
 
-  const updateBoundary = () => {
-    const data = drawRef.current.getAll();
-    if (data.features.length > 0) {
-      const feature = data.features[0];
-      setBoundary(feature);
-
-      // Check if polygon is closed
-      if (feature.geometry.type === 'Polygon') {
-        const coords = feature.geometry.coordinates?.[0];
-        if (coords && coords.length > 3) {
-          const first = coords[0];
-          const last = coords[coords.length - 1];
-          const isClosed = first[0] === last[0] && first[1] === last[1];
-
-          if (isClosed && step === '3B') {
-            // ✅ Advance to confirmation step
-            setDrawingStarted(false);
-            setStep('3C');
-          }
-        }
-      }
-    } else {
-      setBoundary(null);
-    }
-  };
-
-useEffect(() => {
-  console.log('🧭 Survey render check — step:', step);
-  console.log('🧭 showSurveyForm:', showSurveyForm);
-  console.log('🧭 surveyComplete:', surveyComplete);
-}, [step, showSurveyForm, surveyComplete]);
-
+  useEffect(() => {
+    console.log('🧭 Survey render check — step:', step);
+    console.log('🧭 showSurveyForm:', showSurveyForm);
+    console.log('🧭 surveyComplete:', surveyComplete);
+  }, [step, showSurveyForm, surveyComplete]);
 
   const handleConfirmLocation = () => {
     if (!mapRef.current) return;
@@ -229,17 +207,11 @@ useEffect(() => {
     }
   };
 
-  const clearBoundary = () => {
-  drawRef.current.deleteAll();
-  setBoundary(null);
-  drawRef.current.changeMode('draw_polygon'); // ✅ Re-enable drawing
-  setStep('3B'); // or '3A' if you want to reset all the way back
-};
-
-const startOver = () => {
-  handleReset(); // reuse your full reset logic
+  const startOver = () => {
+    handleReset();
     setStep('3A');
-};
+  };
+  
     return (
       <div className="map-wrapper">
         {/* Map container */}
