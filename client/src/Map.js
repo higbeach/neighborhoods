@@ -114,6 +114,18 @@ const NeighborhoodMap = () => {
           filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
           paint: { 'circle-radius': 4, 'circle-color': '#ff0000' },
         },
+        {
+          id: 'gl-draw-line-active',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'LineString'], ['!=', 'mode', 'static']],
+          paint: { 'line-color': '#ff0000', 'line-width': 2 }
+        },
+        {
+          id: 'gl-draw-line-vertex-active',
+          type: 'circle',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex'], ['!=', 'mode', 'static']],
+          paint: { 'circle-radius': 4, 'circle-color': '#ff0000' }
+        }
       ],
     });
 
@@ -333,17 +345,30 @@ const NeighborhoodMap = () => {
 {/* --- Step 3B: Drawing Step --- */}
 {step === '3B' && drawingStarted && (
   <div className="map-controls">
-    <button onClick={() => {
-      // Undo last point
-      const data = drawRef.current.getAll();
-      if (data.features.length > 0) {
-        const coords = data.features[0].geometry.coordinates[0];
-        coords.pop();
-        drawRef.current.set({ type: 'FeatureCollection', features: [data.features[0]] });
-      }
-    }}>
+    <button
+      onClick={() => {
+        const data = drawRef.current.getAll();
+        if (data.features.length > 0) {
+          const feature = data.features[0];
+
+          if (feature.geometry.type === 'LineString') {
+            // Still drawing an open line
+            feature.geometry.coordinates.pop();
+          } else if (feature.geometry.type === 'Polygon') {
+            // Already closed into a polygon
+            feature.geometry.coordinates[0].pop();
+          }
+
+          drawRef.current.set({
+            type: 'FeatureCollection',
+            features: [feature],
+          });
+        }
+      }}
+    >
       Undo
     </button>
+
     <button className="secondary" onClick={() => setStep('3A')}>
       Show Instructions
     </button>
