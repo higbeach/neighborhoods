@@ -20,13 +20,19 @@ const DrawOpenPolygon = {
     };
   },
 
+  // Support both click (desktop) and tap (touch)
   onClick(state, e) {
-    console.log('🖱 onClick fired at', e.lngLat);
+    return this._handleAddPoint(state, e);
+  },
+  onTap(state, e) {
+    return this._handleAddPoint(state, e);
+  },
+
+  _handleAddPoint(state, e) {
+    console.log('🖱 onClick/onTap fired at', e.lngLat);
 
     const coords = state.line.coordinates;
-
-    // Expanded tolerance (~50m at Seattle latitude)
-    const tolerance = 0.0005;
+    const tolerance = 0.001; // ~100m, easier for touch devices
 
     // If user clicks near the first point, close polygon
     if (coords.length > 2) {
@@ -75,7 +81,7 @@ const DrawOpenPolygon = {
       const dy = first[1] - e.lngLat.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (dist < 0.0005) {
+      if (dist < 0.001) {
         this.map.getCanvas().style.cursor = 'pointer';
       } else {
         this.map.getCanvas().style.cursor = 'default';
@@ -88,7 +94,7 @@ const DrawOpenPolygon = {
     display(geojson);
 
     // Draw vertices as points with unique IDs
-    if (geojson.geometry.type === 'LineString') {
+    if (geojson.geometry.type === 'LineString' && geojson.id === state.line.id) {
       geojson.geometry.coordinates.forEach((coord, idx) => {
         display({
           id: `${geojson.id}.${idx}`,

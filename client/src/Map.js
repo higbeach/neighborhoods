@@ -39,30 +39,28 @@ const NeighborhoodMap = () => {
     }, 100);
   }, [step]);
 
-  // ✅ Boundary update logic
+  // ✅ Boundary update logic (no step changes here)
   const updateBoundary = useCallback(() => {
     const data = drawRef.current.getAll();
     if (data.features.length > 0) {
       const feature = data.features[0];
       setBoundary(feature);
 
+      // Keep integrity checks for debugging/UX hints if desired
       if (feature.geometry.type === 'Polygon') {
         const coords = feature.geometry.coordinates?.[0];
         if (coords && coords.length > 3) {
           const first = coords[0];
           const last = coords[coords.length - 1];
           const isClosed = first[0] === last[0] && first[1] === last[1];
-
-          if (isClosed && step === '3B') {
-            setDrawingStarted(false);
-            setStep('3C');
-          }
+          // Do not setStep here — draw.finish listener handles advancing to 3C
+          // Optionally, you could set flags/dialogs based on isClosed
         }
       }
     } else {
       setBoundary(null);
     }
-  }, [step]);
+  }, []);
 
   // ✅ Map initialization
   useEffect(() => {
@@ -89,46 +87,44 @@ const NeighborhoodMap = () => {
         ...MapboxDraw.modes,
         draw_open_polygon: DrawOpenPolygon, // add custom mode
       },
-     styles: [
-  {
-    id: 'gl-draw-polygon-fill',
-    type: 'fill',
-    filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-    paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
-  },
-  {
-    id: 'gl-draw-polygon-stroke-active',
-    type: 'line',
-    filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-    paint: { 'line-color': '#ff0000', 'line-width': 3 },
-  },
-  {
-    id: 'gl-draw-line-active',
-    type: 'line',
-    filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
-    paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
-  },
-  {
-    id: 'gl-draw-vertex-halo',
-    type: 'circle',
-    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-    paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
-  },
-  {
-    id: 'gl-draw-vertex-active',
-    type: 'circle',
-    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-    paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
-  },
-  {
-    id: 'gl-draw-ghost-line',
-    type: 'line',
-    filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
-    paint: { 'line-color': '#ff0000', 'line-dasharray': [0.5, 2], 'line-width': 2 }
-  }
-
-],
-
+      styles: [
+        {
+          id: 'gl-draw-polygon-fill',
+          type: 'fill',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
+        },
+        {
+          id: 'gl-draw-polygon-stroke-active',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'line-color': '#ff0000', 'line-width': 3 },
+        },
+        {
+          id: 'gl-draw-line-active',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
+          paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+        },
+        {
+          id: 'gl-draw-vertex-halo',
+          type: 'circle',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+          paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
+        },
+        {
+          id: 'gl-draw-vertex-active',
+          type: 'circle',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+          paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
+        },
+        {
+          id: 'gl-draw-ghost-line',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
+          paint: { 'line-color': '#ff0000', 'line-dasharray': [0.5, 2], 'line-width': 2 }
+        }
+      ],
     });
 
     mapRef.current.addControl(drawRef.current);
@@ -138,14 +134,13 @@ const NeighborhoodMap = () => {
     mapRef.current.on('draw.update', updateBoundary);
     mapRef.current.on('draw.delete', () => setBoundary(null));
 
+    // When polygon is closed, go to 3C (review)
     mapRef.current.on('draw.finish', (e) => {
       console.log('🎯 Custom finish event fired', e.features);
-      // Advance your flow here
-      updateBoundary(); // reuse your existing boundary update logic
+      updateBoundary();           // keep boundary state fresh
       setDrawingStarted(false);
-      setStep('3C');
+      setStep('3C');              // ✅ go to review step
     });
-
 
     mapRef.current.on('load', () => {
       const layersToHide = [
@@ -178,8 +173,8 @@ const NeighborhoodMap = () => {
       if (!mapRef.current) return;
       mapRef.current.off('draw.create', updateBoundary);
       mapRef.current.off('draw.update', updateBoundary);
-      mapRef.current.off('draw.finish'); // 👈 add this
-
+      mapRef.current.off('draw.delete');
+      mapRef.current.off('draw.finish');
     };
   }, [updateBoundary]);
 
@@ -246,116 +241,87 @@ const NeighborhoodMap = () => {
   };
 
     return (
-      <div className="map-wrapper">
-        {/* Map container */}
-        <div ref={mapContainer} className="map-container" />
+  <div className="map-wrapper">
+    {/* Map container */}
+    <div ref={mapContainer} className="map-container" />
 
-        {step === 0 && (
-          <div className="overlay overlay-enter">
-            <h2>Help Us Map Our Neighborhood.</h2>
-            <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
-            <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
-            <p>Please use <a href="https://www.convenepllc.com/contact-us/" target="_blank" rel="noopener noreferrer">
-                this contact form
-              </a> for any questions or feedback.
-            </p>
-            <div className="overlay-actions">
-              <button onClick={() => setStep(1)}>Let's Get Started</button>
-            </div>
-          </div>
-      )}
+    {/* Step 0: Intro */}
+    {step === 0 && (
+      <div className="overlay overlay-enter">
+        <h2>Help Us Map Our Neighborhood.</h2>
+        <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
+        <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
+        <p>Please use <a href="https://www.convenepllc.com/contact-us/" target="_blank" rel="noopener noreferrer">
+            this contact form
+          </a> for any questions or feedback.
+        </p>
+        <div className="overlay-actions">
+          <button onClick={() => setStep(1)}>Let's Get Started</button>
+        </div>
+      </div>
+    )}
 
-      {step === 1 && (
-         <>
-          <div className="map-pin">
-           <svg viewBox="0 0 16 16" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-           <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M3.37892 10.2236L8 16L12.6211 10.2236C13.5137 9.10788 14 7.72154 14 6.29266V6C14 2.68629 11.3137 0 8 0C4.68629 0 2 2.68629 2 6V6.29266C2 7.72154 2.4863 9.10788 3.37892 10.2236ZM8 8C9.10457 8 10 7.10457 10 6C10 4.89543 9.10457 4 8 4C6.89543 4 6 4.89543 6 6C6 7.10457 6.89543 8 8 8Z"
-              fill="#ff0000"
-            />
-          </svg>
-         </div>
-
-          <div className="overlay overlay-enter">
-            <h2>Mark Where You Live</h2>
-            <p>1.Pan the map until the pin is centered over where you live.<br />
-              2. Click the "I Live here!" button</p>
-            <div className="overlay-actions">
-              <button onClick={handleConfirmLocation}>I live here!</button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {step === 2 && (
+    {/* Step 1: Pin location */}
+    {step === 1 && (
+      <>
+        <div className="map-pin">
+          {/* pin svg */}
+        </div>
         <div className="overlay overlay-enter">
-          <h2>What do you call this area?</h2>
-          <label>Type the neighborhood name</label>
-          <input
-            type="text"
-            placeholder="Neighborhood name"
-            value={areaName}
-            onChange={(e) => setAreaName(e.target.value)}
-            list="neighborhood-names"
-          />
-          <datalist id="neighborhood-names">
-            {neighborhoodNames.map((name, idx) => (
-              <option key={idx} value={name} />
-            ))}
-          </datalist>
-
-          <label>How many years have you lived here?</label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={years}
-            onChange={(e) => setYears(e.target.value)}
-          />
-          <p>{years} years</p>
-
+          <h2>Mark Where You Live</h2>
+          <p>1. Pan the map until the pin is centered over where you live.<br />
+             2. Click the "I Live here!" button</p>
           <div className="overlay-actions">
-            <button onClick={() => setStep('3A')} disabled={!areaName}>Next</button>
-            <button className="secondary" onClick={handleReset}>Reset</button>
+            <button onClick={handleConfirmLocation}>I live here!</button>
           </div>
         </div>
-      )}
+      </>
+    )}
 
- {/* --- Step 3A: Drawing Instructions --- */}
-{step === '3A' && (
-  <div className="overlay overlay-enter">
-    <h2>Where would you mark this neighborhood’s boundaries?</h2>
-    <div className="drawing-animation">
-      {/* You can drop in a looping GIF or SVG here */}
-      <p className="animation-caption">
+    {/* Step 2: Name + years */}
+    {step === 2 && (
+      <div className="overlay overlay-enter">
+        <h2>What do you call this area?</h2>
+        {/* inputs for areaName + years */}
+        <div className="overlay-actions">
+          <button onClick={() => setStep('3A')} disabled={!areaName}>Next</button>
+          <button className="secondary" onClick={handleReset}>Reset</button>
+        </div>
+      </div>
+    )}
+
+    {/* Step 3A: Drawing instructions */}
+    {step === '3A' && (
+      <div className="overlay overlay-enter">
+        <h2>Where would you mark this neighborhood’s boundaries?</h2>
+        <div className="drawing-animation">
+          <p className="animation-caption">
             Here's how to draw: <br /><br />
             1. Tap/click to add a starting point<br />
             2. Tap/click again to add more points<br />
             3. Tap/click your starting point to close the shape.<br /><br />
             <strong>Note:</strong> To be included, the entirety of a block needs to be within your neighborhood boundary.
           </p>
-    </div>
-    <div className="overlay-actions">
-      <button
-        onClick={() => {
-          drawRef.current.deleteAll();
-          drawRef.current.changeMode('draw_open_polygon');
-          setDrawingStarted(true);
-          setStep('3B');
-          setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }, 100);
-        }}
-      >
-        I’m ready to draw
-      </button>
-    </div>
-  </div>
-)}
+        </div>
+        <div className="overlay-actions">
+          <button
+            onClick={() => {
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_open_polygon');
+              setDrawingStarted(true);
+              setStep('3B');
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 100);
+            }}
+          >
+            I’m ready to draw
+          </button>
+        </div>
+      </div>
+    )}
 
-{/* --- Step 3B: Drawing Step --- */}
+   {/* --- Step 3B: Drawing Step --- */}
 {step === '3B' && drawingStarted && (
   <div className="map-controls">
     <button
@@ -388,65 +354,44 @@ const NeighborhoodMap = () => {
   </div>
 )}
 
-{/* --- Step 3C: Confirmation ("Looking Good!") --- */}
-{step === '3C' && (
-  <div className="overlay overlay-enter">
-    <h2>Looking good!</h2>
-    <p>If this looks right, press Next. To try again, press Start Over.</p>
-    <div className="overlay-actions">
-      <button onClick={() => setStep('3D')}>Next</button>
-      <button
-        className="secondary"
-        onClick={() => {
-          drawRef.current.deleteAll();
-          setBoundary(null);
-          setStep('3A');
-        }}
-      >
-        Start Over
-      </button>
-    </div>
-  </div>
-)}
 
-{/* --- Step 3D: Additional Comments --- */}
-{step === '3D' && (
-  <div className="overlay overlay-enter">
-    <h2>Any additional comments?</h2>
-    <textarea
-      value={comments}
-      onChange={(e) => setComments(e.target.value)}
-      placeholder="Add your thoughts here..."
-    />
-    <div className="overlay-actions">
-      <button
-        onClick={() => {
-          // Save boundary + comments
-          setStep(4);
-        }}
-      >
-        Submit
-      </button>
+   {step === '3C' && (
+    <div className="overlay overlay-enter">
+      <h2>Looking good!</h2>
+      <p>If this looks right, press Next. To try again, press Start Over.</p>
+      <div className="overlay-actions">
+        {/* ✅ Jump straight to BoundariesForm */}
+        <button onClick={() => setStep(4)}>Next</button>
+        <button
+          className="secondary"
+          onClick={() => {
+            drawRef.current.deleteAll();
+            setBoundary(null);
+            setStep('3A');
+          }}
+        >
+          Start Over
+        </button>
+      </div>
     </div>
-  </div>
-)}
+  )}
 
-{/* --- Step 4: Boundaries Form --- */}
-{step === 4 && (
-  <BoundariesForm
-    boundary={boundary}
-    location={location}
-    years={years}
-    areaName={areaName}
-    comments={comments}
-    onStartOver={startOver}
-    onSubmitted={(uuid) => {
-      setSubmissionUuid(uuid);
-      setStep(5);
-      setShowSurveyPrompt(true);
-    }}
-  />
-)}
+    {/* Step 4: BoundariesForm (Confirm & Submit) */}
+    {step === 4 && (
+      <BoundariesForm
+        boundary={boundary}
+        location={location}
+        years={years}
+        areaName={areaName}
+        comments={comments}
+        onStartOver={startOver}
+        onSubmitted={(uuid) => {
+          setSubmissionUuid(uuid);
+          setStep(5);
+          setShowSurveyPrompt(true);
+        }}
+      />
+    )},
 
       {step === 5 && showSurveyPrompt && !showSurveyForm && (
         <div className="overlay overlay-enter">
