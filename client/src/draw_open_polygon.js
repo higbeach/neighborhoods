@@ -11,37 +11,30 @@ const DrawOpenPolygon = {
 
     this.addFeature(line);
 
-    // Handlers to clear cursor/ghostline state
-    const clearCursor = () => {
-      // Stop ghostline emission and closing hover
-      options.__debug && console.log('🧹 Clearing cursor state');
-      this._ctx && (this._ctx.currentMousePosition = null);
-      this._ctx && (this._ctx.nearFirstVertex = false);
-      // Also reset canvas cursor style
-      this.map.getCanvas().style.cursor = 'default';
-    };
-
-    const onCanvasLeave = () => clearCursor();
-
-    // Attach canvas mouseleave listener
-    this.map.getCanvas().addEventListener('mouseleave', onCanvasLeave);
-
-    // Listen for external UI event (Undo, etc.)
-    this.map.on('ui:clear-cursor', clearCursor);
-
-    // Store mode context and detach functions for cleanup
     const ctx = {
       line,
       cursor: 'default',
       currentMousePosition: null,
       nearFirstVertex: false,
-      setBoundary: options.setBoundary || (() => {}),
-      _onCanvasLeave: onCanvasLeave,
-      _clearCursor: clearCursor
+      setBoundary: options.setBoundary || (() => {})
     };
 
-    // Keep a reference for handlers
-    this._ctx = ctx;
+    // Listen for external reset (from Undo handler)
+    this.map.on('ui:reset-draw', () => {
+      console.log('🔄 Resetting draw mode state');
+      if (ctx.line) {
+        this.deleteFeature(ctx.line.id);
+      }
+      ctx.line = this.newFeature({
+        type: 'Feature',
+        properties: { meta: 'feature' },
+        geometry: { type: 'LineString', coordinates: [] }
+      });
+      this.addFeature(ctx.line);
+      ctx.currentMousePosition = null;
+      ctx.nearFirstVertex = false;
+      this.map.getCanvas().style.cursor = 'default';
+    });
 
     return ctx;
   },
@@ -60,7 +53,7 @@ const DrawOpenPolygon = {
     const dy = first?.[1] - e.lngLat.lat;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Primary closure: near first vertex
+    // ✅ Close polygon by clicking near first vertex
     if (coords.length > 2 && dist < tolerance) {
       console.log('✅ Closing polygon via first-point click');
 
@@ -76,14 +69,13 @@ const DrawOpenPolygon = {
 
       if (typeof state.setBoundary === 'function') {
         state.setBoundary(polygon.toGeoJSON());
-        console.log('📦 Boundary updated in state (click closure)');
       }
 
       this.changeMode('simple_select', { featureIds: [] });
       return;
     }
 
-    // Fallback closure: double-click
+    // ✅ Close polygon by double-click
     if (coords.length > 2 && e.originalEvent?.detail === 2) {
       console.log('✅ Closing polygon via double-click fallback');
 
@@ -99,7 +91,6 @@ const DrawOpenPolygon = {
 
       if (typeof state.setBoundary === 'function') {
         state.setBoundary(polygon.toGeoJSON());
-        console.log('📦 Boundary updated in state (double-click closure)');
       }
 
       this.changeMode('simple_select', { featureIds: [] });
@@ -128,7 +119,7 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
-    // Don’t emit anything for invalid/empty geometries
+    // ✅ Don’t emit anything if too few points
     if (geojson.geometry.type === 'LineString' &&
         geojson.geometry.coordinates.length < 2) {
       return;
@@ -154,7 +145,7 @@ const DrawOpenPolygon = {
         });
       });
 
-      // ghostline (last → cursor)
+      // ghostline
       if (state.currentMousePosition && geojson.geometry.coordinates.length > 0) {
         const coords = geojson.geometry.coordinates;
         display({
@@ -173,15 +164,6 @@ const DrawOpenPolygon = {
   onStop() {
     console.log('🛑 onStop fired');
     this.map.getCanvas().style.cursor = 'default';
-
-    // Detach listeners
-    if (this._ctx?._onCanvasLeave) {
-      this.map.getCanvas().removeEventListener('mouseleave', this._ctx._onCanvasLeave);
-    }
-    if (this._ctx?._clearCursor) {
-      this.map.off('ui:clear-cursor', this._ctx._clearCursor);
-    }
-    this._ctx = null;
   }
 };
 
