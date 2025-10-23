@@ -382,33 +382,34 @@ const NeighborhoodMap = () => {
     )}
 
    {/* --- Step 3B: Drawing Step --- */}
-{step === '3B' && drawingStarted && (
-  <div className="map-controls">
-   <button
-      onClick={() => {
-        const data = drawRef.current.getAll();
-        if (data.features.length > 0) {
-          const feature = data.features[0];
+      {step === '3B' && drawingStarted && (
+        <div className="map-controls">
+          <button
+          onClick={() => {
+            const data = drawRef.current.getAll();
+            if (data.features.length > 0) {
+              const feature = data.features[0];
 
-          if (feature.geometry.type === 'LineString') {
-            // Remove last point
-            feature.geometry.coordinates.pop();
-          } else if (feature.geometry.type === 'Polygon') {
-            // Remove last point from ring
-            const ring = feature.geometry.coordinates[0];
-            ring.splice(ring.length - 2, 1); // remove second-to-last point (last is duplicate of first)
-            feature.geometry.coordinates[0] = ring;
-          }
+              if (feature.geometry.type === 'LineString') {
+                feature.geometry.coordinates.pop();
+              } else if (feature.geometry.type === 'Polygon') {
+                const ring = feature.geometry.coordinates[0];
+                ring.splice(ring.length - 2, 1); // remove second-to-last point
+                feature.geometry.coordinates[0] = ring;
+              }
 
-          drawRef.current.set({
-            type: 'FeatureCollection',
-            features: [feature],
-          });
-        }
-      }}
-    >
-      Undo
-    </button>
+              // ✅ Reset draw mode with updated geometry
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_open_polygon', { setBoundary });
+
+              // ✅ Re-add the trimmed feature
+              drawRef.current.add(feature);
+            }
+          }}
+        >
+          Undo
+        </button>
+
 
 
     <button className="secondary" onClick={() => setStep('3A')}>
