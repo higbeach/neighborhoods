@@ -22,25 +22,37 @@ const BoundariesForm = ({
     }
 
     const coords = boundary.geometry?.coordinates;
-      const ring = coords?.[0];
+    const ring = coords?.[0];
 
-      const isClosed =
-        Array.isArray(ring) &&
-        ring.length >= 4 &&
-        ring[0][0] === ring[ring.length - 1][0] &&
-        ring[0][1] === ring[ring.length - 1][1];
+    console.log('📦 Geometry type:', boundary.geometry?.type);
+    console.log('📦 First coord:', ring?.[0]);
+    console.log('📦 Last coord:', ring?.[ring?.length - 1]);
 
-      const isValidPolygon =
-        boundary.geometry?.type === 'Polygon' &&
-        Array.isArray(coords) &&
-        coords.length > 0 &&
-        isClosed;
+    // Optional: use a tolerance instead of exact match
+   const isClosed = (() => {
+      if (!Array.isArray(ring) || ring.length < 4) return false;
+      const [x1, y1] = ring[0];
+      const [x2, y2] = ring[ring.length - 1];
+      const dx = x1 - x2;
+      const dy = y1 - y2;
+      return Math.sqrt(dx * dx + dy * dy) < 0.000001;
+    })();
 
-      if (!isValidPolygon) {
-        alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
-        return;
-      }
+      console.log('📦 isClosed:', isClosed);
+      console.log('📦 isValidPolygon:', isValidPolygon);
 
+    const isValidPolygon =
+      boundary.geometry?.type === 'Polygon' &&
+      Array.isArray(coords) &&
+      coords.length > 0 &&
+      isClosed;
+
+      console.log('📦 Closure distance:', Math.sqrt((ring[0][0] - ring[ring.length - 1][0]) ** 2 + (ring[0][1] - ring[ring.length - 1][1]) ** 2));
+      
+    if (!isValidPolygon) {
+      alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
+      return;
+    }
 
     const ip = await fetch('https://api.ipify.org?format=json')
       .then((res) => res.json())
@@ -86,9 +98,8 @@ const BoundariesForm = ({
         Array.isArray(parsed.data) && parsed.data.length > 0
           ? parsed.data[0].uuid
           : undefined;
-          
-          console.log('📦 Inserted row:', parsed.data?.[0]);
 
+      console.log('📦 Inserted row:', parsed.data?.[0]);
 
       if (!insertedUuid) {
         console.warn('⚠️ No UUID returned from backend. Survey update may fail.');
