@@ -19,18 +19,18 @@ const DrawOpenPolygon = {
     // Internal undo handler
     const undoHandler = () => {
       const coords = ctx.line.coordinates;
-      console.log('↩️ ui:undo received. Before length:', coords.length);
+      console.log('↩️ ui:undo received — coords before:', coords.length);
 
       if (coords.length === 0) {
-        console.log('↩️ Nothing to undo (already empty)');
+        console.log('↩️ Nothing to undo (empty)');
         return;
       }
 
       ctx.line.removeCoordinate(coords.length - 1);
-      console.log('↩️ After undo length:', ctx.line.coordinates.length);
+      console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
 
       if (ctx.line.coordinates.length === 0) {
-        // Reset to fresh empty line
+        // Re-init fresh empty line so user can draw again immediately
         this.deleteFeature(ctx.line.id);
         ctx.line = this.newFeature({
           type: 'Feature',
@@ -56,11 +56,11 @@ const DrawOpenPolygon = {
   onTap(state, e) { return this._handleAddPoint(state, e); },
 
   _handleAddPoint(state, e) {
-    // Guard: ignore clicks not on canvas
+    // Ignore clicks that aren’t on the map canvas
     const canvas = this.map.getCanvas();
     const target = e?.originalEvent?.target;
     if (target && target !== canvas) {
-      console.log('🛡️ Ignored click from non-canvas target:', target.tagName || target.className);
+      console.log('🛡️ Ignored non-canvas click:', target.tagName || target.className);
       return;
     }
 
@@ -98,7 +98,7 @@ const DrawOpenPolygon = {
 
     // Regular point addition
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
-    console.log('➕ Added point, total coords now:', state.line.coordinates.length);
+    console.log('➕ Added point, total coords:', state.line.coordinates.length);
 
     this.map.fire('draw.update', { features: [state.line.toGeoJSON()] });
   },
@@ -112,11 +112,12 @@ const DrawOpenPolygon = {
 
       state.nearFirstVertex = dist < 0.001;
       this.map.getCanvas().style.cursor = state.nearFirstVertex ? 'pointer' : 'default';
-      console.log('🖱 MouseMove near first vertex?', state.nearFirstVertex);
+      console.log('🖱 MouseMove — near first?', state.nearFirstVertex);
     }
   },
 
   toDisplayFeatures(state, geojson, display) {
+    // Always render vertices when there is at least one coordinate
     if (geojson.geometry.type === 'LineString' &&
         geojson.geometry.coordinates.length < 1) {
       console.log('🚫 No coords to display');
@@ -126,7 +127,7 @@ const DrawOpenPolygon = {
     display(geojson);
 
     if (geojson.geometry.type === 'LineString') {
-      console.log('🔎 Rendering vertices, count:', geojson.geometry.coordinates.length);
+      console.log('🔎 Rendering vertices — count:', geojson.geometry.coordinates.length);
       geojson.geometry.coordinates.forEach((coord, idx) => {
         const isFirst = idx === 0;
         display({

@@ -117,18 +117,6 @@ const NeighborhoodMap = () => {
           paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
         },
         {
-          id: 'gl-draw-ghost-line',
-          type: 'line',
-          source: 'mapbox-gl-draw-cold',
-          filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
-          paint: {
-            'line-color': '#cc0000',
-            'line-dasharray': [1, 2],
-            'line-width': 2,
-            'line-opacity': 0.6
-          }
-        },
-        {
         id: 'gl-draw-vertex-closing',
         type: 'circle',
         filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
@@ -384,17 +372,15 @@ const NeighborhoodMap = () => {
       </div>
     )}
 
-   {/* --- Step 3B: Drawing Step --- */}
-      {step === '3B' && drawingStarted && (
-        <div className="map-controls">
-         <button
+{/* --- Step 3B: Drawing Step --- */}
+{step === '3B' && drawingStarted && (
+  <div className="map-controls">
+    <button
       onClick={(ev) => {
-        // Prevent the button click from propagating to the map/canvas
-        ev.stopPropagation();
+        console.log('🧭 Undo button clicked — firing ui:undo');
+        ev.stopPropagation(); // don’t let the click reach the canvas
         ev.preventDefault();
-
-        // Tell the draw mode to undo internally
-        mapRef.current?.fire('ui:undo');
+        mapRef.current?.fire('ui:undo'); // draw mode listens to this
       }}
     >
       Undo
@@ -410,13 +396,9 @@ const NeighborhoodMap = () => {
     >
       Show Instructions
     </button>
-
-
-    <button className="secondary" onClick={() => setStep('3A')}>
-      Show Instructions
-    </button>
   </div>
 )}
+
 
 
   {step === '3C' && (
