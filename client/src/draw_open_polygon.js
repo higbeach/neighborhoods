@@ -11,12 +11,7 @@ const DrawOpenPolygon = {
 
     this.addFeature(line);
 
-    return {
-      line,
-      cursor: 'default',
-      currentMousePosition: null,
-      nearFirstVertex: false
-    };
+    return { line, cursor: 'default', currentMousePosition: null };
   },
 
   onClick(state, e) { return this._handleAddPoint(state, e); },
@@ -68,52 +63,52 @@ const DrawOpenPolygon = {
       const dy = first[1] - e.lngLat.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      state.nearFirstVertex = dist < 0.001;
-      this.map.getCanvas().style.cursor = state.nearFirstVertex ? 'pointer' : 'default';
+      this.map.getCanvas().style.cursor = dist < 0.001 ? 'pointer' : 'default';
     }
   },
 
   toDisplayFeatures(state, geojson, display) {
-    display(geojson);
+  display(geojson);
 
-    // Vertices (only for our active line)
-    if (geojson.geometry.type === 'LineString' && geojson.id === state.line.id) {
-      geojson.geometry.coordinates.forEach((coord, idx) => {
-        const isFirst = idx === 0;
-        display({
-          id: `${geojson.id}.${idx}`,
-          type: 'Feature',
-          properties: {
-            meta: 'vertex',
-            parent: geojson.id,
-            coord_path: idx,
-            closing: isFirst && state.nearFirstVertex ? 'true' : 'false'
-          },
-          geometry: { type: 'Point', coordinates: coord }
-        });
+  // Vertices (only for our active line)
+  if (geojson.geometry.type === 'LineString' && geojson.id === state.line.id) {
+    geojson.geometry.coordinates.forEach((coord, idx) => {
+      const isFirst = idx === 0;
+      display({
+        id: `${geojson.id}.${idx}`,
+        type: 'Feature',
+        properties: {
+          meta: 'vertex',
+          parent: geojson.id,
+          coord_path: idx,
+          // First vertex gets closing:true when near
+          closing: isFirst && state.nearFirstVertex ? 'true' : 'false'
+        },
+        geometry: { type: 'Point', coordinates: coord }
+      });
+    });
+  }
+
+  // Ghost line (last vertex → cursor)
+  if (
+    state.currentMousePosition &&
+    geojson.geometry.type === 'LineString' &&
+    geojson.id === state.line.id
+  ) {
+    const coords = geojson.geometry.coordinates;
+    if (coords.length > 0) {
+      display({
+        id: `${geojson.id}.ghost`,
+        type: 'Feature',
+        properties: { meta: 'ghost' },
+        geometry: {
+          type: 'LineString',
+          coordinates: [coords[coords.length - 1], state.currentMousePosition]
+        }
       });
     }
-
-    // Ghost line (last vertex → cursor)
-    if (
-      state.currentMousePosition &&
-      geojson.geometry.type === 'LineString' &&
-      geojson.id === state.line.id
-    ) {
-      const coords = geojson.geometry.coordinates;
-      if (coords.length > 0) {
-        display({
-          id: `${geojson.id}.ghost`,
-          type: 'Feature',
-          properties: { meta: 'ghost' },
-          geometry: {
-            type: 'LineString',
-            coordinates: [coords[coords.length - 1], state.currentMousePosition]
-          }
-        });
-      }
-    }
-  },
+  }
+},
 
   onStop() {
     console.log('🛑 onStop fired');
