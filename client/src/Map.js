@@ -350,18 +350,19 @@ const NeighborhoodMap = () => {
         </div>
         <div className="overlay-actions">
           <button
-            onClick={() => {
-              drawRef.current.deleteAll();
-              drawRef.current.changeMode('draw_open_polygon');
-              setDrawingStarted(true);
-              setStep('3B');
-              setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }, 100);
-            }}
-          >
-            I’m ready to draw
-          </button>
+          onClick={() => {
+            drawRef.current.deleteAll();
+            drawRef.current.changeMode('draw_open_polygon');
+            console.log('✅ Switched to draw_open_polygon mode');
+            setDrawingStarted(true);
+            setStep('3B');
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 100);
+          }}
+        >
+          I’m ready to draw
+        </button>
         </div>
       </div>
     )}

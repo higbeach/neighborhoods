@@ -69,6 +69,7 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
+      console.log('toDisplayFeatures called for', geojson.geometry.type);
     // Always display the current feature (line or polygon)
     display(geojson);
 
