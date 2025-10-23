@@ -85,65 +85,71 @@ const NeighborhoodMap = () => {
         ...MapboxDraw.modes,
         draw_open_polygon: DrawOpenPolygon, // add custom mode
       },
-      styles: [
-        {
-          id: 'gl-draw-polygon-fill',
-          type: 'fill',
-          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-          paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
-        },
-        {
-          id: 'gl-draw-polygon-stroke-active',
-          type: 'line',
-          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-          paint: { 'line-color': '#ff0000', 'line-width': 3 },
-        },
-        {
-          id: 'gl-draw-line-active',
-          type: 'line',
-          filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
-          paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
-        },
-        {
-          id: 'gl-draw-vertex-halo',
-          type: 'circle',
-          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-          paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
-        },
-        {
-          id: 'gl-draw-vertex-active',
-          type: 'circle',
-          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-          paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
-        },
-        {
-        id: 'gl-draw-vertex-closing',
-        type: 'circle',
-        filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
-        paint: {
-          'circle-radius': 7,
-          'circle-color': '#00ff00', // bright green highlight
-          'circle-stroke-color': '#000000',
-          'circle-stroke-width': 2 }
-        },
-       {
-        id: 'gl-draw-first-vertex',
-        type: 'circle',
-        source: 'mapbox-gl-draw-cold', // match your other draw layers' source
-        filter: ['all',
-          ['==', '$type', 'Point'],
-          ['==', 'meta', 'vertex'],
-          ['==', ['get', 'first'], 'true']
-        ],
-        paint: {
-          'circle-radius': 7,
-          'circle-color': '#00cc00', // green for first point
-          'circle-stroke-color': '#000000',
-          'circle-stroke-width': 2
-        }
-      }
-
-            ],
+    styles: [
+  {
+    id: 'gl-draw-polygon-fill',
+    type: 'fill',
+    source: 'mapbox-gl-draw-cold',
+    filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+    paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
+  },
+  {
+    id: 'gl-draw-polygon-stroke-active',
+    type: 'line',
+    source: 'mapbox-gl-draw-cold',
+    filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+    paint: { 'line-color': '#ff0000', 'line-width': 3 },
+  },
+  {
+    id: 'gl-draw-line-active',
+    type: 'line',
+    source: 'mapbox-gl-draw-cold',
+    filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
+    paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+  },
+  {
+    id: 'gl-draw-vertex-halo',
+    type: 'circle',
+    source: 'mapbox-gl-draw-cold',
+    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+    paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
+  },
+  {
+    id: 'gl-draw-vertex-active',
+    type: 'circle',
+    source: 'mapbox-gl-draw-cold',
+    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+    paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
+  },
+  {
+    id: 'gl-draw-vertex-closing',
+    type: 'circle',
+    source: 'mapbox-gl-draw-cold',
+    filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
+    paint: {
+      'circle-radius': 7,
+      'circle-color': '#00ff00',
+      'circle-stroke-color': '#000000',
+      'circle-stroke-width': 2
+    }
+  },
+  {
+    id: 'gl-draw-first-vertex',
+    type: 'circle',
+    source: 'mapbox-gl-draw-cold',
+    filter: ['all',
+      ['==', '$type', 'Point'],
+      ['==', 'meta', 'vertex'],
+      ['==', ['get', 'first'], 'true']
+    ],
+    paint: {
+      'circle-radius': 7,
+      'circle-color': '#00cc00',
+      'circle-stroke-color': '#000000',
+      'circle-stroke-width': 2
+    }
+  }
+]
     });
 
     mapRef.current.addControl(drawRef.current);

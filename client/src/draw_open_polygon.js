@@ -45,6 +45,7 @@ const DrawOpenPolygon = {
       this.map.fire('draw.update', { features: [ctx.line.toGeoJSON()] });
     };
 
+    // Listen to ui:undo on the internal map instance owned by Draw
     this.map.on('ui:undo', undoHandler);
 
     ctx._undoHandler = undoHandler;
@@ -56,7 +57,7 @@ const DrawOpenPolygon = {
   onTap(state, e) { return this._handleAddPoint(state, e); },
 
   _handleAddPoint(state, e) {
-    // Ignore clicks that aren’t on the map canvas
+    // Ignore non-canvas clicks so UI buttons don’t add points
     const canvas = this.map.getCanvas();
     const target = e?.originalEvent?.target;
     if (target && target !== canvas) {
@@ -117,7 +118,7 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
-    // Always render vertices when there is at least one coordinate
+    // Render the line and its vertices
     if (geojson.geometry.type === 'LineString' &&
         geojson.geometry.coordinates.length < 1) {
       console.log('🚫 No coords to display');
