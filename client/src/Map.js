@@ -132,12 +132,7 @@ const NeighborhoodMap = () => {
           'circle-stroke-color': '#000000',
           'circle-stroke-width': 2 }
         },
-        {
-          id: 'debug-all-points',
-          type: 'circle',
-          filter: ['==', '$type', 'Point'],
-          paint: { 'circle-radius': 6, 'circle-color': '#0000ff' }
-        }
+      
             ],
     });
 
