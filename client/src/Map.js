@@ -132,7 +132,20 @@ const NeighborhoodMap = () => {
           'circle-stroke-color': '#000000',
           'circle-stroke-width': 2 }
         },
-      
+        {
+        id: 'vertex-pulse',
+        type: 'circle',
+        source: 'mapbox-gl-draw-cold',
+        filter: ['all', ['==', 'meta', 'vertex'], ['==', ['get', 'pulse'], 'true']],
+        paint: {
+          'circle-radius': 6,
+          'circle-color': '#ff0000',
+          'circle-opacity': 0.6,
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#fff',
+          'circle-blur': 1
+        }
+      }
             ],
     });
 
@@ -381,8 +394,12 @@ const NeighborhoodMap = () => {
 
           drawRef.current.set({
             type: 'FeatureCollection',
-            features: [feature],
+            features: [],
           });
+
+          // ✅ Reset ghostline state
+            drawRef.current.changeMode('draw_open_polygon', { setBoundary });
+
         }
       }}
     >

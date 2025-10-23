@@ -114,7 +114,8 @@ const DrawOpenPolygon = {
             meta: 'vertex',
             parent: geojson.id,
             coord_path: idx,
-            closing: isFirst && state.nearFirstVertex ? 'true' : 'false'
+            closing: isFirst && state.nearFirstVertex ? 'true' : 'false',
+            pulse: isFirst ? 'true' : 'false'
           },
           geometry: { type: 'Point', coordinates: coord }
         });
@@ -127,6 +128,11 @@ const DrawOpenPolygon = {
     ) {
       const coords = geojson.geometry.coordinates;
       if (coords.length > 0) {
+        console.log('👻 Emitting ghostline:', {
+          from: coords[coords.length - 1],
+          to: state.currentMousePosition
+        });
+        
         display({
           id: `${geojson.id}.ghost`,
           type: 'Feature',
