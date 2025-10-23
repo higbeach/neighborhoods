@@ -398,7 +398,7 @@ const NeighborhoodMap = () => {
   {step === '3C' && (
     <div className="overlay overlay-enter">
       <h2>Looking good!</h2>
-      <p>If this looks right, you can confirm, redraw, or start completely over.</p>
+      <p>If this looks right to press "Next," To try again, press "Draw Again."</p>
       <div className="overlay-actions">
         {/* ✅ Proceed to BoundariesForm */}
         <button onClick={() => setStep(4)}>Next</button>
@@ -414,13 +414,6 @@ const NeighborhoodMap = () => {
           Draw Again
         </button>
 
-        {/* ✅ Full reset */}
-        <button
-          className="secondary"
-          onClick={startOver}
-        >
-          Start from the Beginning
-        </button>
       </div>
     </div>
   )}
