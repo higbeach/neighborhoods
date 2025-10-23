@@ -120,7 +120,12 @@ const NeighborhoodMap = () => {
           id: 'gl-draw-ghost-line',
           type: 'line',
           filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
-          paint: { 'line-color': '#ff0000', 'line-dasharray': [0.5, 2], 'line-width': 2 }
+          paint: {
+            'line-color': '#cc0000',
+            'line-dasharray': [1, 2],
+            'line-width': 2,
+            'line-opacity': 0.6
+          }
         },
         {
         id: 'gl-draw-vertex-closing',
@@ -378,33 +383,32 @@ const NeighborhoodMap = () => {
    {/* --- Step 3B: Drawing Step --- */}
 {step === '3B' && drawingStarted && (
   <div className="map-controls">
-    <button
+   <button
       onClick={() => {
         const data = drawRef.current.getAll();
         if (data.features.length > 0) {
           const feature = data.features[0];
 
           if (feature.geometry.type === 'LineString') {
-            // Still drawing an open line
+            // Remove last point
             feature.geometry.coordinates.pop();
           } else if (feature.geometry.type === 'Polygon') {
-            // Already closed into a polygon
-            feature.geometry.coordinates[0].pop();
+            // Remove last point from ring
+            const ring = feature.geometry.coordinates[0];
+            ring.splice(ring.length - 2, 1); // remove second-to-last point (last is duplicate of first)
+            feature.geometry.coordinates[0] = ring;
           }
 
           drawRef.current.set({
             type: 'FeatureCollection',
-            features: [],
+            features: [feature],
           });
-
-          // ✅ Reset ghostline state
-            drawRef.current.changeMode('draw_open_polygon', { setBoundary });
-
         }
       }}
     >
       Undo
     </button>
+
 
     <button className="secondary" onClick={() => setStep('3A')}>
       Show Instructions
