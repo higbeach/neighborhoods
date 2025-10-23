@@ -1,7 +1,6 @@
-// src/draw_open_polygon.js
 const DrawOpenPolygon = {
   onSetup(options = {}) {
-    console.log('🎬 onSetup fired');
+    console.log('🎬 draw_open_polygon.js → onSetup fired');
 
     const line = this.newFeature({
       type: 'Feature',
@@ -16,7 +15,6 @@ const DrawOpenPolygon = {
       nearFirstVertex: false
     };
 
-    // Internal undo handler
     const undoHandler = () => {
       const coords = ctx.line.coordinates;
       console.log('↩️ ui:undo received — coords before:', coords.length);
@@ -30,7 +28,6 @@ const DrawOpenPolygon = {
       console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
 
       if (ctx.line.coordinates.length === 0) {
-        // Re-init fresh empty line so user can draw again immediately
         this.deleteFeature(ctx.line.id);
         ctx.line = this.newFeature({
           type: 'Feature',
@@ -45,7 +42,6 @@ const DrawOpenPolygon = {
       this.map.fire('draw.update', { features: [ctx.line.toGeoJSON()] });
     };
 
-    // Listen to ui:undo on the internal map instance owned by Draw
     this.map.on('ui:undo', undoHandler);
 
     ctx._undoHandler = undoHandler;
@@ -53,11 +49,14 @@ const DrawOpenPolygon = {
     return ctx;
   },
 
-  onClick(state, e) { return this._handleAddPoint(state, e); },
-  onTap(state, e) { return this._handleAddPoint(state, e); },
+  onClick(state, e) {
+    return this._handleAddPoint(state, e);
+  },
+  onTap(state, e) {
+    return this._handleAddPoint(state, e);
+  },
 
   _handleAddPoint(state, e) {
-    // Ignore non-canvas clicks so UI buttons don’t add points
     const canvas = this.map.getCanvas();
     const target = e?.originalEvent?.target;
     if (target && target !== canvas) {
@@ -75,7 +74,6 @@ const DrawOpenPolygon = {
     const dy = first?.[1] - e.lngLat.lat;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Close polygon by clicking near first vertex
     if (coords.length > 2 && dist < tolerance) {
       console.log('✅ Closing polygon via first-point click');
 
@@ -97,7 +95,6 @@ const DrawOpenPolygon = {
       return;
     }
 
-    // Regular point addition
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
     console.log('➕ Added point, total coords:', state.line.coordinates.length);
 
@@ -118,7 +115,6 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
-    // Render the line and its vertices
     if (geojson.geometry.type === 'LineString' &&
         geojson.geometry.coordinates.length < 1) {
       console.log('🚫 No coords to display');
@@ -147,12 +143,17 @@ const DrawOpenPolygon = {
           console.log('🌟 First vertex displayed at', coord);
         }
       });
+
+      // ✅ Explicitly suppress ghostline emission
+      // Do NOT emit any feature with meta: 'ghost'
     }
   },
 
   onStop() {
     console.log('🛑 onStop fired');
-    if (this._ctx?._undoHandler) this.map.off('ui:undo', this._ctx._undoHandler);
+    if (this._ctx?._undoHandler) {
+      this.map.off('ui:undo', this._ctx._undoHandler);
+    }
     this.map.getCanvas().style.cursor = 'default';
     this._ctx = null;
   }

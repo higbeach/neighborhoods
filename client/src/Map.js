@@ -7,8 +7,6 @@ import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import BoundariesForm from './BoundariesForm';
 import NeighborhoodSurvey from './NeighborhoodSurvey';
 import neighborhoodNames from './neighborhoodNames';
-
-// 👉 import your custom mode
 import DrawOpenPolygon from './draw_open_polygon';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
@@ -19,203 +17,16 @@ const NeighborhoodMap = () => {
   const drawRef = useRef(null);
   const markerRef = useRef(null);
 
-  const [step, setStep] = useState(0); // ✅ start at intro (Step 0)
+  const [step, setStep] = useState(0);
   const [location, setLocation] = useState(null);
   const [years, setYears] = useState(0);
   const [areaName, setAreaName] = useState('');
   const [boundary, setBoundary] = useState(null);
-
   const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
   const [drawingStarted, setDrawingStarted] = useState(false);
   const [submissionUuid, setSubmissionUuid] = useState(null);
-
-
-  // ✅ Scroll to top on step change
-  useEffect(() => {
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
-  }, [step]);
-
-  // ✅ Boundary update logic (no step changes here)
-  const updateBoundary = useCallback(() => {
-    const data = drawRef.current.getAll();
-    if (data.features.length > 0) {
-      const feature = data.features[0];
-      setBoundary(feature);
-
-      // Keep integrity checks for debugging/UX hints if desired
-      if (feature.geometry.type === 'Polygon') {
-        const coords = feature.geometry.coordinates?.[0];
-        if (coords && coords.length > 3) {
-          // Removed unused isClosed variable
-          // Do not setStep here — draw.finish listener handles advancing to 3C
-          // Optionally, you could set flags/dialogs based on isClosed
-        }
-      }
-    } else {
-      setBoundary(null);
-    }
-  }, []);
-
-  // ✅ Map initialization
-  useEffect(() => {
-    if (mapRef.current) return;
-
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v10',
-      center: [-122.2868, 47.5609],
-      zoom: 13,
-    });
-
-    // Add zoom controls in lower right, no compass
-    mapRef.current.addControl(
-      new mapboxgl.NavigationControl({ showCompass: false }),
-      'bottom-right'
-    );
-
-    // ✅ Register custom mode
-    drawRef.current = new MapboxDraw({
-      displayControlsDefault: false,
-      controls: {},
-      modes: {
-        ...MapboxDraw.modes,
-        draw_open_polygon: DrawOpenPolygon, // add custom mode
-      },
-    styles: [
-  {
-    id: 'gl-draw-polygon-fill',
-    type: 'fill',
-    source: 'mapbox-gl-draw-cold',
-    filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-    paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
-  },
-  {
-    id: 'gl-draw-polygon-stroke-active',
-    type: 'line',
-    source: 'mapbox-gl-draw-cold',
-    filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-    paint: { 'line-color': '#ff0000', 'line-width': 3 },
-  },
-  {
-    id: 'gl-draw-line-active',
-    type: 'line',
-    source: 'mapbox-gl-draw-cold',
-    filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
-    paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
-  },
-  {
-    id: 'gl-draw-vertex-halo',
-    type: 'circle',
-    source: 'mapbox-gl-draw-cold',
-    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-    paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
-  },
-  {
-    id: 'gl-draw-vertex-active',
-    type: 'circle',
-    source: 'mapbox-gl-draw-cold',
-    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-    paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
-  },
-  {
-    id: 'gl-draw-vertex-closing',
-    type: 'circle',
-    source: 'mapbox-gl-draw-cold',
-    filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
-    paint: {
-      'circle-radius': 7,
-      'circle-color': '#00ff00',
-      'circle-stroke-color': '#000000',
-      'circle-stroke-width': 2
-    }
-  },
-  {
-    id: 'gl-draw-first-vertex',
-    type: 'circle',
-    source: 'mapbox-gl-draw-cold',
-    filter: ['all',
-      ['==', '$type', 'Point'],
-      ['==', 'meta', 'vertex'],
-      ['==', ['get', 'first'], 'true']
-    ],
-    paint: {
-      'circle-radius': 7,
-      'circle-color': '#00cc00',
-      'circle-stroke-color': '#000000',
-      'circle-stroke-width': 2
-    }
-  }
-]
-    });
-
-    mapRef.current.addControl(drawRef.current);
-
-    // Attach listeners
-    mapRef.current.on('draw.create', updateBoundary);
-    mapRef.current.on('draw.update', updateBoundary);
-    mapRef.current.on('draw.delete', () => setBoundary(null));
-
-    // When polygon is closed, go to 3C (review)
-    mapRef.current.on('draw.finish', (e) => {
-      console.log('🎯 Custom finish event fired', e.features);
-      updateBoundary();           // keep boundary state fresh
-      setDrawingStarted(false);
-      setStep('3C');              // ✅ go to review step
-    });
-
-    mapRef.current.on('load', () => {
-      const layersToHide = [
-        'neighborhood-label',
-        'neighborhood_label',
-        'place_label',
-        'place-city-lg-n',
-        'place-city-lg-s',
-        'place-city-md-n',
-        'place-city-md-s',
-        'place-city-sm',
-      ];
-      layersToHide.forEach((layerId) => {
-        if (mapRef.current.getLayer(layerId)) {
-          mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
-        }
-      });
-      const labelLayer = 'place-label';
-      if (mapRef.current.getLayer(labelLayer)) {
-        mapRef.current.setFilter(labelLayer, [
-          'all',
-          ['!=', ['get', 'place_type'], 'neighborhood'],
-          ['!=', ['get', 'place_type'], 'locality'],
-        ]);
-      }
-    });
-
-    // Cleanup listeners
-    return () => {
-      if (!mapRef.current) return;
-      mapRef.current.off('draw.create', updateBoundary);
-      mapRef.current.off('draw.update', updateBoundary);
-      mapRef.current.off('draw.delete');
-      mapRef.current.off('draw.finish');
-    };
-  }, [updateBoundary]);
-
-  useEffect(() => {
-    console.log('📍 Step changed to:', step);
-  }, [step]);
-
-  useEffect(() => {
-    console.log('🧾 Survey form visibility:', showSurveyForm);
-  }, [showSurveyForm]);
-
-  useEffect(() => {
-    console.log('🧭 Survey render check — step:', step);
-    console.log('🧭 showSurveyForm:', showSurveyForm);
-    console.log('🧭 surveyComplete:', surveyComplete);
-  }, [step, showSurveyForm, surveyComplete]);
 
   const handleConfirmLocation = () => {
     if (!mapRef.current) return;
@@ -262,10 +73,185 @@ const NeighborhoodMap = () => {
 
   const startOver = () => {
     handleReset();
-    setStep(0); // ✅ restart whole flow at intro
+    setStep(0);
   };
 
-    return (
+  useEffect(() => {
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  }, [step]);
+
+  const updateBoundary = useCallback(() => {
+    const data = drawRef.current.getAll();
+    if (data.features.length > 0) {
+      const feature = data.features[0];
+      setBoundary(feature);
+    } else {
+      setBoundary(null);
+    }
+  }, []);
+
+// second quarter
+
+// second quarter
+
+  useEffect(() => {
+    if (mapRef.current) return;
+
+    mapRef.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/light-v10',
+      center: [-122.2868, 47.5609],
+      zoom: 13,
+    });
+
+    console.log('🗺️ Map initialized');
+
+    mapRef.current.addControl(
+      new mapboxgl.NavigationControl({ showCompass: false }),
+      'bottom-right'
+    );
+
+    drawRef.current = new MapboxDraw({
+      displayControlsDefault: false,
+      controls: {},
+      modes: {
+        ...MapboxDraw.modes,
+        draw_open_polygon: DrawOpenPolygon,
+      },
+      styles: [
+        {
+          id: 'gl-draw-polygon-fill',
+          type: 'fill',
+          source: 'mapbox-gl-draw-cold',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
+        },
+        {
+          id: 'gl-draw-polygon-stroke-active',
+          type: 'line',
+          source: 'mapbox-gl-draw-cold',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'line-color': '#ff0000', 'line-width': 3 },
+        },
+        {
+          id: 'gl-draw-line-active',
+          type: 'line',
+          source: 'mapbox-gl-draw-cold',
+          filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
+          paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+        },
+        {
+          id: 'gl-draw-vertex-halo',
+          type: 'circle',
+          source: 'mapbox-gl-draw-cold',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+          paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
+        },
+        {
+          id: 'gl-draw-vertex-active',
+          type: 'circle',
+          source: 'mapbox-gl-draw-cold',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+          paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
+        },
+        {
+          id: 'gl-draw-vertex-closing',
+          type: 'circle',
+          source: 'mapbox-gl-draw-cold',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
+          paint: {
+            'circle-radius': 7,
+            'circle-color': '#00ff00',
+            'circle-stroke-color': '#000000',
+            'circle-stroke-width': 2
+          }
+        },
+        {
+          id: 'gl-draw-first-vertex',
+          type: 'circle',
+          source: 'mapbox-gl-draw-cold',
+          filter: ['all',
+            ['==', '$type', 'Point'],
+            ['==', 'meta', 'vertex'],
+            ['==', 'first', 'true'] // ✅ FIXED: no ['get', ...]
+          ],
+          paint: {
+            'circle-radius': 7,
+            'circle-color': '#00cc00',
+            'circle-stroke-color': '#000000',
+            'circle-stroke-width': 2
+          }
+        }
+      ]
+    });
+
+    mapRef.current.addControl(drawRef.current);
+    console.log('✏️ Draw control added');
+
+    mapRef.current.on('draw.create', updateBoundary);
+    mapRef.current.on('draw.update', updateBoundary);
+    mapRef.current.on('draw.delete', () => setBoundary(null));
+
+    mapRef.current.on('draw.finish', (e) => {
+      console.log('🎯 Custom finish event fired', e.features);
+      updateBoundary();
+      setDrawingStarted(false);
+      setStep('3C');
+    });
+
+    mapRef.current.on('load', () => {
+      console.log('🧩 Map loaded — hiding labels');
+      const layersToHide = [
+        'neighborhood-label',
+        'neighborhood_label',
+        'place_label',
+        'place-city-lg-n',
+        'place-city-lg-s',
+        'place-city-md-n',
+        'place-city-md-s',
+        'place-city-sm',
+      ];
+      layersToHide.forEach((layerId) => {
+        if (mapRef.current.getLayer(layerId)) {
+          mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
+        }
+      });
+      const labelLayer = 'place-label';
+      if (mapRef.current.getLayer(labelLayer)) {
+        mapRef.current.setFilter(labelLayer, [
+          'all',
+          ['!=', ['get', 'place_type'], 'neighborhood'],
+          ['!=', ['get', 'place_type'], 'locality'],
+        ]);
+      }
+
+      const allLayers = mapRef.current.getStyle().layers;
+      console.log('🧪 Final layer list:', allLayers.map(l => l.id));
+    });
+
+    return () => {
+      if (!mapRef.current) return;
+      mapRef.current.off('draw.create', updateBoundary);
+      mapRef.current.off('draw.update', updateBoundary);
+      mapRef.current.off('draw.delete');
+      mapRef.current.off('draw.finish');
+    };
+  }, [updateBoundary]);
+
+  useEffect(() => {
+    console.log('📍 Step changed to:', step);
+  }, [step]);
+
+  useEffect(() => {
+    console.log('🧾 Survey form visibility:', showSurveyForm);
+  }, [showSurveyForm]);
+
+
+// second half
+
+return (
   <div className="map-wrapper">
     {/* Map container */}
     <div ref={mapContainer} className="map-container" />
@@ -291,7 +277,7 @@ const NeighborhoodMap = () => {
       <>
         <div className="map-pin">
           <svg viewBox="0 0 16 16" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-           <path
+            <path
               fillRule="evenodd"
               clipRule="evenodd"
               d="M3.37892 10.2236L8 16L12.6211 10.2236C13.5137 9.10788 14 7.72154 14 6.29266V6C14 2.68629 11.3137 0 8 0C4.68629 0 2 2.68629 2 6V6.29266C2 7.72154 2.4863 9.10788 3.37892 10.2236ZM8 8C9.10457 8 10 7.10457 10 6C10 4.89543 9.10457 4 8 4C6.89543 4 6 4.89543 6 6C6 7.10457 6.89543 8 8 8Z"
@@ -313,30 +299,30 @@ const NeighborhoodMap = () => {
     {/* Step 2: Name + years */}
     {step === 2 && (
       <div className="overlay overlay-enter">
-          <h2>What do you call this area?</h2>
-          <label>Type the neighborhood name</label>
-          <input
-            type="text"
-            placeholder="Neighborhood name"
-            value={areaName}
-            onChange={(e) => setAreaName(e.target.value)}
-            list="neighborhood-names"
-          />
-          <datalist id="neighborhood-names">
-            {neighborhoodNames.map((name, idx) => (
-              <option key={idx} value={name} />
-            ))}
-          </datalist>
+        <h2>What do you call this area?</h2>
+        <label>Type the neighborhood name</label>
+        <input
+          type="text"
+          placeholder="Neighborhood name"
+          value={areaName}
+          onChange={(e) => setAreaName(e.target.value)}
+          list="neighborhood-names"
+        />
+        <datalist id="neighborhood-names">
+          {neighborhoodNames.map((name, idx) => (
+            <option key={idx} value={name} />
+          ))}
+        </datalist>
 
-          <label>How many years have you lived here?</label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={years}
-            onChange={(e) => setYears(e.target.value)}
-          />
-          <p>{years} years</p>
+        <label>How many years have you lived here?</label>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={years}
+          onChange={(e) => setYears(e.target.value)}
+        />
+        <p>{years} years</p>
 
         <div className="overlay-actions">
           <button onClick={() => setStep('3A')} disabled={!areaName}>Next</button>
@@ -344,7 +330,6 @@ const NeighborhoodMap = () => {
         </div>
       </div>
     )}
-
 
     {/* Step 3A: Drawing instructions */}
     {step === '3A' && (
@@ -361,77 +346,82 @@ const NeighborhoodMap = () => {
         </div>
         <div className="overlay-actions">
           <button
-          onClick={() => {
-            drawRef.current.deleteAll();
-            drawRef.current.changeMode('draw_open_polygon', { setBoundary });
-            console.log('✅ Switched to draw_open_polygon mode');
-            setDrawingStarted(true);
-            setStep('3B');
-            setTimeout(() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 100);
-          }}
-        >
-          I’m ready to draw
-        </button>
+            onClick={(ev) => {
+              ev.stopPropagation();
+              ev.preventDefault();
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_open_polygon', { setBoundary });
+              console.log('✅ Switched to draw_open_polygon mode');
+              setDrawingStarted(true);
+              setStep('3B');
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 100);
+            }}
+          >
+            I’m ready to draw
+          </button>
         </div>
       </div>
     )}
 
-{/* --- Step 3B: Drawing Step --- */}
-{step === '3B' && drawingStarted && (
-  <div className="map-controls">
-    <button
-      onClick={(ev) => {
-        console.log('🧭 Undo button clicked — firing ui:undo');
-        ev.stopPropagation(); // don’t let the click reach the canvas
-        ev.preventDefault();
-        mapRef.current?.fire('ui:undo'); // draw mode listens to this
-      }}
-    >
-      Undo
-    </button>
-
-    <button
-      className="secondary"
-      onClick={(ev) => {
-        ev.stopPropagation();
-        ev.preventDefault();
-        setStep('3A');
-      }}
-    >
-      Show Instructions
-    </button>
-  </div>
-)}
-
-
-
-  {step === '3C' && (
-    <div className="overlay overlay-enter">
-      <h2>Looking good!</h2>
-      <p>If this looks right to press "Next." <br /> <br />To try again, press "Draw Again."</p>
-      <div className="overlay-actions">
-        {/* ✅ Proceed to BoundariesForm */}
-        <button onClick={() => setStep(4)}>Next</button>
-
-        {/* ✅ Redraw only */}
+    {/* Step 3B: Drawing Step */}
+    {step === '3B' && drawingStarted && (
+      <div className="map-controls">
         <button
-          onClick={() => {
-            drawRef.current.deleteAll();
-            setBoundary(null);
+          onClick={(ev) => {
+            console.log('🧭 Undo button clicked — firing ui:undo');
+            ev.stopPropagation();
+            ev.preventDefault();
+            mapRef.current?.fire('ui:undo');
+          }}
+        >
+          Undo
+        </button>
+
+        <button
+          className="secondary"
+          onClick={(ev) => {
+            ev.stopPropagation();
+            ev.preventDefault();
             setStep('3A');
           }}
         >
-          Draw Again
+          Show Instructions
         </button>
-
       </div>
-    </div>
-  )}
+    )}
 
+    {/* Step 3C: Review */}
+    {step === '3C' && (
+      <div className="overlay overlay-enter">
+        <h2>Looking good!</h2>
+        <p>If this looks right, press "Next." <br /><br />To try again, press "Draw Again."</p>
+        <div className="overlay-actions">
+          <button onClick={() => {
+            console.log('📐 Confirming boundary:', boundary);
+            setStep(4);
+          }}>
+            Next
+          </button>
+          <button
+            onClick={(ev) => {
+              ev.stopPropagation();
+              ev.preventDefault();
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_open_polygon', { setBoundary });
+              setBoundary(null);
+              setDrawingStarted(true);
+              setStep('3B');
+            }}
+          >
+            Draw Again
+          </button>
+        </div>
+      </div>
+    )}
 
-    {/* Step 4: BoundariesForm (Confirm & Submit) */}
+    {/* Step 4: BoundariesForm */}
     {step === 4 && (
       <BoundariesForm
         boundary={boundary}
@@ -446,45 +436,48 @@ const NeighborhoodMap = () => {
           setShowSurveyPrompt(true);
         }}
       />
-    )},
+    )}
 
-      {step === 5 && showSurveyPrompt && !showSurveyForm && (
-        <div className="overlay overlay-enter">
-          <h2>Thank you for your submission!</h2>
-          <p>Do you have 2–3 minutes to answer some additional questions about your feelings toward your neighborhood?</p>
-          <div className="overlay-actions">
-            <button onClick={() => setShowSurveyForm(true)}>Yes — take me to the survey</button>
-            <button className="secondary" onClick={handleReset}>No thanks</button>
-          </div>
+    {/* Step 5: Survey prompt */}
+    {step === 5 && showSurveyPrompt && !showSurveyForm && (
+      <div className="overlay overlay-enter">
+        <h2>Thank you for your submission!</h2>
+        <p>Do you have 2–3 minutes to answer some additional questions about your feelings toward your neighborhood?</p>
+        <div className="overlay-actions">
+          <button onClick={() => setShowSurveyForm(true)}>Yes — take me to the survey</button>
+          <button className="secondary" onClick={handleReset}>No thanks</button>
         </div>
-      )}
+      </div>
+    )}
 
-      {step === 5 && showSurveyForm && !surveyComplete && (
-        <NeighborhoodSurvey
-          location={location}
-          years={years}
-          areaName={areaName}
-          boundary={boundary}
-          submissionUuid={submissionUuid} // ✅ pass the UUID
-          onComplete={() => {
-            setSurveyComplete(true);
-          }}
-        />
+    {/* Step 5: Survey form */}
+    {step === 5 && showSurveyForm && !surveyComplete && (
+      <NeighborhoodSurvey
+        location={location}
+        years={years}
+        areaName={areaName}
+        boundary={boundary}
+        submissionUuid={submissionUuid}
+        onComplete={() => {
+          setSurveyComplete(true);
+        }}
+      />
+    )}
 
-      )}
-
-      {step === 5 && surveyComplete && (
-        <div className="overlay overlay-enter">
-          <h2>Thank you!</h2>
-          <p>Your survey responses have been recorded.</p>
-          <p>Please share this with other people you know who live in Columbia City or surrounding neighborhoods.</p>
-          <div className="overlay-actions">
-            <button onClick={handleReset}>Start Over</button>
-          </div>
+    {/* Step 5: Survey complete */}
+    {step === 5 && surveyComplete && (
+      <div className="overlay overlay-enter">
+        <h2>Thank you!</h2>
+        <p>Your survey responses have been recorded.</p>
+        <p>Please share this with other people you know who live in Columbia City or surrounding neighborhoods.</p>
+        <div className="overlay-actions">
+          <button onClick={handleReset}>Start Over</button>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
+
 };
 
 export default NeighborhoodMap;

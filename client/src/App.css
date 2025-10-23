@@ -265,3 +265,19 @@ body {
 .mapbox-gl-draw_ctrl-top-right {
   display: none !important;
 }
+/* Ensure overlays intercept clicks */
+.overlay {
+  pointer-events: auto;
+}
+
+/* Suppress any ghostline remnants */
+#gl-draw-ghost-line,
+.gl-draw-ghost-line {
+  display: none !important;
+}
+
+/* Optional debug: highlight button click targets */
+.map-controls button {
+  outline: none; /* remove if debugging */
+}
+
