@@ -139,17 +139,21 @@ const NeighborhoodMap = () => {
           'circle-stroke-width': 2 }
         },
         {
-        id: 'vertex-pulse',
-        type: 'circle',
-        source: 'mapbox-gl-draw-cold',
-        filter: ['all', ['==', 'meta', 'vertex'], ['==', ['get', 'pulse'], 'true']],
-        paint: {
-          'circle-radius': 6,
-          'circle-color': '#ff0000',
-          'circle-opacity': 0.6,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#fff',
-          'circle-blur': 1
+         id: 'vertex-pulse',
+          type: 'circle',
+          source: 'mapbox-gl-draw-cold',
+          filter: ['all',
+            ['==', '$type', 'Point'],
+            ['==', 'meta', 'vertex'],
+            ['==', ['get', 'pulse'], 'true']
+          ],
+          paint: {
+            'circle-radius': 6,
+            'circle-color': '#ff0000',
+            'circle-opacity': 0.6,
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#fff',
+            'circle-blur': 1
         }
       }
             ],
@@ -384,31 +388,36 @@ const NeighborhoodMap = () => {
    {/* --- Step 3B: Drawing Step --- */}
       {step === '3B' && drawingStarted && (
         <div className="map-controls">
-          <button
-          onClick={() => {
-            const data = drawRef.current.getAll();
-            if (data.features.length > 0) {
-              const feature = data.features[0];
+         <button
+            onClick={() => {
+              const data = drawRef.current.getAll();
+              if (data.features.length > 0) {
+                const feature = data.features[0];
 
-              if (feature.geometry.type === 'LineString') {
-                feature.geometry.coordinates.pop();
-              } else if (feature.geometry.type === 'Polygon') {
-                const ring = feature.geometry.coordinates[0];
-                ring.splice(ring.length - 2, 1); // remove second-to-last point
-                feature.geometry.coordinates[0] = ring;
+                let updated = false;
+
+                if (feature.geometry.type === 'LineString') {
+                  feature.geometry.coordinates.pop();
+                  updated = feature.geometry.coordinates.length >= 2;
+                } else if (feature.geometry.type === 'Polygon') {
+                  const ring = feature.geometry.coordinates[0];
+                  ring.splice(ring.length - 2, 1); // remove second-to-last point
+                  updated = ring.length >= 4; // must have at least 3 + closing point
+                  feature.geometry.coordinates[0] = ring;
+                }
+
+                drawRef.current.deleteAll();
+                drawRef.current.changeMode('draw_open_polygon', { setBoundary });
+
+                if (updated) {
+                  drawRef.current.add(feature);
+                }
               }
+            }}
+          >
+            Undo
+          </button>
 
-              // ✅ Reset draw mode with updated geometry
-              drawRef.current.deleteAll();
-              drawRef.current.changeMode('draw_open_polygon', { setBoundary });
-
-              // ✅ Re-add the trimmed feature
-              drawRef.current.add(feature);
-            }
-          }}
-        >
-          Undo
-        </button>
 
 
 
