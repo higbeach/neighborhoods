@@ -105,6 +105,10 @@ const DrawOpenPolygon = {
     display(geojson);
 
     if (geojson.geometry.type === 'LineString') {
+      if (geojson.geometry.coordinates.length < 2) {
+        return; // ✅ prevent stray dots/ghostlines after Undo
+      }
+
       geojson.geometry.coordinates.forEach((coord, idx) => {
         const isFirst = idx === 0;
         display({
@@ -124,27 +128,27 @@ const DrawOpenPolygon = {
 
     if (
       state.currentMousePosition &&
-      geojson.geometry.type === 'LineString'
+      geojson.geometry.type === 'LineString' &&
+      geojson.geometry.coordinates.length > 0
     ) {
       const coords = geojson.geometry.coordinates;
-      if (coords.length > 0) {
-        console.log('👻 Emitting ghostline:', {
-          from: coords[coords.length - 1],
-          to: state.currentMousePosition
-        });
-        
-        display({
-          id: `${geojson.id}.ghost`,
-          type: 'Feature',
-          properties: { meta: 'ghost' },
-          geometry: {
-            type: 'LineString',
-            coordinates: [coords[coords.length - 1], state.currentMousePosition]
-          }
-        });
-      }
+      console.log('👻 Emitting ghostline:', {
+        from: coords[coords.length - 1],
+        to: state.currentMousePosition
+      });
+
+      display({
+        id: `${geojson.id}.ghost`,
+        type: 'Feature',
+        properties: { meta: 'ghost' },
+        geometry: {
+          type: 'LineString',
+          coordinates: [coords[coords.length - 1], state.currentMousePosition]
+        }
+      });
     }
   },
+
 
   onStop() {
     console.log('🛑 onStop fired');

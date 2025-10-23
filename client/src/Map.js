@@ -388,44 +388,68 @@ const NeighborhoodMap = () => {
    {/* --- Step 3B: Drawing Step --- */}
       {step === '3B' && drawingStarted && (
         <div className="map-controls">
-         <button
+        <button
           onClick={() => {
             const data = drawRef.current.getAll();
-            if (data.features.length > 0) {
-              const feature = data.features[0];
-              let coords = [];
+            if (data.features.length === 0) return;
 
-              if (feature.geometry.type === 'LineString') {
-                coords = feature.geometry.coordinates;
-                coords.pop();
+            const feature = data.features[0];
 
-                if (coords.length >= 2) {
-                  feature.geometry.coordinates = coords;
-                } else {
-                  drawRef.current.deleteAll();
-                  drawRef.current.changeMode('draw_open_polygon', { setBoundary });
-                  return; // ✅ too few points — reset cleanly
-                }
-              } else if (feature.geometry.type === 'Polygon') {
-                const ring = feature.geometry.coordinates[0];
-                ring.splice(ring.length - 2, 1); // remove second-to-last
-                if (ring.length >= 4) {
-                  feature.geometry.coordinates[0] = ring;
-                } else {
-                  drawRef.current.deleteAll();
-                  drawRef.current.changeMode('draw_open_polygon', { setBoundary });
-                  return; // ✅ too few points — reset cleanly
-                }
+            if (feature.geometry.type === 'LineString') {
+              // Remove the last point
+              feature.geometry.coordinates.pop();
+
+              if (feature.geometry.coordinates.length >= 2) {
+                // Still a valid line
+                drawRef.current.set({
+                  type: 'FeatureCollection',
+                  features: [feature],
+                });
+              } else {
+                // Too few points → clear everything
+                drawRef.current.set({
+                  type: 'FeatureCollection',
+                  features: [],
+                });
               }
+            } else if (feature.geometry.type === 'Polygon') {
+              const ring = feature.geometry.coordinates[0];
+              // Remove the second-to-last point (last is duplicate of first)
+              ring.splice(ring.length - 2, 1);
 
-              drawRef.current.deleteAll();
-              drawRef.current.changeMode('draw_open_polygon', { setBoundary });
-              drawRef.current.add(feature);
+              if (ring.length >= 4) {
+                // Still a valid polygon
+                feature.geometry.coordinates[0] = ring;
+                drawRef.current.set({
+                  type: 'FeatureCollection',
+                  features: [feature],
+                });
+              } else if (ring.length === 3) {
+                // Convert to an open LineString with remaining points
+                const open = {
+                  ...feature,
+                  geometry: {
+                    type: 'LineString',
+                    coordinates: ring.slice(0, 3),
+                  },
+                };
+                drawRef.current.set({
+                  type: 'FeatureCollection',
+                  features: [open],
+                });
+              } else {
+                // Too few points → clear everything
+                drawRef.current.set({
+                  type: 'FeatureCollection',
+                  features: [],
+                });
+              }
             }
           }}
         >
           Undo
         </button>
+
 
 
     <button className="secondary" onClick={() => setStep('3A')}>
