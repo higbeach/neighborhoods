@@ -11,13 +11,39 @@ const DrawOpenPolygon = {
 
     this.addFeature(line);
 
-    return {
+    // Handlers to clear cursor/ghostline state
+    const clearCursor = () => {
+      // Stop ghostline emission and closing hover
+      options.__debug && console.log('🧹 Clearing cursor state');
+      this._ctx && (this._ctx.currentMousePosition = null);
+      this._ctx && (this._ctx.nearFirstVertex = false);
+      // Also reset canvas cursor style
+      this.map.getCanvas().style.cursor = 'default';
+    };
+
+    const onCanvasLeave = () => clearCursor();
+
+    // Attach canvas mouseleave listener
+    this.map.getCanvas().addEventListener('mouseleave', onCanvasLeave);
+
+    // Listen for external UI event (Undo, etc.)
+    this.map.on('ui:clear-cursor', clearCursor);
+
+    // Store mode context and detach functions for cleanup
+    const ctx = {
       line,
       cursor: 'default',
       currentMousePosition: null,
       nearFirstVertex: false,
-      setBoundary: options.setBoundary || (() => {})
+      setBoundary: options.setBoundary || (() => {}),
+      _onCanvasLeave: onCanvasLeave,
+      _clearCursor: clearCursor
     };
+
+    // Keep a reference for handlers
+    this._ctx = ctx;
+
+    return ctx;
   },
 
   onClick(state, e) { return this._handleAddPoint(state, e); },
@@ -34,7 +60,7 @@ const DrawOpenPolygon = {
     const dy = first?.[1] - e.lngLat.lat;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // ✅ Primary closure: user clicks near first vertex
+    // Primary closure: near first vertex
     if (coords.length > 2 && dist < tolerance) {
       console.log('✅ Closing polygon via first-point click');
 
@@ -57,7 +83,7 @@ const DrawOpenPolygon = {
       return;
     }
 
-    // ✅ Fallback closure: user double-clicks anywhere
+    // Fallback closure: double-click
     if (coords.length > 2 && e.originalEvent?.detail === 2) {
       console.log('✅ Closing polygon via double-click fallback');
 
@@ -102,13 +128,16 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
+    // Don’t emit anything for invalid/empty geometries
+    if (geojson.geometry.type === 'LineString' &&
+        geojson.geometry.coordinates.length < 2) {
+      return;
+    }
+
     display(geojson);
 
     if (geojson.geometry.type === 'LineString') {
-      if (geojson.geometry.coordinates.length < 2) {
-        return; // ✅ prevent stray dots/ghostlines after Undo
-      }
-
+      // vertices
       geojson.geometry.coordinates.forEach((coord, idx) => {
         const isFirst = idx === 0;
         display({
@@ -124,35 +153,35 @@ const DrawOpenPolygon = {
           geometry: { type: 'Point', coordinates: coord }
         });
       });
-    }
 
-    if (
-      state.currentMousePosition &&
-      geojson.geometry.type === 'LineString' &&
-      geojson.geometry.coordinates.length > 0
-    ) {
-      const coords = geojson.geometry.coordinates;
-      console.log('👻 Emitting ghostline:', {
-        from: coords[coords.length - 1],
-        to: state.currentMousePosition
-      });
-
-      display({
-        id: `${geojson.id}.ghost`,
-        type: 'Feature',
-        properties: { meta: 'ghost' },
-        geometry: {
-          type: 'LineString',
-          coordinates: [coords[coords.length - 1], state.currentMousePosition]
-        }
-      });
+      // ghostline (last → cursor)
+      if (state.currentMousePosition && geojson.geometry.coordinates.length > 0) {
+        const coords = geojson.geometry.coordinates;
+        display({
+          id: `${geojson.id}.ghost`,
+          type: 'Feature',
+          properties: { meta: 'ghost' },
+          geometry: {
+            type: 'LineString',
+            coordinates: [coords[coords.length - 1], state.currentMousePosition]
+          }
+        });
+      }
     }
   },
-
 
   onStop() {
     console.log('🛑 onStop fired');
     this.map.getCanvas().style.cursor = 'default';
+
+    // Detach listeners
+    if (this._ctx?._onCanvasLeave) {
+      this.map.getCanvas().removeEventListener('mouseleave', this._ctx._onCanvasLeave);
+    }
+    if (this._ctx?._clearCursor) {
+      this.map.off('ui:clear-cursor', this._ctx._clearCursor);
+    }
+    this._ctx = null;
   }
 };
 
