@@ -138,24 +138,19 @@ const NeighborhoodMap = () => {
           'circle-stroke-color': '#000000',
           'circle-stroke-width': 2 }
         },
-        {
-        id: 'vertex-pulse',
+       {
+        id: 'gl-draw-first-vertex',
         type: 'circle',
         source: 'mapbox-gl-draw-cold',
-        filter: ['all',
-          ['==', '$type', 'Point'],
-          ['==', 'meta', 'vertex'],
-          ['==', ['get', 'pulse'], 'true']
-        ],
+        filter: ['all', ['==', '$type', 'Point'], ['==', 'first', 'true']],
         paint: {
-          'circle-radius': 6,
-          'circle-color': '#ff0000', // red pulse
-          'circle-opacity': 0.6,
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#fff',
-          'circle-blur': 1
+          'circle-radius': 7,
+          'circle-color': '#00cc00', // green
+          'circle-stroke-color': '#000',
+          'circle-stroke-width': 2
         }
       }
+
             ],
     });
 
@@ -388,60 +383,56 @@ const NeighborhoodMap = () => {
    {/* --- Step 3B: Drawing Step --- */}
       {step === '3B' && drawingStarted && (
         <div className="map-controls">
-           <button
-      onClick={() => {
-        const data = drawRef.current.getAll();
-        if (data.features.length === 0) return;
+          <button
+            onClick={() => {
+              const data = drawRef.current.getAll();
+              if (data.features.length === 0) return;
 
-        const feature = data.features[0];
+              const feature = data.features[0];
 
-        if (feature.geometry.type === 'LineString') {
-          feature.geometry.coordinates.pop();
+              if (feature.geometry.type === 'LineString') {
+                feature.geometry.coordinates.pop();
 
-          if (feature.geometry.coordinates.length >= 2) {
-            drawRef.current.set({
-              type: 'FeatureCollection',
-              features: [feature],
-            });
-          } else {
-            // ✅ Clear and reset mode state
-            drawRef.current.set({ type: 'FeatureCollection', features: [] });
-            mapRef.current?.fire('ui:reset-draw');
-          }
-        } else if (feature.geometry.type === 'Polygon') {
-          const ring = feature.geometry.coordinates[0];
-          ring.splice(ring.length - 2, 1);
+                if (feature.geometry.coordinates.length >= 1) {
+                  drawRef.current.set({
+                    type: 'FeatureCollection',
+                    features: [feature],
+                  });
+                } else {
+                  // Clear everything if no points left
+                  drawRef.current.set({ type: 'FeatureCollection', features: [] });
+                }
+              } else if (feature.geometry.type === 'Polygon') {
+                const ring = feature.geometry.coordinates[0];
+                ring.splice(ring.length - 2, 1);
 
-          if (ring.length >= 4) {
-            feature.geometry.coordinates[0] = ring;
-            drawRef.current.set({
-              type: 'FeatureCollection',
-              features: [feature],
-            });
-          } else if (ring.length === 3) {
-            // Convert to open LineString
-            const open = {
-              ...feature,
-              geometry: {
-                type: 'LineString',
-                coordinates: ring.slice(0, 3),
-              },
-            };
-            drawRef.current.set({
-              type: 'FeatureCollection',
-              features: [open],
-            });
-          } else {
-            // ✅ Clear and reset mode state
-            drawRef.current.set({ type: 'FeatureCollection', features: [] });
-            mapRef.current?.fire('ui:reset-draw');
-          }
-        }
-      }}
-    >
-      Undo
-    </button>
-
+                if (ring.length >= 4) {
+                  feature.geometry.coordinates[0] = ring;
+                  drawRef.current.set({
+                    type: 'FeatureCollection',
+                    features: [feature],
+                  });
+                } else if (ring.length === 3) {
+                  // Convert to open LineString
+                  const open = {
+                    ...feature,
+                    geometry: {
+                      type: 'LineString',
+                      coordinates: ring.slice(0, 3),
+                    },
+                  };
+                  drawRef.current.set({
+                    type: 'FeatureCollection',
+                    features: [open],
+                  });
+                } else {
+                  drawRef.current.set({ type: 'FeatureCollection', features: [] });
+                }
+              }
+            }}
+          >
+            Undo
+          </button>
 
 
     <button className="secondary" onClick={() => setStep('3A')}>
