@@ -388,68 +388,68 @@ const NeighborhoodMap = () => {
    {/* --- Step 3B: Drawing Step --- */}
       {step === '3B' && drawingStarted && (
         <div className="map-controls">
-        <button
-          onClick={() => {
-            const data = drawRef.current.getAll();
-            if (data.features.length === 0) return;
+          <button
+            onClick={() => {
+              const data = drawRef.current.getAll();
+              if (data.features.length === 0) return;
 
-            const feature = data.features[0];
+              const feature = data.features[0];
 
-            if (feature.geometry.type === 'LineString') {
-              // Remove the last point
-              feature.geometry.coordinates.pop();
+              if (feature.geometry.type === 'LineString') {
+                // remove the last point
+                feature.geometry.coordinates.pop();
 
-              if (feature.geometry.coordinates.length >= 2) {
-                // Still a valid line
-                drawRef.current.set({
-                  type: 'FeatureCollection',
-                  features: [feature],
-                });
-              } else {
-                // Too few points → clear everything
-                drawRef.current.set({
-                  type: 'FeatureCollection',
-                  features: [],
-                });
+                if (feature.geometry.coordinates.length >= 2) {
+                  drawRef.current.set({
+                    type: 'FeatureCollection',
+                    features: [feature]
+                  });
+                } else {
+                  // too few points → clear everything
+                  drawRef.current.set({
+                    type: 'FeatureCollection',
+                    features: []
+                  });
+                }
+              } else if (feature.geometry.type === 'Polygon') {
+                const ring = feature.geometry.coordinates[0];
+                // remove the second-to-last point (last duplicates first)
+                ring.splice(ring.length - 2, 1);
+
+                if (ring.length >= 4) {
+                  feature.geometry.coordinates[0] = ring;
+                  drawRef.current.set({
+                    type: 'FeatureCollection',
+                    features: [feature]
+                  });
+                } else if (ring.length === 3) {
+                  // convert to an open LineString to keep stepping back
+                  const open = {
+                    ...feature,
+                    geometry: {
+                      type: 'LineString',
+                      coordinates: ring.slice(0, 3)
+                    }
+                  };
+                  drawRef.current.set({
+                    type: 'FeatureCollection',
+                    features: [open]
+                  });
+                } else {
+                  drawRef.current.set({
+                    type: 'FeatureCollection',
+                    features: []
+                  });
+                }
               }
-            } else if (feature.geometry.type === 'Polygon') {
-              const ring = feature.geometry.coordinates[0];
-              // Remove the second-to-last point (last is duplicate of first)
-              ring.splice(ring.length - 2, 1);
 
-              if (ring.length >= 4) {
-                // Still a valid polygon
-                feature.geometry.coordinates[0] = ring;
-                drawRef.current.set({
-                  type: 'FeatureCollection',
-                  features: [feature],
-                });
-              } else if (ring.length === 3) {
-                // Convert to an open LineString with remaining points
-                const open = {
-                  ...feature,
-                  geometry: {
-                    type: 'LineString',
-                    coordinates: ring.slice(0, 3),
-                  },
-                };
-                drawRef.current.set({
-                  type: 'FeatureCollection',
-                  features: [open],
-                });
-              } else {
-                // Too few points → clear everything
-                drawRef.current.set({
-                  type: 'FeatureCollection',
-                  features: [],
-                });
-              }
-            }
-          }}
-        >
-          Undo
-        </button>
-
+              // ✅ Tell the custom draw mode to clear cursor state and stop emitting ghostlines
+              // Replace `mapRef.current` with your map instance if named differently.
+              mapRef.current?.fire('ui:clear-cursor');
+            }}
+          >
+            Undo
+          </button>
 
 
     <button className="secondary" onClick={() => setStep('3A')}>
