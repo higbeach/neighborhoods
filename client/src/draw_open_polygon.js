@@ -77,6 +77,14 @@ const DrawOpenPolygon = {
     if (geojson.geometry.type === 'LineString' && geojson.id === state.line.id) {
       geojson.geometry.coordinates.forEach((coord, idx) => {
         const isFirst = idx === 0;
+        console.log('Emitting vertex feature', {
+        coord,
+        props: {
+          meta: 'vertex',
+          closing: isFirst && state.nearFirstVertex ? 'true' : 'false'
+        }
+      });
+
         display({
           id: `${geojson.id}.${idx}`,
           type: 'Feature',
