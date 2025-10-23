@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import MapboxDraw from '@mapbox/mapbox-gl-draw';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -8,6 +8,9 @@ import BoundariesForm from './BoundariesForm';
 import NeighborhoodSurvey from './NeighborhoodSurvey';
 import neighborhoodNames from './neighborhoodNames';
 
+// 👉 import your custom mode
+import DrawOpenPolygon from './draw_open_polygon';
+
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
 
 const NeighborhoodMap = () => {
@@ -16,28 +19,48 @@ const NeighborhoodMap = () => {
   const drawRef = useRef(null);
   const markerRef = useRef(null);
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(0); // ✅ start at intro (Step 0)
   const [location, setLocation] = useState(null);
   const [years, setYears] = useState(0);
   const [areaName, setAreaName] = useState('');
   const [boundary, setBoundary] = useState(null);
 
-  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false); // ✅ NEW
+  const [showSurveyPrompt, setShowSurveyPrompt] = useState(false);
   const [showSurveyForm, setShowSurveyForm] = useState(false);
   const [surveyComplete, setSurveyComplete] = useState(false);
   const [drawingStarted, setDrawingStarted] = useState(false);
   const [submissionUuid, setSubmissionUuid] = useState(null);
 
 
-
   // ✅ Scroll to top on step change
-useEffect(() => {
-  setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, 100); // 100ms delay
-}, [step]);
+  useEffect(() => {
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  }, [step]);
 
+  // ✅ Boundary update logic (no step changes here)
+  const updateBoundary = useCallback(() => {
+    const data = drawRef.current.getAll();
+    if (data.features.length > 0) {
+      const feature = data.features[0];
+      setBoundary(feature);
 
+      // Keep integrity checks for debugging/UX hints if desired
+      if (feature.geometry.type === 'Polygon') {
+        const coords = feature.geometry.coordinates?.[0];
+        if (coords && coords.length > 3) {
+          // Removed unused isClosed variable
+          // Do not setStep here — draw.finish listener handles advancing to 3C
+          // Optionally, you could set flags/dialogs based on isClosed
+        }
+      }
+    } else {
+      setBoundary(null);
+    }
+  }, []);
+
+  // ✅ Map initialization
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -48,25 +71,87 @@ useEffect(() => {
       zoom: 13,
     });
 
-    // ✅ Add zoom controls in lower right, no compass
+    // Add zoom controls in lower right, no compass
     mapRef.current.addControl(
       new mapboxgl.NavigationControl({ showCompass: false }),
       'bottom-right'
     );
 
+    // ✅ Register custom mode
     drawRef.current = new MapboxDraw({
-      displayControlsDefault: false, // disables all default controls
-      controls: {}                   // explicitly no controls
+      displayControlsDefault: false,
+      controls: {},
+      modes: {
+        ...MapboxDraw.modes,
+        draw_open_polygon: DrawOpenPolygon, // add custom mode
+      },
+      styles: [
+        {
+          id: 'gl-draw-polygon-fill',
+          type: 'fill',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
+        },
+        {
+          id: 'gl-draw-polygon-stroke-active',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+          paint: { 'line-color': '#ff0000', 'line-width': 3 },
+        },
+        {
+          id: 'gl-draw-line-active',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
+          paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+        },
+        {
+          id: 'gl-draw-vertex-halo',
+          type: 'circle',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+          paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
+        },
+        {
+          id: 'gl-draw-vertex-active',
+          type: 'circle',
+          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+          paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
+        },
+        {
+          id: 'gl-draw-ghost-line',
+          type: 'line',
+          filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
+          paint: { 'line-color': '#ff0000', 'line-dasharray': [0.5, 2], 'line-width': 2 }
+        },
+        {
+        id: 'gl-draw-vertex-closing',
+        type: 'circle',
+        filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
+        paint: {
+          'circle-radius': 7,
+          'circle-color': '#00ff00', // bright green highlight
+          'circle-stroke-color': '#000000',
+          'circle-stroke-width': 2
+        }
+      }
+      ],
     });
 
     mapRef.current.addControl(drawRef.current);
 
+    // Attach listeners
     mapRef.current.on('draw.create', updateBoundary);
     mapRef.current.on('draw.update', updateBoundary);
     mapRef.current.on('draw.delete', () => setBoundary(null));
 
+    // When polygon is closed, go to 3C (review)
+    mapRef.current.on('draw.finish', (e) => {
+      console.log('🎯 Custom finish event fired', e.features);
+      updateBoundary();           // keep boundary state fresh
+      setDrawingStarted(false);
+      setStep('3C');              // ✅ go to review step
+    });
+
     mapRef.current.on('load', () => {
-      // Attempt to hide known label layers
       const layersToHide = [
         'neighborhood-label',
         'neighborhood_label',
@@ -77,14 +162,11 @@ useEffect(() => {
         'place-city-md-s',
         'place-city-sm',
       ];
-
       layersToHide.forEach((layerId) => {
         if (mapRef.current.getLayer(layerId)) {
           mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
         }
       });
-
-      // Filter out neighborhood and locality labels from 'place-label' layer
       const labelLayer = 'place-label';
       if (mapRef.current.getLayer(labelLayer)) {
         mapRef.current.setFilter(labelLayer, [
@@ -95,13 +177,15 @@ useEffect(() => {
       }
     });
 
-  }, []);
-
- // useEffect(() => {
- //   if (step === 3 && drawRef.current) {
- //     drawRef.current.changeMode('draw_polygon');
- //   }
- // }, [step]);
+    // Cleanup listeners
+    return () => {
+      if (!mapRef.current) return;
+      mapRef.current.off('draw.create', updateBoundary);
+      mapRef.current.off('draw.update', updateBoundary);
+      mapRef.current.off('draw.delete');
+      mapRef.current.off('draw.finish');
+    };
+  }, [updateBoundary]);
 
   useEffect(() => {
     console.log('📍 Step changed to:', step);
@@ -111,16 +195,11 @@ useEffect(() => {
     console.log('🧾 Survey form visibility:', showSurveyForm);
   }, [showSurveyForm]);
 
-  const updateBoundary = () => {
-    const data = drawRef.current.getAll();
-    if (data.features.length > 0) {
-      console.log('✅ Boundary created:', data.features[0]);
-      setBoundary(data.features[0]);
-    } else {
-      console.log('⚠️ Boundary cleared or invalid');
-      setBoundary(null);
-    }
-  };
+  useEffect(() => {
+    console.log('🧭 Survey render check — step:', step);
+    console.log('🧭 showSurveyForm:', showSurveyForm);
+    console.log('🧭 surveyComplete:', surveyComplete);
+  }, [step, showSurveyForm, surveyComplete]);
 
   const handleConfirmLocation = () => {
     if (!mapRef.current) return;
@@ -165,92 +244,52 @@ useEffect(() => {
     }
   };
 
-  const validateAndFinishDrawing = () => {
-    const drawn = drawRef.current?.getAll();
-    const feature = drawn?.features?.[0];
-    const geometry = feature?.geometry;
+  const startOver = () => {
+    handleReset();
+    setStep(0); // ✅ restart whole flow at intro
+  };
 
-    if (!geometry || geometry.type !== 'Polygon') {
-      alert('Please draw a polygon before finishing.');
-      return;
-    }
-
-    const coords = geometry.coordinates?.[0];
-    if (!coords || coords.length < 4) {
-      alert('Please double-click/tap to close the boundary.');
-      return;
-    }
-
-    const first = coords[0];
-    const last = coords[coords.length - 1];
-    const isClosed = first[0] === last[0] && first[1] === last[1];
-
-    if (!isClosed) {
-      alert('Please double-click/tap to close the boundary.');
-      return;
-    }
-
-  setBoundary(feature);
-  setDrawingStarted(false); // ✅ hide drawing buttons
-  setStep(4);               // ✅ move to next step
-};
-
-  const clearBoundary = () => {
-  drawRef.current.deleteAll();
-  setBoundary(null);
-  drawRef.current.changeMode('draw_polygon'); // ✅ Re-enable drawing
-  setStep(3); // stay on drawing step
-};
-
-const startOver = () => {
-  handleReset(); // reuse your full reset logic
-};
     return (
-      <div className="map-wrapper">
-        {/* Map container */}
-        <div ref={mapContainer} className="map-container" />
+  <div className="map-wrapper">
+    {/* Map container */}
+    <div ref={mapContainer} className="map-container" />
 
-        {step === 0 && (
-          <div className="overlay overlay-enter">
-            <h2>Help Us Map Our Neighborhood.</h2>
-            <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
-            <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
-            <p>Please use <a href="https://www.convenepllc.com/contact-us/" target="_blank" rel="noopener noreferrer">
-                this contact form
-              </a> for any questions or feedback.
-            </p>
-            <div className="overlay-actions">
-              <button onClick={() => setStep(1)}>Let's Get Started</button>
-            </div>
-          </div>
-      )}
+    {/* Step 0: Intro */}
+    {step === 0 && (
+      <div className="overlay overlay-enter">
+        <h2>Help Us Map Our Neighborhood.</h2>
+        <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
+        <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
+        <p>Please use <a href="https://www.convenepllc.com/contact-us/" target="_blank" rel="noopener noreferrer">
+            this contact form
+          </a> for any questions or feedback.
+        </p>
+        <div className="overlay-actions">
+          <button onClick={() => setStep(1)}>Let's Get Started</button>
+        </div>
+      </div>
+    )}
 
-      {step === 1 && (
-         <>
-          <div className="map-pin">
-           <svg viewBox="0 0 16 16" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-           <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M3.37892 10.2236L8 16L12.6211 10.2236C13.5137 9.10788 14 7.72154 14 6.29266V6C14 2.68629 11.3137 0 8 0C4.68629 0 2 2.68629 2 6V6.29266C2 7.72154 2.4863 9.10788 3.37892 10.2236ZM8 8C9.10457 8 10 7.10457 10 6C10 4.89543 9.10457 4 8 4C6.89543 4 6 4.89543 6 6C6 7.10457 6.89543 8 8 8Z"
-              fill="#ff0000"
-            />
-          </svg>
-         </div>
-
-          <div className="overlay overlay-enter">
-            <h2>Mark Where You Live</h2>
-            <p>1.Pan the map until the pin is centered over where you live.<br />
-              2. Click the "I Live here!" button</p>
-            <div className="overlay-actions">
-              <button onClick={handleConfirmLocation}>I live here!</button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {step === 2 && (
+    {/* Step 1: Pin location */}
+    {step === 1 && (
+      <>
+        <div className="map-pin">
+          {/* pin svg */}
+        </div>
         <div className="overlay overlay-enter">
+          <h2>Mark Where You Live</h2>
+          <p>1. Pan the map until the pin is centered over where you live.<br />
+             2. Click the "I Live here!" button</p>
+          <div className="overlay-actions">
+            <button onClick={handleConfirmLocation}>I live here!</button>
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* Step 2: Name + years */}
+    {step === 2 && (
+      <div className="overlay overlay-enter">
           <h2>What do you call this area?</h2>
           <label>Type the neighborhood name</label>
           <input
@@ -276,78 +315,125 @@ const startOver = () => {
           />
           <p>{years} years</p>
 
-          <div className="overlay-actions">
-            <button onClick={() => setStep(3)} disabled={!areaName}>Next</button>
-            <button className="secondary" onClick={handleReset}>Reset</button>
-          </div>
+        <div className="overlay-actions">
+          <button onClick={() => setStep('3A')} disabled={!areaName}>Next</button>
+          <button className="secondary" onClick={handleReset}>Reset</button>
         </div>
-      )}
+      </div>
+    )}
 
-      {step === 3 && !drawingStarted && (
-        <div className="overlay overlay-enter">
-          <h2>Where would you mark this neighborhood’s boundaries?</h2>
-          <p>
+
+    {/* Step 3A: Drawing instructions */}
+    {step === '3A' && (
+      <div className="overlay overlay-enter">
+        <h2>Where would you mark this neighborhood’s boundaries?</h2>
+        <div className="drawing-animation">
+          <p className="animation-caption">
             Here's how to draw: <br /><br />
             1. Tap/click to add a starting point<br />
             2. Tap/click again to add more points<br />
-            3. Double click/tap to close the shape.<br />
-            4. Click the "Finish Drawing" button when you are done.<br /><br />
+            3. Tap/click your starting point to close the shape.<br /><br />
             <strong>Note:</strong> To be included, the entirety of a block needs to be within your neighborhood boundary.
           </p>
-          <div className="overlay-actions">
-            <button
-              onClick={() => {
-                drawRef.current.deleteAll();
-                drawRef.current.changeMode('draw_polygon');
-                setDrawingStarted(true); // ✅ flip the flag
-                setTimeout(() => {
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }, 100);
-              }}
-            >
-              Start Drawing
-            </button>
-          </div>
         </div>
-      )}
-
-      {step === 3 && drawingStarted && (
-        <div className="map-controls">
+        <div className="overlay-actions">
           <button
-            onClick={validateAndFinishDrawing}
-            onTouchStart={(e) => {
-              e.preventDefault(); // prevent double trigger on iOS
-              validateAndFinishDrawing();
+            onClick={() => {
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_open_polygon');
+              setDrawingStarted(true);
+              setStep('3B');
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 100);
             }}
-            disabled={!boundary}
           >
-            Finish Drawing
-          </button>
-          <button
-            className="secondary"
-            onClick={clearBoundary}
-          >
-            Clear Drawing
+            I’m ready to draw
           </button>
         </div>
-      )}
+      </div>
+    )}
+
+   {/* --- Step 3B: Drawing Step --- */}
+{step === '3B' && drawingStarted && (
+  <div className="map-controls">
+    <button
+      onClick={() => {
+        const data = drawRef.current.getAll();
+        if (data.features.length > 0) {
+          const feature = data.features[0];
+
+          if (feature.geometry.type === 'LineString') {
+            // Still drawing an open line
+            feature.geometry.coordinates.pop();
+          } else if (feature.geometry.type === 'Polygon') {
+            // Already closed into a polygon
+            feature.geometry.coordinates[0].pop();
+          }
+
+          drawRef.current.set({
+            type: 'FeatureCollection',
+            features: [feature],
+          });
+        }
+      }}
+    >
+      Undo
+    </button>
+
+    <button className="secondary" onClick={() => setStep('3A')}>
+      Show Instructions
+    </button>
+  </div>
+)}
 
 
-      {step === 4 && (
-        <BoundariesForm
-          boundary={boundary}
-          location={location}
-          years={years}
-          areaName={areaName}
-          onStartOver={startOver}       // ✅ Full reset
-            onSubmitted={(uuid) => {
-            setSubmissionUuid(uuid); // ✅ store the UUID
-            setStep(5);
-            setShowSurveyPrompt(true);
+  {step === '3C' && (
+    <div className="overlay overlay-enter">
+      <h2>Looking good!</h2>
+      <p>If this looks right, you can confirm, redraw, or start completely over.</p>
+      <div className="overlay-actions">
+        {/* ✅ Proceed to BoundariesForm */}
+        <button onClick={() => setStep(4)}>Next</button>
+
+        {/* ✅ Redraw only */}
+        <button
+          onClick={() => {
+            drawRef.current.deleteAll();
+            setBoundary(null);
+            setStep('3A');
           }}
+        >
+          Draw Again
+        </button>
 
-        />
-      )}
+        {/* ✅ Full reset */}
+        <button
+          className="secondary"
+          onClick={startOver}
+        >
+          Start from the Beginning
+        </button>
+      </div>
+    </div>
+  )}
+
+
+    {/* Step 4: BoundariesForm (Confirm & Submit) */}
+    {step === 4 && (
+      <BoundariesForm
+        boundary={boundary}
+        location={location}
+        years={years}
+        areaName={areaName}
+        onStartOver={startOver}
+        onSubmitted={(uuid) => {
+          setSubmissionUuid(uuid);
+          setStep(5);
+          setShowSurveyPrompt(true);
+        }}
+      />
+    )},
 
       {step === 5 && showSurveyPrompt && !showSurveyForm && (
         <div className="overlay overlay-enter">
@@ -360,10 +446,6 @@ const startOver = () => {
         </div>
       )}
 
-        console.log('🧭 Survey render check — step:', step);
-        console.log('🧭 showSurveyForm:', showSurveyForm);
-        console.log('🧭 surveyComplete:', surveyComplete);
-
       {step === 5 && showSurveyForm && !surveyComplete && (
         <NeighborhoodSurvey
           location={location}
@@ -375,7 +457,6 @@ const startOver = () => {
             setSurveyComplete(true);
           }}
         />
-
 
       )}
 

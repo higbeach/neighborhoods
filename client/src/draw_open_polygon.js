@@ -11,7 +11,12 @@ const DrawOpenPolygon = {
 
     this.addFeature(line);
 
-    return { line, cursor: 'default', currentMousePosition: null };
+    return {
+      line,
+      cursor: 'default',
+      currentMousePosition: null,
+      nearFirstVertex: false
+    };
   },
 
   onClick(state, e) { return this._handleAddPoint(state, e); },
@@ -63,7 +68,8 @@ const DrawOpenPolygon = {
       const dy = first[1] - e.lngLat.lat;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      this.map.getCanvas().style.cursor = dist < 0.001 ? 'pointer' : 'default';
+      state.nearFirstVertex = dist < 0.001;
+      this.map.getCanvas().style.cursor = state.nearFirstVertex ? 'pointer' : 'default';
     }
   },
 
@@ -73,10 +79,16 @@ const DrawOpenPolygon = {
     // Vertices (only for our active line)
     if (geojson.geometry.type === 'LineString' && geojson.id === state.line.id) {
       geojson.geometry.coordinates.forEach((coord, idx) => {
+        const isFirst = idx === 0;
         display({
           id: `${geojson.id}.${idx}`,
           type: 'Feature',
-          properties: { meta: 'vertex', parent: geojson.id, coord_path: idx },
+          properties: {
+            meta: 'vertex',
+            parent: geojson.id,
+            coord_path: idx,
+            closing: isFirst && state.nearFirstVertex ? 'true' : 'false'
+          },
           geometry: { type: 'Point', coordinates: coord }
         });
       });
