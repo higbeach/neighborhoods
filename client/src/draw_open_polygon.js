@@ -11,7 +11,6 @@ const DrawOpenPolygon = {
 
     this.addFeature(line);
 
-    // ✅ Initialize nearFirstVertex so it's always defined
     return { line, cursor: 'default', currentMousePosition: null, nearFirstVertex: false };
   },
 
@@ -70,6 +69,7 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
+    // Always display the current feature (line or polygon)
     display(geojson);
 
     // Vertices (only for our active line)
@@ -83,7 +83,6 @@ const DrawOpenPolygon = {
             meta: 'vertex',
             parent: geojson.id,
             coord_path: idx,
-            // First vertex gets closing:true when near
             closing: isFirst && state.nearFirstVertex ? 'true' : 'false'
           },
           geometry: { type: 'Point', coordinates: coord }
