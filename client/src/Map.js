@@ -347,7 +347,7 @@ const NeighborhoodMap = () => {
           <button
           onClick={() => {
             drawRef.current.deleteAll();
-            drawRef.current.changeMode('draw_open_polygon');
+            drawRef.current.changeMode('draw_open_polygon', { setBoundary });
             console.log('✅ Switched to draw_open_polygon mode');
             setDrawingStarted(true);
             setStep('3B');
@@ -427,6 +427,7 @@ const NeighborhoodMap = () => {
         location={location}
         years={years}
         areaName={areaName}
+        onReset={handleReset}
         onStartOver={startOver}
         onSubmitted={(uuid) => {
           setSubmissionUuid(uuid);
