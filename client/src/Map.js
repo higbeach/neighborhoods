@@ -119,6 +119,7 @@ const NeighborhoodMap = () => {
         {
           id: 'gl-draw-ghost-line',
           type: 'line',
+          source: 'mapbox-gl-draw-cold',
           filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'ghost']],
           paint: {
             'line-color': '#cc0000',
