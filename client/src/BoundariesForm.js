@@ -22,16 +22,25 @@ const BoundariesForm = ({
     }
 
     const coords = boundary.geometry?.coordinates;
-    const isValidPolygon =
-      boundary.geometry?.type === 'Polygon' &&
-      Array.isArray(coords) &&
-      coords.length > 0 &&
-      coords[0].length >= 4;
+      const ring = coords?.[0];
 
-    if (!isValidPolygon) {
-      alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
-      return;
-    }
+      const isClosed =
+        Array.isArray(ring) &&
+        ring.length >= 4 &&
+        ring[0][0] === ring[ring.length - 1][0] &&
+        ring[0][1] === ring[ring.length - 1][1];
+
+      const isValidPolygon =
+        boundary.geometry?.type === 'Polygon' &&
+        Array.isArray(coords) &&
+        coords.length > 0 &&
+        isClosed;
+
+      if (!isValidPolygon) {
+        alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
+        return;
+      }
+
 
     const ip = await fetch('https://api.ipify.org?format=json')
       .then((res) => res.json())
