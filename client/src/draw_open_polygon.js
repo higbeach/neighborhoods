@@ -1,29 +1,70 @@
 // src/draw_open_polygon.js
 const DrawOpenPolygon = {
   onSetup(options = {}) {
-    console.log('🎬 onSetup fired');
-
     const line = this.newFeature({
       type: 'Feature',
       properties: { meta: 'feature' },
       geometry: { type: 'LineString', coordinates: [] }
     });
-
     this.addFeature(line);
 
-    return {
+    const ctx = {
       line,
-      cursor: 'default',
-      setBoundary: options.setBoundary || (() => {})
+      setBoundary: options.setBoundary || (() => {}),
+      nearFirstVertex: false
     };
+
+    // Handle UI events from Map.js (Undo and Reset)
+    const undoHandler = () => {
+      const coords = ctx.line.coordinates;
+
+      if (coords.length === 0) return;
+
+      // Remove the last vertex (use Feature API so IDs and state stay consistent)
+      ctx.line.removeCoordinate(coords.length - 1);
+
+      // If no points left, reset to a fresh empty line so user can draw again
+      if (ctx.line.coordinates.length === 0) {
+        this.deleteFeature(ctx.line.id);
+        ctx.line = this.newFeature({
+          type: 'Feature',
+          properties: { meta: 'feature' },
+          geometry: { type: 'LineString', coordinates: [] }
+        });
+        this.addFeature(ctx.line);
+        ctx.nearFirstVertex = false;
+      }
+
+      // Notify Draw to re-render
+      this.map.fire('draw.update', { features: [ctx.line.toGeoJSON()] });
+    };
+
+    const resetHandler = () => {
+      // Full reset: delete feature and re-init an empty line
+      if (ctx.line) this.deleteFeature(ctx.line.id);
+      ctx.line = this.newFeature({
+        type: 'Feature',
+        properties: { meta: 'feature' },
+        geometry: { type: 'LineString', coordinates: [] }
+      });
+      this.addFeature(ctx.line);
+      ctx.nearFirstVertex = false;
+    };
+
+    this.map.on('ui:undo', undoHandler);
+    this.map.on('ui:reset-draw', resetHandler);
+
+    // Keep references for cleanup
+    ctx._undoHandler = undoHandler;
+    ctx._resetHandler = resetHandler;
+
+    return ctx;
   },
 
   onClick(state, e) { return this._handleAddPoint(state, e); },
   onTap(state, e) { return this._handleAddPoint(state, e); },
 
   _handleAddPoint(state, e) {
-    console.log('🖱 onClick/onTap fired at', e.lngLat);
-
     const coords = state.line.coordinates;
     const tolerance = 0.001;
 
@@ -32,10 +73,8 @@ const DrawOpenPolygon = {
     const dy = first?.[1] - e.lngLat.lat;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // ✅ Close polygon by clicking near first vertex
+    // Close polygon by clicking near first vertex
     if (coords.length > 2 && dist < tolerance) {
-      console.log('✅ Closing polygon via first-point click');
-
       const polygon = this.newFeature({
         type: 'Feature',
         properties: { meta: 'final' },
@@ -54,17 +93,26 @@ const DrawOpenPolygon = {
       return;
     }
 
-    // Regular point addition
+    // Regular point addition (use Feature API)
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
-    console.log('➕ Added point, total coords:', state.line.coordinates.length);
-
     this.map.fire('draw.update', { features: [state.line.toGeoJSON()] });
   },
 
+  onMouseMove(state, e) {
+    if (state.line.coordinates.length > 0) {
+      const first = state.line.coordinates[0];
+      const dx = first[0] - e.lngLat.lng;
+      const dy = first[1] - e.lngLat.lat;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      state.nearFirstVertex = dist < 0.001;
+      this.map.getCanvas().style.cursor = state.nearFirstVertex ? 'pointer' : 'default';
+    }
+  },
+
   toDisplayFeatures(state, geojson, display) {
-    // Don’t emit anything if too few points
-    if (geojson.geometry.type === 'LineString' &&
-        geojson.geometry.coordinates.length < 1) {
+    // No ghostlines. Only render the line and its vertices.
+    if (geojson.geometry.type === 'LineString' && geojson.geometry.coordinates.length < 1) {
       return;
     }
 
@@ -80,7 +128,8 @@ const DrawOpenPolygon = {
             meta: 'vertex',
             parent: geojson.id,
             coord_path: idx,
-            first: isFirst ? 'true' : 'false'
+            first: isFirst ? 'true' : 'false',
+            closing: isFirst && state.nearFirstVertex ? 'true' : 'false'
           },
           geometry: { type: 'Point', coordinates: coord }
         });
@@ -89,7 +138,10 @@ const DrawOpenPolygon = {
   },
 
   onStop() {
-    console.log('🛑 onStop fired');
+    // Cleanup event listeners
+    if (this._ctx?._undoHandler) this.map.off('ui:undo', this._ctx._undoHandler);
+    if (this._ctx?._resetHandler) this.map.off('ui:reset-draw', this._ctx._resetHandler);
+
     this.map.getCanvas().style.cursor = 'default';
   }
 };
