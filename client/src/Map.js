@@ -130,10 +130,15 @@ const NeighborhoodMap = () => {
           'circle-radius': 7,
           'circle-color': '#00ff00', // bright green highlight
           'circle-stroke-color': '#000000',
-          'circle-stroke-width': 2
+          'circle-stroke-width': 2 }
+        },
+        {
+          id: 'debug-all-points',
+          type: 'circle',
+          filter: ['==', '$type', 'Point'],
+          paint: { 'circle-radius': 6, 'circle-color': '#0000ff' }
         }
-      }
-      ],
+            ],
     });
 
     mapRef.current.addControl(drawRef.current);
