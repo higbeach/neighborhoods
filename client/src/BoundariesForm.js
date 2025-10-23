@@ -39,7 +39,7 @@ const BoundariesForm = ({
     })();
 
       console.log('📦 isClosed:', isClosed);
-      console.log('📦 isValidPolygon:', isValidPolygon);
+
 
     const isValidPolygon =
       boundary.geometry?.type === 'Polygon' &&
@@ -47,6 +47,7 @@ const BoundariesForm = ({
       coords.length > 0 &&
       isClosed;
 
+      console.log('📦 isValidPolygon:', isValidPolygon);
       console.log('📦 Closure distance:', Math.sqrt((ring[0][0] - ring[ring.length - 1][0]) ** 2 + (ring[0][1] - ring[ring.length - 1][1]) ** 2));
       
     if (!isValidPolygon) {
