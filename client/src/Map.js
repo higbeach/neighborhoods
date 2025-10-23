@@ -141,15 +141,20 @@ const NeighborhoodMap = () => {
        {
         id: 'gl-draw-first-vertex',
         type: 'circle',
-        source: 'mapbox-gl-draw-cold',
-        filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex'], ['==', ['get', 'first'], 'true']],
+        source: 'mapbox-gl-draw-cold', // match your other draw layers' source
+        filter: ['all',
+          ['==', '$type', 'Point'],
+          ['==', 'meta', 'vertex'],
+          ['==', ['get', 'first'], 'true']
+        ],
         paint: {
           'circle-radius': 7,
-          'circle-color': '#00cc00', // distinct first point (green)
+          'circle-color': '#00cc00', // green for first point
           'circle-stroke-color': '#000000',
           'circle-stroke-width': 2
         }
       }
+
             ],
     });
 
@@ -382,9 +387,29 @@ const NeighborhoodMap = () => {
    {/* --- Step 3B: Drawing Step --- */}
       {step === '3B' && drawingStarted && (
         <div className="map-controls">
-         <button onClick={() => mapRef.current?.fire('ui:undo')}>
-          Undo
-        </button>
+         <button
+      onClick={(ev) => {
+        // Prevent the button click from propagating to the map/canvas
+        ev.stopPropagation();
+        ev.preventDefault();
+
+        // Tell the draw mode to undo internally
+        mapRef.current?.fire('ui:undo');
+      }}
+    >
+      Undo
+    </button>
+
+    <button
+      className="secondary"
+      onClick={(ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        setStep('3A');
+      }}
+    >
+      Show Instructions
+    </button>
 
 
     <button className="secondary" onClick={() => setStep('3A')}>
