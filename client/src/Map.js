@@ -109,7 +109,6 @@ const NeighborhoodMap = () => {
   }, []);
 
 
-
 // Part 2
 
   useEffect(() => {
@@ -224,7 +223,7 @@ const NeighborhoodMap = () => {
   }, [step, showSurveyForm, surveyComplete]);
 
 
-// Part 3
+
 
 // Part 3
 
