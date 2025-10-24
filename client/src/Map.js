@@ -110,7 +110,6 @@ const NeighborhoodMap = () => {
 
 
 // Part 2
-
 // Part 2
 
 useEffect(() => {
@@ -140,20 +139,43 @@ useEffect(() => {
         modes: {
           ...MapboxDraw.modes,
           draw_open_polygon: DrawOpenPolygon,
-        }
+        },
+        styles: [
+          // Red dashed line for active drawing
+          {
+            id: 'custom-draw-line',
+            type: 'line',
+            filter: ['all', ['==', '$type', 'LineString'], ['!=', 'mode', 'static']],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+          },
+          // Red polygon fill
+          {
+            id: 'custom-draw-polygon-fill',
+            type: 'fill',
+            filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+            paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 }
+          },
+          // Red polygon outline
+          {
+            id: 'custom-draw-polygon-stroke',
+            type: 'line',
+            filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#ff0000', 'line-width': 2 }
+          },
+          // Red vertex points
+          {
+            id: 'custom-draw-points',
+            type: 'circle',
+            filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+            paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
+          }
+        ]
       });
 
       mapRef.current.addControl(drawRef.current);
-      console.log('✏️ Draw control added');
-
-      // 🔎 Dump ALL layers so we can see what Draw actually injected
-      const allLayers = mapRef.current.getStyle().layers || [];
-      console.log('🔎 Full style layer dump after Draw added:');
-      allLayers.forEach((layer, idx) => {
-        console.log(
-          `[${idx}] id=${layer.id}, type=${layer.type}, source=${layer.source}`
-        );
-      });
+      console.log('✏️ Draw control added with custom styles');
 
       // Bind draw events
       mapRef.current.on('draw.create', updateBoundary);
