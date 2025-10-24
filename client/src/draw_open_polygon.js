@@ -3,7 +3,7 @@
 // Fixes:
 // - Lines erase instantly on undo (we control the line layer)
 // - First vertex styled differently (larger, different color)
-// - Fast redraws with requestAnimationFrame
+// - On close, we replace the working line with a Polygon so BoundariesForm sees a valid polygon
 
 const VERTICES_SOURCE_ID = 'custom-vertices-source';
 const VERTICES_LAYER_ID = 'custom-vertices-layer';
@@ -161,12 +161,16 @@ const DrawOpenPolygon = {
       this.map.fire('draw.create', { features: [polyJSON] });
       this.map.fire('draw.finish', { features: [polyJSON] });
 
-      // Clear custom sources when finishing
-      this._clearCustomSources();
+      // Replace line with polygon so downstream sees a Polygon
+      try { this.deleteFeature(state.line.id); } catch {}
+      state.line = polygon;
 
       if (typeof state.setBoundary === 'function') {
-        state.setBoundary(polyJSON);
+        state.setBoundary(polyJSON); // ensures BoundariesForm sees a Polygon
       }
+
+      // Clear custom sources now that polygon is finalized
+      this._clearCustomSources();
 
       this.changeMode('simple_select', { featureIds: [] });
       return;
@@ -188,8 +192,7 @@ const DrawOpenPolygon = {
       this.map.getCanvas().style.cursor = state.nearFirstVertex ? 'pointer' : 'default';
     }
   },
-
-  toDisplayFeatures(state, geojson, display) {
+    toDisplayFeatures(state, geojson, display) {
     if (geojson.geometry.type === 'LineString') {
       // We render the line ourselves via the custom source/layer
       console.log(`🔵 [mode] toDisplayFeatures (ignoring line) coords=${geojson.geometry.coordinates.length}`);
