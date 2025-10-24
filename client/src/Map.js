@@ -111,7 +111,7 @@ const NeighborhoodMap = () => {
 
 // Part 2
 
-
+// Part 2
 
 useEffect(() => {
   if (mapRef.current) return;
@@ -146,13 +146,13 @@ useEffect(() => {
       mapRef.current.addControl(drawRef.current);
       console.log('✏️ Draw control added');
 
-      // 🔎 Log all layers so we can see what Draw actually injected
+      // 🔎 Dump ALL layers so we can see what Draw actually injected
       const allLayers = mapRef.current.getStyle().layers || [];
-      console.log('🔎 All style layers after Draw added:');
+      console.log('🔎 Full style layer dump after Draw added:');
       allLayers.forEach((layer, idx) => {
-        if (layer.source?.startsWith('mapbox-gl-draw')) {
-          console.log(`   [${idx}] id=${layer.id}, type=${layer.type}, source=${layer.source}`);
-        }
+        console.log(
+          `[${idx}] id=${layer.id}, type=${layer.type}, source=${layer.source}`
+        );
       });
 
       // Bind draw events
@@ -215,6 +215,8 @@ useEffect(() => {
   console.log('🧭 showSurveyForm:', showSurveyForm);
   console.log('🧭 surveyComplete:', surveyComplete);
 }, [step, showSurveyForm, surveyComplete]);
+
+
 // Part 3
 
 return (
