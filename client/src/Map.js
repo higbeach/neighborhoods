@@ -10,6 +10,7 @@ import neighborhoodNames from './neighborhoodNames';
 import DrawOpenPolygon from './draw_open_polygon';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
+mapboxgl.setTelemetryEnabled(false); // ✅ Suppress Mapbox analytics
 
 const NeighborhoodMap = () => {
   const mapContainer = useRef(null);
@@ -112,6 +113,22 @@ const NeighborhoodMap = () => {
       'bottom-right'
     );
 
+    // ✅ Prevent duplicate layer injection
+    const layerIdsToRemove = [
+      'gl-draw-first-vertex',
+      'gl-draw-vertex-closing',
+      'gl-draw-vertex-active',
+      'gl-draw-vertex-halo',
+      'gl-draw-line-active',
+      'gl-draw-polygon-fill',
+      'gl-draw-polygon-stroke-active'
+    ];
+    layerIdsToRemove.forEach(id => {
+      if (mapRef.current.getLayer(id)) {
+        mapRef.current.removeLayer(id);
+      }
+    });
+
     drawRef.current = new MapboxDraw({
       displayControlsDefault: false,
       controls: {},
@@ -174,7 +191,7 @@ const NeighborhoodMap = () => {
           filter: ['all',
             ['==', '$type', 'Point'],
             ['==', 'meta', 'vertex'],
-            ['==', 'first', 'true'] // ✅ FIXED: no ['get', ...]
+            ['==', 'first', 'true']
           ],
           paint: {
             'circle-radius': 7,
@@ -247,6 +264,11 @@ const NeighborhoodMap = () => {
     console.log('🧾 Survey form visibility:', showSurveyForm);
   }, [showSurveyForm]);
 
+  useEffect(() => {
+    console.log('🧭 Survey render check — step:', step);
+    console.log('🧭 showSurveyForm:', showSurveyForm);
+    console.log('🧭 surveyComplete:', surveyComplete);
+  }, [step, showSurveyForm, surveyComplete]);
 
 // second half
 
