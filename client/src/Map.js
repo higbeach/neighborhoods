@@ -120,7 +120,6 @@ const NeighborhoodMap = () => {
       center: [-122.2868, 47.5609],
       zoom: 13,
     });
-
     console.log('🗺️ Map initialized');
 
     mapRef.current.addControl(
@@ -132,8 +131,6 @@ const NeighborhoodMap = () => {
     mapRef.current.once('styledata', () => {
       console.log('🧠 Map style fully loaded — safe to inject draw');
 
-      // DO NOT provide custom styles — let MapboxDraw add its default styles.
-      // This avoids duplicate layer IDs like "gl-draw-*".
       if (!drawRef.current) {
         drawRef.current = new MapboxDraw({
           displayControlsDefault: false,
@@ -147,6 +144,50 @@ const NeighborhoodMap = () => {
         mapRef.current.addControl(drawRef.current);
         console.log('✏️ Draw control added');
 
+        // Restyle Mapbox Draw defaults directly (no custom layers)
+        const setPaint = (layerId, prop, value) => {
+          if (mapRef.current.getLayer(layerId)) {
+            mapRef.current.setPaintProperty(layerId, prop, value);
+            console.log(`🎨 ${layerId} ${prop} =`, value);
+          } else {
+            console.warn(`⚠️ Missing Draw layer: ${layerId}`);
+          }
+        };
+
+        // Active line (hot / during drawing)
+        setPaint('gl-draw-line-active', 'line-color', '#ff0000');
+        setPaint('gl-draw-line-active', 'line-width', 2);
+        setPaint('gl-draw-line-active', 'line-dasharray', [2, 2]);
+
+        // Inactive line (cold / after finishing)
+        setPaint('gl-draw-line-inactive', 'line-color', '#ff0000');
+        setPaint('gl-draw-line-inactive', 'line-width', 2);
+        setPaint('gl-draw-line-inactive', 'line-dasharray', [2, 2]);
+
+        // Active polygon stroke + fill
+        setPaint('gl-draw-polygon-stroke-active', 'line-color', '#ff0000');
+        setPaint('gl-draw-polygon-stroke-active', 'line-width', 3);
+        setPaint('gl-draw-polygon-fill', 'fill-color', '#ff0000');
+        setPaint('gl-draw-polygon-fill', 'fill-opacity', 0.1);
+
+        // Inactive polygon stroke + fill
+        setPaint('gl-draw-polygon-stroke-inactive', 'line-color', '#ff0000');
+        setPaint('gl-draw-polygon-stroke-inactive', 'line-width', 3);
+        setPaint('gl-draw-polygon-fill-inactive', 'fill-color', '#ff0000');
+        setPaint('gl-draw-polygon-fill-inactive', 'fill-opacity', 0.1);
+
+        // Vertex halo and vertex dot (both active/inactive)
+        setPaint('gl-draw-vertex-halo-active', 'circle-radius', 8);
+        setPaint('gl-draw-vertex-halo-active', 'circle-color', '#ffffff');
+        setPaint('gl-draw-vertex-halo-inactive', 'circle-radius', 8);
+        setPaint('gl-draw-vertex-halo-inactive', 'circle-color', '#ffffff');
+
+        setPaint('gl-draw-vertex-active', 'circle-radius', 5);
+        setPaint('gl-draw-vertex-active', 'circle-color', '#ff0000');
+        setPaint('gl-draw-vertex-inactive', 'circle-radius', 5);
+        setPaint('gl-draw-vertex-inactive', 'circle-color', '#ff0000');
+
+        // Bind draw events
         mapRef.current.on('draw.create', updateBoundary);
         mapRef.current.on('draw.update', updateBoundary);
         mapRef.current.on('draw.delete', () => {
@@ -208,6 +249,7 @@ const NeighborhoodMap = () => {
     };
   }, [updateBoundary]);
 
+  // Logging hooks (keep here at the end of Part 2)
   useEffect(() => {
     console.log('📍 Step changed to:', step);
   }, [step]);
@@ -222,10 +264,6 @@ const NeighborhoodMap = () => {
     console.log('🧭 surveyComplete:', surveyComplete);
   }, [step, showSurveyForm, surveyComplete]);
 
-
-
-
-// Part 3
 
 
 // Part 3

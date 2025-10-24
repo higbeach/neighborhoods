@@ -34,16 +34,13 @@ const DrawOpenPolygon = {
     const undoHandler = () => {
       const coords = state.line.coordinates;
       console.log('↩️ Undo — coords before:', coords.length);
-
       if (coords.length === 0) return;
 
       state.line.removeCoordinate(coords.length - 1);
       console.log('↩️ After undo — coords:', state.line.coordinates.length);
 
       if (state.line.coordinates.length === 0) {
-        try {
-          this.deleteFeature(state.line.id);
-        } catch {}
+        try { this.deleteFeature(state.line.id); } catch {}
         state.line = this.newFeature({
           type: 'Feature',
           properties: { meta: 'feature' },
@@ -54,7 +51,7 @@ const DrawOpenPolygon = {
         console.log('🧹 Reset line after full undo');
       }
 
-      state._scheduleUpdate();
+      state._scheduleUpdate(); // forces vertex redraw so dots disappear one-by-one
     };
 
     this.map.on('ui:undo', undoHandler);
@@ -111,9 +108,9 @@ const DrawOpenPolygon = {
   toDisplayFeatures(state, geojson, display) {
     if (geojson.geometry.type === 'LineString') {
       const count = geojson.geometry.coordinates.length;
-      if (count >= 2) display(geojson);
+      if (count >= 2) display(geojson); // line only when 2+ points
 
-      // Always render vertices, even the very first one
+      // Always render vertices; first vertex tagged consistently
       geojson.geometry.coordinates.forEach((coord, idx) => {
         display({
           id: `${geojson.id}.${idx}`,
