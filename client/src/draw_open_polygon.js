@@ -1,11 +1,14 @@
 // draw_open_polygon.js
-// Custom mode that manages its own vertex rendering via a dedicated GeoJSON source/layer.
+// Custom mode that manages its own vertex + line rendering via dedicated GeoJSON sources/layers.
 // Fixes:
-// - Lines erase correctly on undo
+// - Lines erase instantly on undo (we control the line layer)
 // - First vertex styled differently (larger, different color)
+// - Fast redraws with requestAnimationFrame
 
 const VERTICES_SOURCE_ID = 'custom-vertices-source';
 const VERTICES_LAYER_ID = 'custom-vertices-layer';
+const LINE_SOURCE_ID = 'custom-line-source';
+const LINE_LAYER_ID = 'custom-line-layer';
 
 function featureCollection(features = []) {
   return { type: 'FeatureCollection', features };
@@ -36,8 +39,8 @@ const DrawOpenPolygon = {
     });
     this.addFeature(line);
 
-    // Ensure our custom vertices source/layers exist
-    this._ensureVerticesLayers();
+    // Ensure our custom sources/layers exist
+    this._ensureCustomLayers();
 
     const state = {
       line,
@@ -45,20 +48,31 @@ const DrawOpenPolygon = {
       nearFirstVertex: false,
       _pendingSync: false,
 
-      syncVertices: () => {
+      syncCustomSources: () => {
         const coords = state.line.coordinates;
         const parentId = state.line.id;
-        const vertexFeatures = coords.map((c, i) => pointFeature(c, parentId, i));
-        const data = featureCollection(vertexFeatures);
 
+        // Vertices
+        const vertexFeatures = coords.map((c, i) => pointFeature(c, parentId, i));
+        const vertexData = featureCollection(vertexFeatures);
         try {
-          const src = this.map.getSource(VERTICES_SOURCE_ID);
-          if (src) {
-            src.setData(data);
-            console.log(`⭕ [mode] vertices synced: count=${coords.length}`);
-          }
+          const vSrc = this.map.getSource(VERTICES_SOURCE_ID);
+          if (vSrc) vSrc.setData(vertexData);
+          console.log(`⭕ [mode] vertices synced: count=${coords.length}`);
         } catch (err) {
           console.error('❌ [mode] syncVertices error:', err);
+        }
+
+        // Line
+        const lineData = featureCollection(
+          coords.length >= 2 ? [state.line.toGeoJSON()] : []
+        );
+        try {
+          const lSrc = this.map.getSource(LINE_SOURCE_ID);
+          if (lSrc) lSrc.setData(lineData);
+          console.log(`📏 [mode] line synced: coords=${coords.length}`);
+        } catch (err) {
+          console.error('❌ [mode] syncLine error:', err);
         }
       },
 
@@ -67,16 +81,7 @@ const DrawOpenPolygon = {
         state._pendingSync = true;
         requestAnimationFrame(() => {
           try {
-            state.syncVertices();
-            const featureJSON = state.line.toGeoJSON();
-            this.map.fire('draw.update', {
-              action: 'change_coordinates',
-              features: [featureJSON]
-            });
-            this.map.fire('draw.render');
-            console.log(
-              `🎨 [mode] redraw fired — coords=${state.line.coordinates.length}`
-            );
+            state.syncCustomSources();
           } finally {
             state._pendingSync = false;
           }
@@ -111,13 +116,14 @@ const DrawOpenPolygon = {
         console.log('🧼 [mode] Reset line feature after full undo');
       }
 
-      // Sync vertices and force line redraw
+      // Sync both vertices and line instantly
       state.scheduleSync();
     };
 
     this.map.on('ui:undo', undoHandler);
     state._undoHandler = undoHandler;
 
+    // Initial sync
     state.scheduleSync();
     return state;
   },
@@ -155,7 +161,8 @@ const DrawOpenPolygon = {
       this.map.fire('draw.create', { features: [polyJSON] });
       this.map.fire('draw.finish', { features: [polyJSON] });
 
-      this._clearVertices();
+      // Clear custom sources when finishing
+      this._clearCustomSources();
 
       if (typeof state.setBoundary === 'function') {
         state.setBoundary(polyJSON);
@@ -184,9 +191,8 @@ const DrawOpenPolygon = {
 
   toDisplayFeatures(state, geojson, display) {
     if (geojson.geometry.type === 'LineString') {
-      const count = geojson.geometry.coordinates.length;
-      if (count >= 2) display(geojson);
-      console.log(`🔵 [mode] toDisplayFeatures — line coords=${count}`);
+      // We render the line ourselves via the custom source/layer
+      console.log(`🔵 [mode] toDisplayFeatures (ignoring line) coords=${geojson.geometry.coordinates.length}`);
       return;
     }
     display(geojson);
@@ -198,12 +204,14 @@ const DrawOpenPolygon = {
       console.log('🛑 [mode] Removed undo handler');
     }
     this.map.getCanvas().style.cursor = 'default';
-    this._clearVertices();
+    this._clearCustomSources();
   },
 
-  // Helpers for vertices source/layers
-  _ensureVerticesLayers() {
+  // Helpers for custom sources/layers
+  _ensureCustomLayers() {
     const map = this.map;
+
+    // Vertices source
     if (!map.getSource(VERTICES_SOURCE_ID)) {
       map.addSource(VERTICES_SOURCE_ID, {
         type: 'geojson',
@@ -212,6 +220,7 @@ const DrawOpenPolygon = {
       console.log('🧱 [mode] Added vertices source');
     }
 
+    // Regular vertices layer
     if (!map.getLayer(VERTICES_LAYER_ID)) {
       map.addLayer({
         id: VERTICES_LAYER_ID,
@@ -227,6 +236,7 @@ const DrawOpenPolygon = {
       console.log('🎯 [mode] Added vertices layer (regular)');
     }
 
+    // First vertex layer (distinct style)
     if (!map.getLayer(VERTICES_LAYER_ID + '-first')) {
       map.addLayer({
         id: VERTICES_LAYER_ID + '-first',
@@ -242,17 +252,38 @@ const DrawOpenPolygon = {
       });
       console.log('🎯 [mode] Added vertices layer (first point)');
     }
+
+    // Line source
+    if (!map.getSource(LINE_SOURCE_ID)) {
+      map.addSource(LINE_SOURCE_ID, {
+        type: 'geojson',
+        data: featureCollection()
+      });
+      console.log('🧱 [mode] Added line source');
+    }
+
+    // Line layer (red dashed)
+    if (!map.getLayer(LINE_LAYER_ID)) {
+      map.addLayer({
+        id: LINE_LAYER_ID,
+        type: 'line',
+        source: LINE_SOURCE_ID,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+      });
+      console.log('🎯 [mode] Added line layer');
+    }
   },
 
-  _clearVertices() {
+  _clearCustomSources() {
     try {
-      const src = this.map.getSource(VERTICES_SOURCE_ID);
-      if (src) {
-        src.setData(featureCollection());
-        console.log('🧽 [mode] Cleared vertices source');
-      }
+      const vSrc = this.map.getSource(VERTICES_SOURCE_ID);
+      if (vSrc) vSrc.setData(featureCollection());
+      const lSrc = this.map.getSource(LINE_SOURCE_ID);
+      if (lSrc) lSrc.setData(featureCollection());
+      console.log('🧽 [mode] Cleared custom sources (vertices + line)');
     } catch (err) {
-      console.warn('⚠️ [mode] clearVertices failed:', err);
+      console.warn('⚠️ [mode] clearCustomSources failed:', err);
     }
   }
 };
