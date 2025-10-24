@@ -10,7 +10,9 @@ import neighborhoodNames from './neighborhoodNames';
 import DrawOpenPolygon from './draw_open_polygon';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
-mapboxgl.setTelemetryEnabled(false); // ✅ Suppress Mapbox analytics
+if (typeof mapboxgl.setTelemetryEnabled === 'function') {
+  mapboxgl.setTelemetryEnabled(false);
+}
 
 const NeighborhoodMap = () => {
   const mapContainer = useRef(null);
