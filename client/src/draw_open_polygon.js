@@ -15,17 +15,18 @@ const DrawOpenPolygon = {
       line,
       setBoundary: options.setBoundary || (() => {}),
       nearFirstVertex: false,
-      _pendingUpdate: false,
-      _scheduleUpdate: () => {
-        if (state._pendingUpdate) return;
-        state._pendingUpdate = true;
+      _pendingRender: false,
+      _renderSoon: () => {
+        if (state._pendingRender) return;
+        state._pendingRender = true;
         requestAnimationFrame(() => {
           try {
-            this.map.fire('draw.update', { features: [state.line.toGeoJSON()] });
-          } catch (err) {
-            console.error('❌ draw.update failed:', err);
+            // Mark the feature dirty and force a render cycle
+            this.drawFeature(state.line.id);
+            this.map.fire('draw.render');
+            console.log('🎨 render cycle fired — coords:', state.line.coordinates.length);
           } finally {
-            state._pendingUpdate = false;
+            state._pendingRender = false;
           }
         });
       }
@@ -40,18 +41,20 @@ const DrawOpenPolygon = {
       console.log('↩️ After undo — coords:', state.line.coordinates.length);
 
       if (state.line.coordinates.length === 0) {
+        // Reset the line so no orphaned vertices linger
         try { this.deleteFeature(state.line.id); } catch {}
-        state.line = this.newFeature({
+        const fresh = this.newFeature({
           type: 'Feature',
           properties: { meta: 'feature' },
           geometry: { type: 'LineString', coordinates: [] }
         });
-        this.addFeature(state.line);
+        this.addFeature(fresh);
+        state.line = fresh;
         state.nearFirstVertex = false;
         console.log('🧹 Reset line after full undo');
       }
 
-      state._scheduleUpdate(); // force vertex redraw
+      state._renderSoon(); // force vertex redraw
     };
 
     this.map.on('ui:undo', undoHandler);
@@ -92,7 +95,7 @@ const DrawOpenPolygon = {
 
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
     console.log('➕ Total coords:', state.line.coordinates.length);
-    state._scheduleUpdate();
+    state._renderSoon(); // show vertex immediately (including first)
   },
 
   onMouseMove(state, e) {
@@ -107,14 +110,15 @@ const DrawOpenPolygon = {
 
   toDisplayFeatures(state, geojson, display) {
     if (geojson.geometry.type === 'LineString') {
-      const count = geojson.geometry.coordinates.length;
+      const coords = geojson.geometry.coordinates;
+      const count = coords.length;
 
-      // Only draw the line if 2+ points
+      // Draw the line only if 2+ points (no ghostlines)
       if (count >= 2) display(geojson);
 
-      // Always draw vertices, even the very first one
-      geojson.geometry.coordinates.forEach((coord, idx) => {
-        display({
+      // Always draw vertices, including the first one
+      coords.forEach((coord, idx) => {
+        const vtx = {
           id: `${geojson.id}.${idx}`,
           type: 'Feature',
           properties: {
@@ -125,8 +129,11 @@ const DrawOpenPolygon = {
             closing: idx === 0 && state.nearFirstVertex ? 'true' : 'false'
           },
           geometry: { type: 'Point', coordinates: coord }
-        });
+        };
+        display(vtx);
       });
+
+      console.log('🔵 toDisplayFeatures — line coords:', count);
       return;
     }
     display(geojson);

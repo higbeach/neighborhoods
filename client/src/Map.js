@@ -141,7 +141,6 @@ useEffect(() => {
           draw_open_polygon: DrawOpenPolygon,
         },
         styles: [
-          // Red dashed line for active drawing
           {
             id: 'custom-draw-line',
             type: 'line',
@@ -149,14 +148,12 @@ useEffect(() => {
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
           },
-          // Red polygon fill
           {
             id: 'custom-draw-polygon-fill',
             type: 'fill',
             filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
             paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 }
           },
-          // Red polygon outline
           {
             id: 'custom-draw-polygon-stroke',
             type: 'line',
@@ -164,7 +161,6 @@ useEffect(() => {
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': '#ff0000', 'line-width': 2 }
           },
-          // Red vertex points
           {
             id: 'custom-draw-points',
             type: 'circle',
@@ -178,15 +174,42 @@ useEffect(() => {
       console.log('✏️ Draw control added with custom styles');
 
       // Bind draw events
-      mapRef.current.on('draw.create', updateBoundary);
-      mapRef.current.on('draw.update', updateBoundary);
+      // IMPORTANT: remove heavy updates on every draw.update
+      const updateBoundaryThrottled = (() => {
+        let scheduled = false;
+        return () => {
+          if (scheduled) return;
+          scheduled = true;
+          requestAnimationFrame(() => {
+            try {
+              updateBoundary();
+            } finally {
+              scheduled = false;
+            }
+          });
+        };
+      })();
+
+      mapRef.current.on('draw.create', () => {
+        console.log('📐 draw.create → updateBoundary');
+        updateBoundaryThrottled();
+      });
+
+      // Do NOT run updateBoundary on every intermediate edit — that’s what made undo slow.
+      // If you still want mid-edit updates, keep them throttled:
+      mapRef.current.on('draw.update', () => {
+        // console.log('📐 draw.update (throttled)');
+        updateBoundaryThrottled();
+      });
+
       mapRef.current.on('draw.delete', () => {
         setBoundary(null);
         console.log('🗑️ Boundary deleted');
       });
+
       mapRef.current.on('draw.finish', (e) => {
         console.log('🎯 Custom finish event fired', e.features);
-        updateBoundary();
+        updateBoundaryThrottled();
         setDrawingStarted(false);
         setStep('3C');
       });
