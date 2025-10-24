@@ -28,7 +28,7 @@ const DrawOpenPolygon = {
       console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
 
       if (ctx.line.coordinates.length === 0) {
-        this.deleteFeature(ctx.line.id);
+        this.deleteFeature(ctx.line.id); // ✅ Fully remove feature
         ctx.line = this.newFeature({
           type: 'Feature',
           properties: { meta: 'feature' },
@@ -36,8 +36,7 @@ const DrawOpenPolygon = {
         });
         this.addFeature(ctx.line);
         ctx.nearFirstVertex = false;
-
-        console.log('🧹 Line cleared after full undo');
+        console.log('🧹 Line reset to empty after full undo');
       }
 
       this.map.fire('draw.update', { features: [ctx.line.toGeoJSON()] });
@@ -58,12 +57,12 @@ const DrawOpenPolygon = {
   },
 
   _handleAddPoint(state, e) {
-    const canvas = this.map.getCanvas();
-    const target = e?.originalEvent?.target;
-    if (target && target !== canvas) {
-      console.log('🛡️ Ignored non-canvas click:', target.tagName || target.className);
+   const target = e?.originalEvent?.target;
+    if (target && target.closest('.mapboxgl-canvas') === null) {
+      console.log('🛡️ Ignored tap outside map canvas');
       return;
-    }
+}
+
 
     console.log('🖱 onClick/onTap at', e.lngLat);
 
@@ -116,6 +115,7 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
+    
     if (geojson.geometry.type === 'LineString' &&
         geojson.geometry.coordinates.length < 1) {
       console.log('🚫 No coords to display');
