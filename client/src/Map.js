@@ -98,7 +98,7 @@ const NeighborhoodMap = () => {
 
 // second quarter
 
-  useEffect(() => {
+   useEffect(() => {
     if (mapRef.current) return;
 
     mapRef.current = new mapboxgl.Map({
@@ -115,112 +115,124 @@ const NeighborhoodMap = () => {
       'bottom-right'
     );
 
-    // ✅ Prevent duplicate layer injection
-    const layerIdsToRemove = [
-      'gl-draw-first-vertex',
-      'gl-draw-vertex-closing',
-      'gl-draw-vertex-active',
-      'gl-draw-vertex-halo',
-      'gl-draw-line-active',
-      'gl-draw-polygon-fill',
-      'gl-draw-polygon-stroke-active'
-    ];
-    layerIdsToRemove.forEach(id => {
-      if (mapRef.current.getLayer(id)) {
-        mapRef.current.removeLayer(id);
-      }
-    });
-
-    drawRef.current = new MapboxDraw({
-      displayControlsDefault: false,
-      controls: {},
-      modes: {
-        ...MapboxDraw.modes,
-        draw_open_polygon: DrawOpenPolygon,
-      },
-      styles: [
-        {
-          id: 'gl-draw-polygon-fill',
-          type: 'fill',
-          source: 'mapbox-gl-draw-cold',
-          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-          paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
-        },
-        {
-          id: 'gl-draw-polygon-stroke-active',
-          type: 'line',
-          source: 'mapbox-gl-draw-cold',
-          filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-          paint: { 'line-color': '#ff0000', 'line-width': 3 },
-        },
-        {
-          id: 'gl-draw-line-active',
-          type: 'line',
-          source: 'mapbox-gl-draw-cold',
-          filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
-          paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
-        },
-        {
-          id: 'gl-draw-vertex-halo',
-          type: 'circle',
-          source: 'mapbox-gl-draw-cold',
-          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-          paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
-        },
-        {
-          id: 'gl-draw-vertex-active',
-          type: 'circle',
-          source: 'mapbox-gl-draw-cold',
-          filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-          paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
-        },
-        {
-          id: 'gl-draw-vertex-closing',
-          type: 'circle',
-          source: 'mapbox-gl-draw-cold',
-          filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
-          paint: {
-            'circle-radius': 7,
-            'circle-color': '#00ff00',
-            'circle-stroke-color': '#000000',
-            'circle-stroke-width': 2
-          }
-        },
-        {
-          id: 'gl-draw-first-vertex',
-          type: 'circle',
-          source: 'mapbox-gl-draw-cold',
-          filter: ['all',
-            ['==', '$type', 'Point'],
-            ['==', 'meta', 'vertex'],
-            ['==', 'first', 'true']
-          ],
-          paint: {
-            'circle-radius': 7,
-            'circle-color': '#00cc00',
-            'circle-stroke-color': '#000000',
-            'circle-stroke-width': 2
-          }
-        }
-      ]
-    });
-
-    mapRef.current.addControl(drawRef.current);
-    console.log('✏️ Draw control added');
-
-    mapRef.current.on('draw.create', updateBoundary);
-    mapRef.current.on('draw.update', updateBoundary);
-    mapRef.current.on('draw.delete', () => setBoundary(null));
-
-    mapRef.current.on('draw.finish', (e) => {
-      console.log('🎯 Custom finish event fired', e.features);
-      updateBoundary();
-      setDrawingStarted(false);
-      setStep('3C');
-    });
-
     mapRef.current.on('load', () => {
       console.log('🧩 Map loaded — hiding labels');
+
+      // ✅ Remove any lingering draw layers
+      const layerIdsToRemove = [
+        'gl-draw-first-vertex',
+        'gl-draw-vertex-closing',
+        'gl-draw-vertex-active',
+        'gl-draw-vertex-halo',
+        'gl-draw-line-active',
+        'gl-draw-polygon-fill',
+        'gl-draw-polygon-stroke-active'
+      ];
+      layerIdsToRemove.forEach(id => {
+        if (mapRef.current.getLayer(id)) {
+          mapRef.current.removeLayer(id);
+        }
+      });
+
+      // ✅ Remove draw sources if present
+      const sourceIdsToRemove = ['mapbox-gl-draw-cold', 'mapbox-gl-draw-hot'];
+      sourceIdsToRemove.forEach(id => {
+        if (mapRef.current.getSource(id)) {
+          mapRef.current.removeSource(id);
+        }
+      });
+
+      // ✅ Add draw control only once
+      if (!drawRef.current) {
+        drawRef.current = new MapboxDraw({
+          displayControlsDefault: false,
+          controls: {},
+          modes: {
+            ...MapboxDraw.modes,
+            draw_open_polygon: DrawOpenPolygon,
+          },
+          styles: [
+            {
+              id: 'gl-draw-polygon-fill',
+              type: 'fill',
+              source: 'mapbox-gl-draw-cold',
+              filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+              paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
+            },
+            {
+              id: 'gl-draw-polygon-stroke-active',
+              type: 'line',
+              source: 'mapbox-gl-draw-cold',
+              filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+              paint: { 'line-color': '#ff0000', 'line-width': 3 },
+            },
+            {
+              id: 'gl-draw-line-active',
+              type: 'line',
+              source: 'mapbox-gl-draw-cold',
+              filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
+              paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+            },
+            {
+              id: 'gl-draw-vertex-halo',
+              type: 'circle',
+              source: 'mapbox-gl-draw-cold',
+              filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+              paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
+            },
+            {
+              id: 'gl-draw-vertex-active',
+              type: 'circle',
+              source: 'mapbox-gl-draw-cold',
+              filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+              paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
+            },
+            {
+              id: 'gl-draw-vertex-closing',
+              type: 'circle',
+              source: 'mapbox-gl-draw-cold',
+              filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
+              paint: {
+                'circle-radius': 7,
+                'circle-color': '#00ff00',
+                'circle-stroke-color': '#000000',
+                'circle-stroke-width': 2
+              }
+            },
+            {
+              id: 'gl-draw-first-vertex',
+              type: 'circle',
+              source: 'mapbox-gl-draw-cold',
+              filter: ['all',
+                ['==', '$type', 'Point'],
+                ['==', 'meta', 'vertex'],
+                ['==', 'first', 'true']
+              ],
+              paint: {
+                'circle-radius': 7,
+                'circle-color': '#00cc00',
+                'circle-stroke-color': '#000000',
+                'circle-stroke-width': 2
+              }
+            }
+          ]
+        });
+
+        mapRef.current.addControl(drawRef.current);
+        console.log('✏️ Draw control added');
+
+        mapRef.current.on('draw.create', updateBoundary);
+        mapRef.current.on('draw.update', updateBoundary);
+        mapRef.current.on('draw.delete', () => setBoundary(null));
+        mapRef.current.on('draw.finish', (e) => {
+          console.log('🎯 Custom finish event fired', e.features);
+          updateBoundary();
+          setDrawingStarted(false);
+          setStep('3C');
+        });
+      }
+
+      // ✅ Hide map labels
       const layersToHide = [
         'neighborhood-label',
         'neighborhood_label',
@@ -236,6 +248,7 @@ const NeighborhoodMap = () => {
           mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
         }
       });
+
       const labelLayer = 'place-label';
       if (mapRef.current.getLayer(labelLayer)) {
         mapRef.current.setFilter(labelLayer, [

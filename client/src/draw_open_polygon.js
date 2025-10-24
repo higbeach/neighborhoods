@@ -28,8 +28,15 @@ const DrawOpenPolygon = {
       console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
 
       if (ctx.line.coordinates.length === 0) {
-        ctx.line.setCoordinates([]); // ✅ Avoid deleteFeature crash
+        this.deleteFeature(ctx.line.id);
+        ctx.line = this.newFeature({
+          type: 'Feature',
+          properties: { meta: 'feature' },
+          geometry: { type: 'LineString', coordinates: [] }
+        });
+        this.addFeature(ctx.line);
         ctx.nearFirstVertex = false;
+
         console.log('🧹 Line cleared after full undo');
       }
 
