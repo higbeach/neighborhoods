@@ -227,6 +227,9 @@ const NeighborhoodMap = () => {
 
 // Part 3
 
+
+// Part 3
+
 return (
   <div className="map-wrapper">
     {/* Map container */}
