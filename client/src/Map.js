@@ -112,7 +112,6 @@ const NeighborhoodMap = () => {
 
 // Part 2
 
-
   useEffect(() => {
     if (mapRef.current) return;
 
@@ -134,33 +133,8 @@ const NeighborhoodMap = () => {
     mapRef.current.once('styledata', () => {
       console.log('🧠 Map style fully loaded — safe to inject draw');
 
-      // Remove lingering draw layers
-      const layerIdsToRemove = [
-        'gl-draw-first-vertex',
-        'gl-draw-vertex-closing',
-        'gl-draw-vertex-active',
-        'gl-draw-vertex-halo',
-        'gl-draw-line-active',
-        'gl-draw-polygon-fill',
-        'gl-draw-polygon-stroke-active'
-      ];
-      layerIdsToRemove.forEach(id => {
-        if (mapRef.current.getLayer(id)) {
-          mapRef.current.removeLayer(id);
-          console.log(`🧹 Removed lingering layer: ${id}`);
-        }
-      });
-
-      // Remove lingering draw sources
-      const sourceIdsToRemove = ['mapbox-gl-draw-cold', 'mapbox-gl-draw-hot'];
-      sourceIdsToRemove.forEach(id => {
-        if (mapRef.current.getSource(id)) {
-          mapRef.current.removeSource(id);
-          console.log(`🧹 Removed lingering source: ${id}`);
-        }
-      });
-
-      // Add draw control only once
+      // DO NOT provide custom styles — let MapboxDraw add its default styles.
+      // This avoids duplicate layer IDs like "gl-draw-*".
       if (!drawRef.current) {
         drawRef.current = new MapboxDraw({
           displayControlsDefault: false,
@@ -168,78 +142,12 @@ const NeighborhoodMap = () => {
           modes: {
             ...MapboxDraw.modes,
             draw_open_polygon: DrawOpenPolygon,
-          },
-          styles: [
-            {
-              id: 'gl-draw-polygon-fill',
-              type: 'fill',
-              source: 'mapbox-gl-draw-cold',
-              filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-              paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 },
-            },
-            {
-              id: 'gl-draw-polygon-stroke-active',
-              type: 'line',
-              source: 'mapbox-gl-draw-cold',
-              filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-              paint: { 'line-color': '#ff0000', 'line-width': 3 },
-            },
-            {
-              id: 'gl-draw-line-active',
-              type: 'line',
-              source: 'mapbox-gl-draw-cold',
-              filter: ['all', ['==', '$type', 'LineString'], ['==', 'meta', 'feature']],
-              paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
-            },
-            {
-              id: 'gl-draw-vertex-halo',
-              type: 'circle',
-              source: 'mapbox-gl-draw-cold',
-              filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-              paint: { 'circle-radius': 8, 'circle-color': '#ffffff' }
-            },
-            {
-              id: 'gl-draw-vertex-active',
-              type: 'circle',
-              source: 'mapbox-gl-draw-cold',
-              filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-              paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
-            },
-            {
-              id: 'gl-draw-vertex-closing',
-              type: 'circle',
-              source: 'mapbox-gl-draw-cold',
-              filter: ['all', ['==', '$type', 'Point'], ['==', 'closing', 'true']],
-              paint: {
-                'circle-radius': 7,
-                'circle-color': '#00ff00',
-                'circle-stroke-color': '#000000',
-                'circle-stroke-width': 2
-              }
-            },
-            {
-              id: 'gl-draw-first-vertex',
-              type: 'circle',
-              source: 'mapbox-gl-draw-cold',
-              filter: ['all',
-                ['==', '$type', 'Point'],
-                ['==', 'meta', 'vertex'],
-                ['==', 'first', 'true']
-              ],
-              paint: {
-                'circle-radius': 7,
-                'circle-color': '#00cc00',
-                'circle-stroke-color': '#000000',
-                'circle-stroke-width': 2
-              }
-            }
-          ]
+          }
         });
 
         mapRef.current.addControl(drawRef.current);
         console.log('✏️ Draw control added');
 
-        // Bind draw events
         mapRef.current.on('draw.create', updateBoundary);
         mapRef.current.on('draw.update', updateBoundary);
         mapRef.current.on('draw.delete', () => {
@@ -252,6 +160,8 @@ const NeighborhoodMap = () => {
           setDrawingStarted(false);
           setStep('3C');
         });
+      } else {
+        console.warn('⚠️ Draw control already present — skipped reinjection');
       }
     });
 
@@ -452,7 +362,6 @@ return (
 
 
     {/* Part 4 */}
-
 
     {/* Step 3A: Drawing instructions */}
     {step === '3A' && (

@@ -9,7 +9,7 @@ const DrawOpenPolygon = {
     });
     this.addFeature(line);
 
-    // Local mode state — DO NOT TOUCH this._ctx
+    // Local mode state — do not overwrite Draw’s internal context
     const ctx = {
       line,
       setBoundary: options.setBoundary || (() => {}),
@@ -29,7 +29,7 @@ const DrawOpenPolygon = {
       console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
 
       if (ctx.line.coordinates.length === 0) {
-        // Delete the current feature safely via mode accessor
+        // Safely delete and recreate the line feature for a fresh start
         try {
           this.deleteFeature(ctx.line.id);
           console.log('🧹 Deleted empty line feature:', ctx.line.id);
@@ -37,19 +37,16 @@ const DrawOpenPolygon = {
           console.error('❌ deleteFeature failed:', err);
         }
 
-        // Create a fresh empty feature for next points
         ctx.line = this.newFeature({
           type: 'Feature',
           properties: { meta: 'feature' },
           geometry: { type: 'LineString', coordinates: [] }
         });
-
         this.addFeature(ctx.line);
         ctx.nearFirstVertex = false;
         console.log('🧹 Line reset to empty after full undo — new id:', ctx.line.id);
       }
 
-      // Fire a single update to refresh rendering
       try {
         this.map.fire('draw.update', { features: [ctx.line.toGeoJSON()] });
         console.log('🔄 draw.update fired after undo');
@@ -60,7 +57,7 @@ const DrawOpenPolygon = {
 
     this.map.on('ui:undo', undoHandler);
 
-    // Track undo handler in state only — do not reassign this._ctx
+    // Track undo handler in local state
     ctx._undoHandler = undoHandler;
     return ctx;
   },
@@ -77,7 +74,7 @@ const DrawOpenPolygon = {
     const target = e?.originalEvent?.target;
     const canvas = this.map.getCanvas();
 
-    // iPad-friendly target check
+    // iPad-friendly target acceptance
     if (target && !(target === canvas || canvas.contains(target))) {
       console.log('🛡️ Ignored tap outside map canvas');
       return;
@@ -123,7 +120,6 @@ const DrawOpenPolygon = {
         console.log('📐 Boundary set via setBoundary in mode');
       }
 
-      // Exit to simple_select cleanly
       try {
         this.changeMode('simple_select', { featureIds: [] });
         console.log('🚪 Changed mode to simple_select');
@@ -159,21 +155,19 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
-    // Suppress ghost rendering if fewer than 2 coords
-    if (geojson.geometry.type === 'LineString' &&
-        geojson.geometry.coordinates.length < 2) {
-      console.log('🚫 Not enough coords to display');
-      return;
-    }
-
-    // Display the line itself
-    display(geojson);
-
-    // Display vertices only for non-static LineStrings
+    // Display line only if there are 2+ points (avoid ghostlines)
     if (geojson.geometry.type === 'LineString') {
       const count = geojson.geometry.coordinates.length;
-      console.log('🔎 Rendering vertices — count:', count);
 
+      if (count >= 2) {
+        display(geojson);
+      } else {
+        console.log('🚫 Not enough coords to display line');
+      }
+
+      // Always display vertices for every existing coordinate
+      // This ensures the very first point is visible
+      console.log('🔎 Rendering vertices — count:', count);
       geojson.geometry.coordinates.forEach((coord, idx) => {
         const isFirst = idx === 0;
 
@@ -194,7 +188,11 @@ const DrawOpenPolygon = {
           console.log('🌟 First vertex displayed at', coord);
         }
       });
+      return;
     }
+
+    // For polygons and other features, just display as provided
+    display(geojson);
   },
 
   onStop(state) {
