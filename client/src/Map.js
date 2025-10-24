@@ -34,6 +34,9 @@ const NeighborhoodMap = () => {
   const [drawingStarted, setDrawingStarted] = useState(false);
   const [submissionUuid, setSubmissionUuid] = useState(null);
 
+  // NEW: instructions overlay state
+  const [showInstructions, setShowInstructions] = useState(false);
+
   const handleConfirmLocation = () => {
     if (!mapRef.current) return;
     const center = mapRef.current.getCenter();
@@ -74,6 +77,7 @@ const NeighborhoodMap = () => {
     setShowSurveyPrompt(false);
     setShowSurveyForm(false);
     setSurveyComplete(false);
+    setShowInstructions(false);
 
     if (markerRef.current) {
       markerRef.current.remove();
@@ -140,46 +144,43 @@ useEffect(() => {
           ...MapboxDraw.modes,
           draw_open_polygon: DrawOpenPolygon,
         },
-       styles: [
-  {
-    id: 'custom-draw-line',
-    type: 'line',
-    filter: ['all', ['==', '$type', 'LineString']],
-    layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
-  },
-  {
-    id: 'custom-draw-polygon-fill',
-    type: 'fill',
-    filter: ['all', ['==', '$type', 'Polygon']],
-    paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 }
-  },
-  {
-    id: 'custom-draw-polygon-stroke',
-    type: 'line',
-    filter: ['all', ['==', '$type', 'Polygon']],
-    layout: { 'line-cap': 'round', 'line-join': 'round' },
-    paint: { 'line-color': '#ff0000', 'line-width': 2 }
-  },
-  {
-    id: 'custom-draw-points',
-    type: 'circle',
-    // 🔑 Only requirement: meta=vertex. No mode filter.
-    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-    paint: {
-      'circle-radius': 5,
-      'circle-color': '#ff0000',
-      'circle-opacity': 1
-    }
-  }
-]
-
+        styles: [
+          {
+            id: 'custom-draw-line',
+            type: 'line',
+            filter: ['all', ['==', '$type', 'LineString']],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+          },
+          {
+            id: 'custom-draw-polygon-fill',
+            type: 'fill',
+            filter: ['all', ['==', '$type', 'Polygon']],
+            paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 }
+          },
+          {
+            id: 'custom-draw-polygon-stroke',
+            type: 'line',
+            filter: ['all', ['==', '$type', 'Polygon']],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: { 'line-color': '#ff0000', 'line-width': 2 }
+          },
+          {
+            id: 'custom-draw-points',
+            type: 'circle',
+            filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+            paint: {
+              'circle-radius': 5,
+              'circle-color': '#ff0000',
+              'circle-opacity': 1
+            }
+          }
+        ]
       });
 
       mapRef.current.addControl(drawRef.current);
       console.log('✏️ Draw control added with custom styles');
 
-      // Throttle boundary updates to keep undo snappy — only on create/finish
       const updateBoundaryThrottled = (() => {
         let scheduled = false;
         return () => {
@@ -198,12 +199,6 @@ useEffect(() => {
       mapRef.current.on('draw.create', () => {
         console.log('📐 draw.create → updateBoundary');
         updateBoundaryThrottled();
-      });
-
-      // Disable heavy mid-edit updates (keeps undo instant)
-      mapRef.current.on('draw.update', () => {
-        // Intentionally minimal: rely on the mode's internal redraw, not React/state
-        // console.log('📐 draw.update (lightweight redraw only)');
       });
 
       mapRef.current.on('draw.delete', () => {
@@ -244,13 +239,31 @@ useEffect(() => {
   return () => {
     if (!mapRef.current) return;
     mapRef.current.off('draw.create', updateBoundary);
-    mapRef.current.off('draw.update', updateBoundary);
     mapRef.current.off('draw.delete');
     mapRef.current.off('draw.finish');
   };
 }, [updateBoundary]);
 
-// Logging hooks
+// Disable map interactions while instructions are open
+useEffect(() => {
+  if (!mapRef.current) return;
+  if (showInstructions) {
+    mapRef.current.boxZoom.disable();
+    mapRef.current.scrollZoom.disable();
+    mapRef.current.dragPan.disable();
+    mapRef.current.keyboard.disable();
+    mapRef.current.doubleClickZoom.disable();
+    console.log('🛑 Map interactions disabled (instructions open)');
+  } else {
+    mapRef.current.boxZoom.enable();
+    mapRef.current.scrollZoom.enable();
+    mapRef.current.dragPan.enable();
+    mapRef.current.keyboard.enable();
+    mapRef.current.doubleClickZoom.enable();
+    console.log('▶️ Map interactions re-enabled');
+  }
+}, [showInstructions]);
+
 useEffect(() => {
   console.log('📍 Step changed to:', step);
 }, [step]);
@@ -264,6 +277,8 @@ useEffect(() => {
   console.log('🧭 showSurveyForm:', showSurveyForm);
   console.log('🧭 surveyComplete:', surveyComplete);
 }, [step, showSurveyForm, surveyComplete]);
+
+// Part 3
 
 // Part 3
 
@@ -399,10 +414,9 @@ return (
       </div>
     )}
 
-
     {/* Part 4 */}
 
-    {/* Step 3A: Drawing instructions */}
+       {/* Step 3A: Drawing instructions */}
     {step === '3A' && (
       <div className="overlay overlay-enter">
         <h2>Where would you mark this neighborhood’s boundaries?</h2>
@@ -442,34 +456,58 @@ return (
 
     {/* Step 3B: Drawing Step */}
     {step === '3B' && drawingStarted && (
-      <div className="map-controls">
-        <button
-          onClick={(ev) => {
-            console.log('🧭 Undo button clicked — firing ui:undo');
-            ev.stopPropagation();
-            ev.preventDefault();
-            if (mapRef.current) {
-              mapRef.current.fire('ui:undo');
-            } else {
-              console.warn('⚠️ mapRef not ready for undo');
-            }
-          }}
-        >
-          Undo
-        </button>
+      <>
+        <div className="map-controls">
+          <button
+            onClick={(ev) => {
+              console.log('🧭 Undo button clicked — firing ui:undo');
+              ev.stopPropagation();
+              ev.preventDefault();
+              if (mapRef.current) {
+                mapRef.current.fire('ui:undo');
+              } else {
+                console.warn('⚠️ mapRef not ready for undo');
+              }
+            }}
+          >
+            Undo
+          </button>
 
-        <button
-          className="secondary"
-          onClick={(ev) => {
-            ev.stopPropagation();
-            ev.preventDefault();
-            console.log('📖 Returning to drawing instructions (Step 3A)');
-            setStep('3A');
-          }}
-        >
-          Show Instructions
-        </button>
-      </div>
+          <button
+            className="secondary"
+            onClick={(ev) => {
+              ev.stopPropagation();
+              ev.preventDefault();
+              console.log('📖 Showing instructions overlay');
+              setShowInstructions(true);
+            }}
+          >
+            Show Instructions
+          </button>
+        </div>
+
+        {/* Instructions Overlay */}
+        {showInstructions && (
+          <div className="overlay overlay-enter">
+            <h2>How to Draw Boundaries</h2>
+            <p>
+              Click on the map to add points. Continue clicking to outline the
+              neighborhood boundary. To close the shape, click back on the first
+              point (the larger blue dot).
+            </p>
+            <div className="overlay-actions">
+              <button
+                onClick={() => {
+                  console.log('🔙 Returning to drawing');
+                  setShowInstructions(false);
+                }}
+              >
+                Back to Drawing
+              </button>
+            </div>
+          </div>
+        )}
+      </>
     )}
 
     {/* Step 3C: Review */}
