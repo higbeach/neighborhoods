@@ -440,9 +440,8 @@ return (
     )}
 
 
-    // Part 4
+    {/* Part 4 */}
 
-   // Part 4
 
     {/* Step 3A: Drawing instructions */}
     {step === '3A' && (
