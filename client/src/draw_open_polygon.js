@@ -1,15 +1,32 @@
 // draw_open_polygon.js
-// Complete custom mode with explicit, high-signal logging.
-// Goals:
-// - First vertex stays visible immediately.
-// - Undo removes the last vertex dot (and line) instantly.
-// - Undo is fast (throttled redraw via requestAnimationFrame).
-// - No internal/private Draw calls; only public Mapbox GL events are fired.
+// Complete mode that manages its own vertex rendering via a dedicated GeoJSON source/layer.
+// This bypasses Draw's internal vertex layers so we control first-dot visibility and undo speed.
+
+const VERTICES_SOURCE_ID = 'custom-vertices-source';
+const VERTICES_LAYER_ID = 'custom-vertices-layer';
+
+function featureCollection(features = []) {
+  return { type: 'FeatureCollection', features };
+}
+
+function pointFeature(coord, parentId, idx) {
+  return {
+    type: 'Feature',
+    id: `${parentId}.${idx}`,
+    properties: {
+      meta: 'vertex',
+      parent: parentId,
+      coord_path: idx
+    },
+    geometry: { type: 'Point', coordinates: coord }
+  };
+}
 
 const DrawOpenPolygon = {
   onSetup(options = {}) {
     console.log('🎬 [mode] onSetup fired');
 
+    // Create the working line feature
     const line = this.newFeature({
       type: 'Feature',
       properties: { meta: 'feature' },
@@ -17,65 +34,78 @@ const DrawOpenPolygon = {
     });
     this.addFeature(line);
 
+    // Ensure our custom vertices source/layer exist
+    this._ensureVerticesLayer();
+
     const state = {
       line,
       setBoundary: options.setBoundary || (() => {}),
       nearFirstVertex: false,
+      _pendingSync: false,
 
-      // throttle render/update to a single RAF tick
-      _pendingUpdate: false,
-      _scheduleUpdate: () => {
-        if (state._pendingUpdate) return;
-        state._pendingUpdate = true;
+      // Sync our external vertices source to match current coords
+      syncVertices: () => {
+        const coords = state.line.coordinates;
+        const parentId = state.line.id;
+        const vertexFeatures = coords.map((c, i) => pointFeature(c, parentId, i));
+        const data = featureCollection(vertexFeatures);
 
+        try {
+          const src = this.map.getSource(VERTICES_SOURCE_ID);
+          if (src) {
+            src.setData(data);
+            console.log(`⭕ [mode] vertices synced: count=${coords.length}`);
+          } else {
+            console.warn('⚠️ [mode] vertices source missing; re-creating');
+            this._ensureVerticesLayer();
+            this.map.getSource(VERTICES_SOURCE_ID)?.setData(data);
+          }
+        } catch (err) {
+          console.error('❌ [mode] syncVertices error:', err);
+        }
+      },
+
+      // Throttle vertex sync to next animation frame
+      scheduleSync: () => {
+        if (state._pendingSync) return;
+        state._pendingSync = true;
         requestAnimationFrame(() => {
           try {
-            const coords = state.line.coordinates;
+            state.syncVertices();
+            // Light-weight redraw signal for Draw (optional)
             const featureJSON = state.line.toGeoJSON();
-
-            // Fire a lightweight update + render. These are public events.
             this.map.fire('draw.update', {
               action: 'change_coordinates',
               features: [featureJSON]
             });
             this.map.fire('draw.render');
-
             console.log(
-              `🎨 [mode] render/update fired — coords=${coords.length} — ids: ${featureJSON.id}`
+              `🎨 [mode] redraw fired — coords=${state.line.coordinates.length}`
             );
-          } catch (err) {
-            console.error('❌ [mode] scheduleUpdate error:', err);
           } finally {
-            state._pendingUpdate = false;
+            state._pendingSync = false;
           }
         });
       }
     };
 
+    // Undo handler: remove last coord, sync vertices, reset when empty
     const undoHandler = () => {
       const before = state.line.coordinates.length;
       console.log(`↩️ [mode] Undo clicked — coords before=${before}`);
+      if (before === 0) return;
 
-      if (before === 0) {
-        console.log('↩️ [mode] Undo ignored — no coordinates');
-        return;
-      }
-
-      // Remove last vertex
       state.line.removeCoordinate(before - 1);
-
       const after = state.line.coordinates.length;
       console.log(`↩️ [mode] After undo — coords=${after}`);
 
-      // If all points removed, reset the feature so no ghost vertices remain
       if (after === 0) {
         try {
           this.deleteFeature(state.line.id);
           console.log('🧹 [mode] Deleted empty line feature');
         } catch (err) {
-          console.warn('⚠️ [mode] Delete empty line failed:', err);
+          console.warn('⚠️ [mode] delete empty line failed:', err);
         }
-
         const fresh = this.newFeature({
           type: 'Feature',
           properties: { meta: 'feature' },
@@ -84,16 +114,18 @@ const DrawOpenPolygon = {
         this.addFeature(fresh);
         state.line = fresh;
         state.nearFirstVertex = false;
-
         console.log('🧼 [mode] Reset line feature after full undo');
       }
 
-      // Trigger a redraw so vertex dots update immediately
-      state._scheduleUpdate();
+      // Immediately update our vertex dots
+      state.scheduleSync();
     };
 
     this.map.on('ui:undo', undoHandler);
     state._undoHandler = undoHandler;
+
+    // Initial sync (shows first dot as soon as it’s added)
+    state.scheduleSync();
 
     return state;
   },
@@ -109,7 +141,6 @@ const DrawOpenPolygon = {
   _handleAddPoint(state, e) {
     const target = e?.originalEvent?.target;
     const canvas = this.map.getCanvas();
-    // Only accept clicks on the canvas area
     if (target && !(target === canvas || canvas.contains(target))) {
       console.log('🚫 [mode] Ignored click outside canvas');
       return;
@@ -123,7 +154,7 @@ const DrawOpenPolygon = {
     const dy = first?.[1] - e.lngLat.lat;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Closing condition: click near the first vertex when 3+ points exist
+    // Close if near first vertex and we already have 3+ points
     if (coords.length > 2 && dist < 0.001) {
       console.log('✅ [mode] Closing polygon');
 
@@ -138,6 +169,9 @@ const DrawOpenPolygon = {
       this.map.fire('draw.create', { features: [polyJSON] });
       this.map.fire('draw.finish', { features: [polyJSON] });
 
+      // Clear our vertices source now that drawing is finished
+      this._clearVertices();
+
       if (typeof state.setBoundary === 'function') {
         try {
           state.setBoundary(polyJSON);
@@ -151,13 +185,12 @@ const DrawOpenPolygon = {
       return;
     }
 
-    // Add a new vertex
+    // Append the new coordinate to the line
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
-    const newLen = state.line.coordinates.length;
-    console.log(`➕ [mode] Total coords after add=${newLen}`);
+    console.log(`➕ [mode] Total coords after add=${state.line.coordinates.length}`);
 
-    // Schedule redraw to show vertex immediately (including first)
-    state._scheduleUpdate();
+    // Sync our vertices (shows first dot immediately)
+    state.scheduleSync();
   },
 
   onMouseMove(state, e) {
@@ -167,54 +200,71 @@ const DrawOpenPolygon = {
       const dx = first[0] - e.lngLat.lng;
       const dy = first[1] - e.lngLat.lat;
       state.nearFirstVertex = Math.sqrt(dx * dx + dy * dy) < 0.001;
-
       this.map.getCanvas().style.cursor = state.nearFirstVertex ? 'pointer' : 'default';
-      // High-signal log at lower frequency: only when nearFirstVertex toggles would be ideal,
-      // but for simplicity we keep it light.
     }
   },
 
+  // We keep Draw’s line rendering minimal to avoid ghost lines.
   toDisplayFeatures(state, geojson, display) {
     if (geojson.geometry.type === 'LineString') {
-      const coords = geojson.geometry.coordinates;
-      const count = coords.length;
+      const count = geojson.geometry.coordinates.length;
 
-      // Draw the line only if 2+ points (prevents ghostlines)
-      if (count >= 2) {
-        display(geojson);
-      }
-
-      // Always emit vertex features — including the very first one
-      coords.forEach((coord, idx) => {
-        const vtx = {
-          id: `${geojson.id}.${idx}`, // unique per coordinate
-          type: 'Feature',
-          properties: {
-            meta: 'vertex',      // matches our circle layer filter
-            parent: geojson.id,
-            coord_path: idx,
-            first: idx === 0 ? 'true' : 'false',
-            closing: idx === 0 && state.nearFirstVertex ? 'true' : 'false'
-          },
-          geometry: { type: 'Point', coordinates: coord }
-        };
-        display(vtx);
-      });
-
+      if (count >= 2) display(geojson);
       console.log(`🔵 [mode] toDisplayFeatures — line coords=${count}`);
+
+      // Do NOT emit vertex Point features here; we render them via our external source/layer.
       return;
     }
-
-    // Default passthrough for non-LineString features
     display(geojson);
   },
 
   onStop(state) {
+    // Remove handlers and clear vertices
     if (state?._undoHandler) {
       this.map.off('ui:undo', state._undoHandler);
       console.log('🛑 [mode] Removed undo handler');
     }
     this.map.getCanvas().style.cursor = 'default';
+    this._clearVertices();
+  },
+
+  // ---- Internal helpers for vertices source/layer ----
+
+  _ensureVerticesLayer() {
+    const map = this.map;
+    if (!map.getSource(VERTICES_SOURCE_ID)) {
+      map.addSource(VERTICES_SOURCE_ID, {
+        type: 'geojson',
+        data: featureCollection()
+      });
+      console.log('🧱 [mode] Added vertices source');
+    }
+
+    if (!map.getLayer(VERTICES_LAYER_ID)) {
+      map.addLayer({
+        id: VERTICES_LAYER_ID,
+        type: 'circle',
+        source: VERTICES_SOURCE_ID,
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#ff0000',
+          'circle-opacity': 1
+        }
+      });
+      console.log('🎯 [mode] Added vertices layer');
+    }
+  },
+
+  _clearVertices() {
+    try {
+      const src = this.map.getSource(VERTICES_SOURCE_ID);
+      if (src) {
+        src.setData(featureCollection());
+        console.log('🧽 [mode] Cleared vertices source');
+      }
+    } catch (err) {
+      console.warn('⚠️ [mode] clearVertices failed:', err);
+    }
   }
 };
 
