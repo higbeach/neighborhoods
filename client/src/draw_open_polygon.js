@@ -1,6 +1,8 @@
 // draw_open_polygon.js
-// Complete mode that manages its own vertex rendering via a dedicated GeoJSON source/layer.
-// This bypasses Draw's internal vertex layers so we control first-dot visibility and undo speed.
+// Custom mode that manages its own vertex rendering via a dedicated GeoJSON source/layer.
+// Fixes:
+// - Lines erase correctly on undo
+// - First vertex styled differently (larger, different color)
 
 const VERTICES_SOURCE_ID = 'custom-vertices-source';
 const VERTICES_LAYER_ID = 'custom-vertices-layer';
@@ -16,7 +18,8 @@ function pointFeature(coord, parentId, idx) {
     properties: {
       meta: 'vertex',
       parent: parentId,
-      coord_path: idx
+      coord_path: idx,
+      first: idx === 0 ? 'true' : 'false'
     },
     geometry: { type: 'Point', coordinates: coord }
   };
@@ -26,7 +29,6 @@ const DrawOpenPolygon = {
   onSetup(options = {}) {
     console.log('🎬 [mode] onSetup fired');
 
-    // Create the working line feature
     const line = this.newFeature({
       type: 'Feature',
       properties: { meta: 'feature' },
@@ -34,8 +36,8 @@ const DrawOpenPolygon = {
     });
     this.addFeature(line);
 
-    // Ensure our custom vertices source/layer exist
-    this._ensureVerticesLayer();
+    // Ensure our custom vertices source/layers exist
+    this._ensureVerticesLayers();
 
     const state = {
       line,
@@ -43,7 +45,6 @@ const DrawOpenPolygon = {
       nearFirstVertex: false,
       _pendingSync: false,
 
-      // Sync our external vertices source to match current coords
       syncVertices: () => {
         const coords = state.line.coordinates;
         const parentId = state.line.id;
@@ -55,24 +56,18 @@ const DrawOpenPolygon = {
           if (src) {
             src.setData(data);
             console.log(`⭕ [mode] vertices synced: count=${coords.length}`);
-          } else {
-            console.warn('⚠️ [mode] vertices source missing; re-creating');
-            this._ensureVerticesLayer();
-            this.map.getSource(VERTICES_SOURCE_ID)?.setData(data);
           }
         } catch (err) {
           console.error('❌ [mode] syncVertices error:', err);
         }
       },
 
-      // Throttle vertex sync to next animation frame
       scheduleSync: () => {
         if (state._pendingSync) return;
         state._pendingSync = true;
         requestAnimationFrame(() => {
           try {
             state.syncVertices();
-            // Light-weight redraw signal for Draw (optional)
             const featureJSON = state.line.toGeoJSON();
             this.map.fire('draw.update', {
               action: 'change_coordinates',
@@ -89,7 +84,6 @@ const DrawOpenPolygon = {
       }
     };
 
-    // Undo handler: remove last coord, sync vertices, reset when empty
     const undoHandler = () => {
       const before = state.line.coordinates.length;
       console.log(`↩️ [mode] Undo clicked — coords before=${before}`);
@@ -117,26 +111,19 @@ const DrawOpenPolygon = {
         console.log('🧼 [mode] Reset line feature after full undo');
       }
 
-      // Immediately update our vertex dots
+      // Sync vertices and force line redraw
       state.scheduleSync();
     };
 
     this.map.on('ui:undo', undoHandler);
     state._undoHandler = undoHandler;
 
-    // Initial sync (shows first dot as soon as it’s added)
     state.scheduleSync();
-
     return state;
   },
 
-  onClick(state, e) {
-    return this._handleAddPoint(state, e);
-  },
-
-  onTap(state, e) {
-    return this._handleAddPoint(state, e);
-  },
+  onClick(state, e) { return this._handleAddPoint(state, e); },
+  onTap(state, e) { return this._handleAddPoint(state, e); },
 
   _handleAddPoint(state, e) {
     const target = e?.originalEvent?.target;
@@ -154,7 +141,6 @@ const DrawOpenPolygon = {
     const dy = first?.[1] - e.lngLat.lat;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Close if near first vertex and we already have 3+ points
     if (coords.length > 2 && dist < 0.001) {
       console.log('✅ [mode] Closing polygon');
 
@@ -169,27 +155,19 @@ const DrawOpenPolygon = {
       this.map.fire('draw.create', { features: [polyJSON] });
       this.map.fire('draw.finish', { features: [polyJSON] });
 
-      // Clear our vertices source now that drawing is finished
       this._clearVertices();
 
       if (typeof state.setBoundary === 'function') {
-        try {
-          state.setBoundary(polyJSON);
-          console.log('📐 [mode] Boundary set on finish');
-        } catch (err) {
-          console.warn('⚠️ [mode] setBoundary failed:', err);
-        }
+        state.setBoundary(polyJSON);
       }
 
       this.changeMode('simple_select', { featureIds: [] });
       return;
     }
 
-    // Append the new coordinate to the line
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
     console.log(`➕ [mode] Total coords after add=${state.line.coordinates.length}`);
 
-    // Sync our vertices (shows first dot immediately)
     state.scheduleSync();
   },
 
@@ -204,22 +182,17 @@ const DrawOpenPolygon = {
     }
   },
 
-  // We keep Draw’s line rendering minimal to avoid ghost lines.
   toDisplayFeatures(state, geojson, display) {
     if (geojson.geometry.type === 'LineString') {
       const count = geojson.geometry.coordinates.length;
-
       if (count >= 2) display(geojson);
       console.log(`🔵 [mode] toDisplayFeatures — line coords=${count}`);
-
-      // Do NOT emit vertex Point features here; we render them via our external source/layer.
       return;
     }
     display(geojson);
   },
 
   onStop(state) {
-    // Remove handlers and clear vertices
     if (state?._undoHandler) {
       this.map.off('ui:undo', state._undoHandler);
       console.log('🛑 [mode] Removed undo handler');
@@ -228,9 +201,8 @@ const DrawOpenPolygon = {
     this._clearVertices();
   },
 
-  // ---- Internal helpers for vertices source/layer ----
-
-  _ensureVerticesLayer() {
+  // Helpers for vertices source/layers
+  _ensureVerticesLayers() {
     const map = this.map;
     if (!map.getSource(VERTICES_SOURCE_ID)) {
       map.addSource(VERTICES_SOURCE_ID, {
@@ -245,13 +217,30 @@ const DrawOpenPolygon = {
         id: VERTICES_LAYER_ID,
         type: 'circle',
         source: VERTICES_SOURCE_ID,
+        filter: ['all', ['==', 'meta', 'vertex'], ['!=', 'first', 'true']],
         paint: {
           'circle-radius': 5,
           'circle-color': '#ff0000',
           'circle-opacity': 1
         }
       });
-      console.log('🎯 [mode] Added vertices layer');
+      console.log('🎯 [mode] Added vertices layer (regular)');
+    }
+
+    if (!map.getLayer(VERTICES_LAYER_ID + '-first')) {
+      map.addLayer({
+        id: VERTICES_LAYER_ID + '-first',
+        type: 'circle',
+        source: VERTICES_SOURCE_ID,
+        filter: ['all', ['==', 'meta', 'vertex'], ['==', 'first', 'true']],
+        paint: {
+          'circle-radius': 8,
+          'circle-color': '#0000ff',
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-width': 2
+        }
+      });
+      console.log('🎯 [mode] Added vertices layer (first point)');
     }
   },
 
