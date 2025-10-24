@@ -170,7 +170,7 @@ const NeighborhoodMap = () => {
 
           const { id, type, source } = layer;
           // Active vs inactive heuristic: “hot” = active, “cold” = inactive/static
-          const active = source === hotSource;
+         // const active = source === hotSource;
 
           if (type === 'line') {
             // Red dashed lines for both active drawing and inactive shapes
