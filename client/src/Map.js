@@ -140,47 +140,40 @@ useEffect(() => {
           ...MapboxDraw.modes,
           draw_open_polygon: DrawOpenPolygon,
         },
-        styles: [
-          // Red dashed line (active)
-          {
-            id: 'custom-draw-line',
-            type: 'line',
-            filter: ['all', ['==', '$type', 'LineString'], ['!=', 'mode', 'static']],
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
-          },
-          // Red polygon fill (active)
-          {
-            id: 'custom-draw-polygon-fill',
-            type: 'fill',
-            filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-            paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 }
-          },
-          // Red polygon outline (active)
-          {
-            id: 'custom-draw-polygon-stroke',
-            type: 'line',
-            filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-            layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': '#ff0000', 'line-width': 2 }
-          },
-          // Red vertex dots (active, not static, always visible)
-          {
-            id: 'custom-draw-points',
-            type: 'circle',
-            filter: [
-              'all',
-              ['==', '$type', 'Point'],
-              ['==', 'meta', 'vertex'],
-              ['!=', 'mode', 'static']
-            ],
-            paint: {
-              'circle-radius': 5,
-              'circle-color': '#ff0000',
-              'circle-opacity': 1
-            }
-          }
-        ]
+       styles: [
+  {
+    id: 'custom-draw-line',
+    type: 'line',
+    filter: ['all', ['==', '$type', 'LineString']],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
+  },
+  {
+    id: 'custom-draw-polygon-fill',
+    type: 'fill',
+    filter: ['all', ['==', '$type', 'Polygon']],
+    paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 }
+  },
+  {
+    id: 'custom-draw-polygon-stroke',
+    type: 'line',
+    filter: ['all', ['==', '$type', 'Polygon']],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#ff0000', 'line-width': 2 }
+  },
+  {
+    id: 'custom-draw-points',
+    type: 'circle',
+    // 🔑 Only requirement: meta=vertex. No mode filter.
+    filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
+    paint: {
+      'circle-radius': 5,
+      'circle-color': '#ff0000',
+      'circle-opacity': 1
+    }
+  }
+]
+
       });
 
       mapRef.current.addControl(drawRef.current);
