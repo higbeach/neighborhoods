@@ -11,7 +11,6 @@ import NeighborhoodSurvey from './NeighborhoodSurvey';
 import neighborhoodNames from './neighborhoodNames';
 import DrawOpenPolygon from './draw_open_polygon';
 
-// ✅ Mapbox setup
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
 if (typeof mapboxgl.setTelemetryEnabled === 'function') {
   mapboxgl.setTelemetryEnabled(false);
@@ -35,7 +34,6 @@ const NeighborhoodMap = () => {
   const [drawingStarted, setDrawingStarted] = useState(false);
   const [submissionUuid, setSubmissionUuid] = useState(null);
 
-  // ✅ Confirm location step
   const handleConfirmLocation = () => {
     if (!mapRef.current) return;
     const center = mapRef.current.getCenter();
@@ -55,7 +53,6 @@ const NeighborhoodMap = () => {
     console.log('📍 Location confirmed:', center);
   };
 
-  // ✅ Custom marker
   const createCustomMarker = () => {
     const img = document.createElement('img');
     img.src = '/pin-icon.svg';
@@ -65,7 +62,6 @@ const NeighborhoodMap = () => {
     return img;
   };
 
-  // ✅ Reset everything
   const handleReset = () => {
     setLocation(null);
     setYears(0);
@@ -93,14 +89,12 @@ const NeighborhoodMap = () => {
     console.log('🔄 Start over triggered');
   };
 
-  // ✅ Scroll to top on step change
   useEffect(() => {
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
   }, [step]);
 
-  // ✅ Update boundary from draw
   const updateBoundary = useCallback(() => {
     if (!drawRef.current) return;
     const data = drawRef.current.getAll();
@@ -117,6 +111,7 @@ const NeighborhoodMap = () => {
 
 
 // Part 2
+
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -135,11 +130,11 @@ const NeighborhoodMap = () => {
       'bottom-right'
     );
 
-    // ✅ Wait for style to fully load before injecting draw
+    // Wait for style to fully load before injecting draw
     mapRef.current.once('styledata', () => {
       console.log('🧠 Map style fully loaded — safe to inject draw');
 
-      // ✅ Remove any lingering draw layers
+      // Remove lingering draw layers
       const layerIdsToRemove = [
         'gl-draw-first-vertex',
         'gl-draw-vertex-closing',
@@ -156,7 +151,7 @@ const NeighborhoodMap = () => {
         }
       });
 
-      // ✅ Remove draw sources if present
+      // Remove lingering draw sources
       const sourceIdsToRemove = ['mapbox-gl-draw-cold', 'mapbox-gl-draw-hot'];
       sourceIdsToRemove.forEach(id => {
         if (mapRef.current.getSource(id)) {
@@ -165,7 +160,7 @@ const NeighborhoodMap = () => {
         }
       });
 
-      // ✅ Add draw control only once
+      // Add draw control only once
       if (!drawRef.current) {
         drawRef.current = new MapboxDraw({
           displayControlsDefault: false,
@@ -244,7 +239,7 @@ const NeighborhoodMap = () => {
         mapRef.current.addControl(drawRef.current);
         console.log('✏️ Draw control added');
 
-        // ✅ Event bindings
+        // Bind draw events
         mapRef.current.on('draw.create', updateBoundary);
         mapRef.current.on('draw.update', updateBoundary);
         mapRef.current.on('draw.delete', () => {
@@ -260,7 +255,7 @@ const NeighborhoodMap = () => {
       }
     });
 
-    // ✅ Hide labels after map load
+    // Hide labels after map load
     mapRef.current.on('load', () => {
       console.log('🧩 Map loaded — hiding labels');
 
@@ -304,6 +299,22 @@ const NeighborhoodMap = () => {
     };
   }, [updateBoundary]);
 
+  useEffect(() => {
+    console.log('📍 Step changed to:', step);
+  }, [step]);
+
+  useEffect(() => {
+    console.log('🧾 Survey form visibility:', showSurveyForm);
+  }, [showSurveyForm]);
+
+  useEffect(() => {
+    console.log('🧭 Survey render check — step:', step);
+    console.log('🧭 showSurveyForm:', showSurveyForm);
+    console.log('🧭 surveyComplete:', surveyComplete);
+  }, [step, showSurveyForm, surveyComplete]);
+
+
+// Part 3
 
 // Part 3
 
@@ -442,6 +453,8 @@ return (
 
     {/* Part 4 */}
 
+
+    // Part 4
 
     {/* Step 3A: Drawing instructions */}
     {step === '3A' && (

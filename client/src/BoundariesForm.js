@@ -7,7 +7,7 @@ const BoundariesForm = ({
   areaName,
   onReset,
   onStartOver,
-  onSubmitted, // now expects a UUID
+  onSubmitted, // expects a UUID
 }) => {
   console.log('📦 BoundariesForm loaded');
 
@@ -18,7 +18,7 @@ const BoundariesForm = ({
 
     if (!boundary) {
       alert('Please draw a boundary before submitting.');
-      console.warn('⚠️ No boundary found on submit');
+      console.warn('⚠️ Submit blocked — no boundary present');
       return;
     }
 
@@ -29,7 +29,7 @@ const BoundariesForm = ({
     console.log('📦 First coord:', ring?.[0]);
     console.log('📦 Last coord:', ring?.[ring?.length - 1]);
 
-    // More tolerant closure check
+    // Relaxed closure tolerance (handles FP precision)
     const isClosed = (() => {
       if (!Array.isArray(ring) || ring.length < 4) return false;
       const [x1, y1] = ring[0];
@@ -38,7 +38,7 @@ const BoundariesForm = ({
       const dy = y1 - y2;
       const distance = Math.sqrt(dx * dx + dy * dy);
       console.log('📦 Closure distance:', distance);
-      return distance < 0.0001; // relaxed tolerance
+      return distance < 0.0001;
     })();
 
     console.log('📦 isClosed:', isClosed);
@@ -53,7 +53,7 @@ const BoundariesForm = ({
 
     if (!isValidPolygon) {
       alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
-      console.error('❌ Invalid polygon on submit:', boundary);
+      console.error('❌ Invalid polygon — boundary:', boundary);
       return;
     }
 
@@ -111,7 +111,7 @@ const BoundariesForm = ({
       console.log('✅ Full backend response:', parsed);
       console.log('📦 Inserted UUID:', insertedUuid);
 
-      onSubmitted(insertedUuid); // ✅ pass UUID to parent
+      onSubmitted(insertedUuid);
     } catch (err) {
       console.error('🚨 Error saving submission:', err.message);
       alert('Error saving submission. See console for details.');
