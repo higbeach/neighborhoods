@@ -173,8 +173,7 @@ useEffect(() => {
       mapRef.current.addControl(drawRef.current);
       console.log('✏️ Draw control added with custom styles');
 
-      // Bind draw events
-      // IMPORTANT: remove heavy updates on every draw.update
+      // Throttle boundary updates to keep undo snappy
       const updateBoundaryThrottled = (() => {
         let scheduled = false;
         return () => {
@@ -195,10 +194,8 @@ useEffect(() => {
         updateBoundaryThrottled();
       });
 
-      // Do NOT run updateBoundary on every intermediate edit — that’s what made undo slow.
-      // If you still want mid-edit updates, keep them throttled:
       mapRef.current.on('draw.update', () => {
-        // console.log('📐 draw.update (throttled)');
+        // Minimal mid-edit updates, still throttled
         updateBoundaryThrottled();
       });
 
