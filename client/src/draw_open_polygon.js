@@ -51,7 +51,7 @@ const DrawOpenPolygon = {
         console.log('🧹 Reset line after full undo');
       }
 
-      state._scheduleUpdate(); // redraw to remove vertices one-by-one
+      state._scheduleUpdate(); // force vertex redraw
     };
 
     this.map.on('ui:undo', undoHandler);
@@ -109,10 +109,10 @@ const DrawOpenPolygon = {
     if (geojson.geometry.type === 'LineString') {
       const count = geojson.geometry.coordinates.length;
 
-      // Line only when 2+ points (avoid ghostlines)
+      // Only draw the line if 2+ points
       if (count >= 2) display(geojson);
 
-      // Always render vertices, including first
+      // Always draw vertices, even the very first one
       geojson.geometry.coordinates.forEach((coord, idx) => {
         display({
           id: `${geojson.id}.${idx}`,
