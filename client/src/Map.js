@@ -111,7 +111,7 @@ const NeighborhoodMap = () => {
 
 // Part 2
 
-// Part 2
+
 
 useEffect(() => {
   if (mapRef.current) return;
@@ -129,6 +129,7 @@ useEffect(() => {
     'bottom-right'
   );
 
+  // Wait for style to fully load before injecting draw
   mapRef.current.once('styledata', () => {
     console.log('🧠 Map style fully loaded — safe to inject draw');
 
@@ -145,45 +146,12 @@ useEffect(() => {
       mapRef.current.addControl(drawRef.current);
       console.log('✏️ Draw control added');
 
-      // Restyle any Draw layers we find
-      const style = mapRef.current.getStyle();
-      const layers = style?.layers || [];
-
-      const restyleLayer = (id, changes) => {
-        Object.entries(changes).forEach(([prop, value]) => {
-          try {
-            mapRef.current.setPaintProperty(id, prop, value);
-            console.log(`🎨 Restyled ${id}: ${prop}=${JSON.stringify(value)}`);
-          } catch {
-            // ignore if layer not found
-          }
-        });
-      };
-
-      layers.forEach((layer) => {
-        if (!layer.source?.startsWith('mapbox-gl-draw')) return;
-        const { id, type } = layer;
-
-        if (type === 'line') {
-          restyleLayer(id, {
-            'line-color': '#ff0000',
-            'line-width': 2,
-            'line-dasharray': [2, 2]
-          });
-        }
-
-        if (type === 'fill') {
-          restyleLayer(id, {
-            'fill-color': '#ff0000',
-            'fill-opacity': 0.1
-          });
-        }
-
-        if (type === 'circle') {
-          restyleLayer(id, {
-            'circle-radius': 5,
-            'circle-color': '#ff0000'
-          });
+      // 🔎 Log all layers so we can see what Draw actually injected
+      const allLayers = mapRef.current.getStyle().layers || [];
+      console.log('🔎 All style layers after Draw added:');
+      allLayers.forEach((layer, idx) => {
+        if (layer.source?.startsWith('mapbox-gl-draw')) {
+          console.log(`   [${idx}] id=${layer.id}, type=${layer.type}, source=${layer.source}`);
         }
       });
 
@@ -203,6 +171,7 @@ useEffect(() => {
     }
   });
 
+  // Hide labels after map load
   mapRef.current.on('load', () => {
     console.log('🧩 Map loaded — hiding labels');
     const layersToHide = [
@@ -218,6 +187,7 @@ useEffect(() => {
     layersToHide.forEach((layerId) => {
       if (mapRef.current.getLayer(layerId)) {
         mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
+        console.log(`🙈 Hid label layer: ${layerId}`);
       }
     });
   });
@@ -245,7 +215,6 @@ useEffect(() => {
   console.log('🧭 showSurveyForm:', showSurveyForm);
   console.log('🧭 surveyComplete:', surveyComplete);
 }, [step, showSurveyForm, surveyComplete]);
-
 // Part 3
 
 return (
