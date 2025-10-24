@@ -26,9 +26,11 @@ const DrawOpenPolygon = {
 
       ctx.line.removeCoordinate(coords.length - 1);
       console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
+      console.log('🧠 ctx.line after undo:', ctx.line);
+      console.log('🧠 draw.getAll():', this.getSelected());
 
       if (ctx.line.coordinates.length === 0) {
-        this.deleteFeature(ctx.line.id); // ✅ Fully remove feature
+        this.deleteFeature(ctx.line.id);
         ctx.line = this.newFeature({
           type: 'Feature',
           properties: { meta: 'feature' },
@@ -57,12 +59,14 @@ const DrawOpenPolygon = {
   },
 
   _handleAddPoint(state, e) {
-   const target = e?.originalEvent?.target;
+    const target = e?.originalEvent?.target;
+    console.log('📱 Tap target:', target);
+    console.log('📱 Tap target closest canvas:', target?.closest('.mapboxgl-canvas'));
+
     if (target && target.closest('.mapboxgl-canvas') === null) {
       console.log('🛡️ Ignored tap outside map canvas');
       return;
-}
-
+    }
 
     console.log('🖱 onClick/onTap at', e.lngLat);
 
@@ -97,6 +101,7 @@ const DrawOpenPolygon = {
 
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
     console.log('➕ Added point, total coords:', state.line.coordinates.length);
+    console.log('🧠 ctx.line after add:', state.line);
 
     this.map.fire('draw.update', { features: [state.line.toGeoJSON()] });
   },
@@ -115,7 +120,8 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
-    
+    console.log('🧠 toDisplayFeatures geojson:', geojson);
+
     if (geojson.geometry.type === 'LineString' &&
         geojson.geometry.coordinates.length < 1) {
       console.log('🚫 No coords to display');
