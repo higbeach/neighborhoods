@@ -111,181 +111,140 @@ const NeighborhoodMap = () => {
 
 // Part 2
 
-  useEffect(() => {
-    if (mapRef.current) return;
+// Part 2
 
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v10',
-      center: [-122.2868, 47.5609],
-      zoom: 13,
-    });
-    console.log('🗺️ Map initialized');
+useEffect(() => {
+  if (mapRef.current) return;
 
-    mapRef.current.addControl(
-      new mapboxgl.NavigationControl({ showCompass: false }),
-      'bottom-right'
-    );
+  mapRef.current = new mapboxgl.Map({
+    container: mapContainer.current,
+    style: 'mapbox://styles/mapbox/light-v10',
+    center: [-122.2868, 47.5609],
+    zoom: 13,
+  });
+  console.log('🗺️ Map initialized');
 
-    // Wait for style to fully load before injecting draw
-    mapRef.current.once('styledata', () => {
-      console.log('🧠 Map style fully loaded — safe to inject draw');
+  mapRef.current.addControl(
+    new mapboxgl.NavigationControl({ showCompass: false }),
+    'bottom-right'
+  );
 
-      if (!drawRef.current) {
-        drawRef.current = new MapboxDraw({
-          displayControlsDefault: false,
-          controls: {},
-          modes: {
-            ...MapboxDraw.modes,
-            draw_open_polygon: DrawOpenPolygon,
-          }
-        });
+  mapRef.current.once('styledata', () => {
+    console.log('🧠 Map style fully loaded — safe to inject draw');
 
-        mapRef.current.addControl(drawRef.current);
-        console.log('✏️ Draw control added');
-
-        // Dynamically restyle Mapbox Draw layers (red dashed line + red vertices)
-        const style = mapRef.current.getStyle();
-        const layers = style?.layers || [];
-        const hotSource = 'mapbox-gl-draw-hot';
-        const coldSource = 'mapbox-gl-draw-cold';
-
-        const restyleLayer = (id, changes) => {
-          Object.entries(changes).forEach(([prop, value]) => {
-            try {
-              mapRef.current.setPaintProperty(id, prop, value);
-              console.log(`🎨 Restyled ${id}: ${prop}=${JSON.stringify(value)}`);
-            } catch (err) {
-              console.warn(`⚠️ Unable to restyle ${id} ${prop}`, err);
-            }
-          });
-        };
-
-        const isDrawLayer = (layer) =>
-          layer?.source === hotSource || layer?.source === coldSource;
-
-        // Identify and restyle
-        layers.forEach((layer) => {
-          if (!isDrawLayer(layer)) return;
-
-          const { id, type, source } = layer;
-          // Active vs inactive heuristic: “hot” = active, “cold” = inactive/static
-         // const active = source === hotSource;
-
-          if (type === 'line') {
-            // Red dashed lines for both active drawing and inactive shapes
-            restyleLayer(id, {
-              'line-color': '#ff0000',
-              'line-width': 2,
-              'line-dasharray': [2, 2]
-            });
-          }
-
-          if (type === 'fill') {
-            // Red translucent fills
-            restyleLayer(id, {
-              'fill-color': '#ff0000',
-              'fill-opacity': 0.1
-            });
-          }
-
-          if (type === 'circle') {
-            // Vertex halo vs dot layers vary by label; apply both where applicable
-            // Heuristic: smaller circles become dots; larger become halos
-            // We set both, since layer responsibilities vary by Draw version
-            restyleLayer(id, {
-              'circle-radius': 5,
-              'circle-color': '#ff0000'
-            });
-
-            // Try to detect halo layers by existing radius > 6
-            const existingRadius = mapRef.current.getPaintProperty(id, 'circle-radius');
-            if (typeof existingRadius === 'number' && existingRadius >= 6) {
-              restyleLayer(id, {
-                'circle-radius': 8,
-                'circle-color': '#ffffff'
-              });
-              console.log(`🟡 Treated ${id} as halo layer (radius ${existingRadius})`);
-            }
-          }
-        });
-
-        // Bind draw events
-        mapRef.current.on('draw.create', updateBoundary);
-        mapRef.current.on('draw.update', updateBoundary);
-        mapRef.current.on('draw.delete', () => {
-          setBoundary(null);
-          console.log('🗑️ Boundary deleted');
-        });
-        mapRef.current.on('draw.finish', (e) => {
-          console.log('🎯 Custom finish event fired', e.features);
-          updateBoundary();
-          setDrawingStarted(false);
-          setStep('3C');
-        });
-      } else {
-        console.warn('⚠️ Draw control already present — skipped reinjection');
-      }
-    });
-
-    // Hide labels after map load
-    mapRef.current.on('load', () => {
-      console.log('🧩 Map loaded — hiding labels');
-
-      const layersToHide = [
-        'neighborhood-label',
-        'neighborhood_label',
-        'place_label',
-        'place-city-lg-n',
-        'place-city-lg-s',
-        'place-city-md-n',
-        'place-city-md-s',
-        'place-city-sm',
-      ];
-      layersToHide.forEach((layerId) => {
-        if (mapRef.current.getLayer(layerId)) {
-          mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
-          console.log(`🙈 Hid label layer: ${layerId}`);
+    if (!drawRef.current) {
+      drawRef.current = new MapboxDraw({
+        displayControlsDefault: false,
+        controls: {},
+        modes: {
+          ...MapboxDraw.modes,
+          draw_open_polygon: DrawOpenPolygon,
         }
       });
 
-      const labelLayer = 'place-label';
-      if (mapRef.current.getLayer(labelLayer)) {
-        mapRef.current.setFilter(labelLayer, [
-          'all',
-          ['!=', ['get', 'place_type'], 'neighborhood'],
-          ['!=', ['get', 'place_type'], 'locality'],
-        ]);
-        console.log('🙈 Filtered place-label to hide neighborhood/locality');
+      mapRef.current.addControl(drawRef.current);
+      console.log('✏️ Draw control added');
+
+      // Restyle any Draw layers we find
+      const style = mapRef.current.getStyle();
+      const layers = style?.layers || [];
+
+      const restyleLayer = (id, changes) => {
+        Object.entries(changes).forEach(([prop, value]) => {
+          try {
+            mapRef.current.setPaintProperty(id, prop, value);
+            console.log(`🎨 Restyled ${id}: ${prop}=${JSON.stringify(value)}`);
+          } catch {
+            // ignore if layer not found
+          }
+        });
+      };
+
+      layers.forEach((layer) => {
+        if (!layer.source?.startsWith('mapbox-gl-draw')) return;
+        const { id, type } = layer;
+
+        if (type === 'line') {
+          restyleLayer(id, {
+            'line-color': '#ff0000',
+            'line-width': 2,
+            'line-dasharray': [2, 2]
+          });
+        }
+
+        if (type === 'fill') {
+          restyleLayer(id, {
+            'fill-color': '#ff0000',
+            'fill-opacity': 0.1
+          });
+        }
+
+        if (type === 'circle') {
+          restyleLayer(id, {
+            'circle-radius': 5,
+            'circle-color': '#ff0000'
+          });
+        }
+      });
+
+      // Bind draw events
+      mapRef.current.on('draw.create', updateBoundary);
+      mapRef.current.on('draw.update', updateBoundary);
+      mapRef.current.on('draw.delete', () => {
+        setBoundary(null);
+        console.log('🗑️ Boundary deleted');
+      });
+      mapRef.current.on('draw.finish', (e) => {
+        console.log('🎯 Custom finish event fired', e.features);
+        updateBoundary();
+        setDrawingStarted(false);
+        setStep('3C');
+      });
+    }
+  });
+
+  mapRef.current.on('load', () => {
+    console.log('🧩 Map loaded — hiding labels');
+    const layersToHide = [
+      'neighborhood-label',
+      'neighborhood_label',
+      'place_label',
+      'place-city-lg-n',
+      'place-city-lg-s',
+      'place-city-md-n',
+      'place-city-md-s',
+      'place-city-sm',
+    ];
+    layersToHide.forEach((layerId) => {
+      if (mapRef.current.getLayer(layerId)) {
+        mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
       }
-
-      const allLayers = mapRef.current.getStyle().layers;
-      console.log('🧪 Final layer list:', allLayers.map(l => l.id));
     });
+  });
 
-    return () => {
-      if (!mapRef.current) return;
-      mapRef.current.off('draw.create', updateBoundary);
-      mapRef.current.off('draw.update', updateBoundary);
-      mapRef.current.off('draw.delete');
-      mapRef.current.off('draw.finish');
-    };
-  }, [updateBoundary]);
+  return () => {
+    if (!mapRef.current) return;
+    mapRef.current.off('draw.create', updateBoundary);
+    mapRef.current.off('draw.update', updateBoundary);
+    mapRef.current.off('draw.delete');
+    mapRef.current.off('draw.finish');
+  };
+}, [updateBoundary]);
 
-  // Logging hooks (keep here at the end of Part 2)
-  useEffect(() => {
-    console.log('📍 Step changed to:', step);
-  }, [step]);
+// Logging hooks
+useEffect(() => {
+  console.log('📍 Step changed to:', step);
+}, [step]);
 
-  useEffect(() => {
-    console.log('🧾 Survey form visibility:', showSurveyForm);
-  }, [showSurveyForm]);
+useEffect(() => {
+  console.log('🧾 Survey form visibility:', showSurveyForm);
+}, [showSurveyForm]);
 
-  useEffect(() => {
-    console.log('🧭 Survey render check — step:', step);
-    console.log('🧭 showSurveyForm:', showSurveyForm);
-    console.log('🧭 surveyComplete:', surveyComplete);
-  }, [step, showSurveyForm, surveyComplete]);
+useEffect(() => {
+  console.log('🧭 Survey render check — step:', step);
+  console.log('🧭 showSurveyForm:', showSurveyForm);
+  console.log('🧭 surveyComplete:', surveyComplete);
+}, [step, showSurveyForm, surveyComplete]);
 
 // Part 3
 
