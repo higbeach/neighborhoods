@@ -27,7 +27,6 @@ const DrawOpenPolygon = {
       ctx.line.removeCoordinate(coords.length - 1);
       console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
       console.log('🧠 ctx.line after undo:', ctx.line);
-      console.log('🧠 draw.getAll():', this.getSelected());
 
       if (ctx.line.coordinates.length === 0) {
         this.deleteFeature(ctx.line.id);
@@ -60,13 +59,13 @@ const DrawOpenPolygon = {
 
   _handleAddPoint(state, e) {
     const target = e?.originalEvent?.target;
-    console.log('📱 Tap target:', target);
-    console.log('📱 Tap target closest canvas:', target?.closest('.mapboxgl-canvas'));
+    const canvas = this.map.getCanvas();
 
-    if (target && target.closest('.mapboxgl-canvas') === null) {
+    if (target && !(target === canvas || canvas.contains(target))) {
       console.log('🛡️ Ignored tap outside map canvas');
       return;
-    }
+}
+
 
     console.log('🖱 onClick/onTap at', e.lngLat);
 
@@ -123,10 +122,11 @@ const DrawOpenPolygon = {
     console.log('🧠 toDisplayFeatures geojson:', geojson);
 
     if (geojson.geometry.type === 'LineString' &&
-        geojson.geometry.coordinates.length < 1) {
-      console.log('🚫 No coords to display');
-      return;
-    }
+      geojson.geometry.coordinates.length < 2) {
+    console.log('🚫 Not enough coords to display');
+    return;
+}
+
 
     display(geojson);
 

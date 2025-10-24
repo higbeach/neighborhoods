@@ -98,7 +98,7 @@ const NeighborhoodMap = () => {
 
 // second quarter
 
-   useEffect(() => {
+    useEffect(() => {
     if (mapRef.current) return;
 
     mapRef.current = new mapboxgl.Map({
@@ -115,8 +115,9 @@ const NeighborhoodMap = () => {
       'bottom-right'
     );
 
-    mapRef.current.on('load', () => {
-      console.log('🧩 Map loaded — hiding labels');
+    // ✅ Wait for style to fully load before injecting draw
+    mapRef.current.once('styledata', () => {
+      console.log('🧠 Map style fully loaded — safe to inject draw');
 
       // ✅ Remove any lingering draw layers
       const layerIdsToRemove = [
@@ -231,8 +232,11 @@ const NeighborhoodMap = () => {
           setStep('3C');
         });
       }
+    });
 
-      // ✅ Hide map labels
+    mapRef.current.on('load', () => {
+      console.log('🧩 Map loaded — hiding labels');
+
       const layersToHide = [
         'neighborhood-label',
         'neighborhood_label',
@@ -285,7 +289,7 @@ const NeighborhoodMap = () => {
     console.log('🧭 surveyComplete:', surveyComplete);
   }, [step, showSurveyForm, surveyComplete]);
 
-  
+
 // second half
 
 return (
