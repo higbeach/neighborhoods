@@ -141,6 +141,7 @@ useEffect(() => {
           draw_open_polygon: DrawOpenPolygon,
         },
         styles: [
+          // Red dashed line (active)
           {
             id: 'custom-draw-line',
             type: 'line',
@@ -148,12 +149,14 @@ useEffect(() => {
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': '#ff0000', 'line-width': 2, 'line-dasharray': [2, 2] }
           },
+          // Red polygon fill (active)
           {
             id: 'custom-draw-polygon-fill',
             type: 'fill',
             filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
             paint: { 'fill-color': '#ff0000', 'fill-opacity': 0.1 }
           },
+          // Red polygon outline (active)
           {
             id: 'custom-draw-polygon-stroke',
             type: 'line',
@@ -161,11 +164,21 @@ useEffect(() => {
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': '#ff0000', 'line-width': 2 }
           },
+          // Red vertex dots (active, not static, always visible)
           {
             id: 'custom-draw-points',
             type: 'circle',
-            filter: ['all', ['==', '$type', 'Point'], ['==', 'meta', 'vertex']],
-            paint: { 'circle-radius': 5, 'circle-color': '#ff0000' }
+            filter: [
+              'all',
+              ['==', '$type', 'Point'],
+              ['==', 'meta', 'vertex'],
+              ['!=', 'mode', 'static']
+            ],
+            paint: {
+              'circle-radius': 5,
+              'circle-color': '#ff0000',
+              'circle-opacity': 1
+            }
           }
         ]
       });
@@ -173,7 +186,7 @@ useEffect(() => {
       mapRef.current.addControl(drawRef.current);
       console.log('✏️ Draw control added with custom styles');
 
-      // Throttle boundary updates to keep undo snappy
+      // Throttle boundary updates to keep undo snappy — only on create/finish
       const updateBoundaryThrottled = (() => {
         let scheduled = false;
         return () => {
@@ -194,9 +207,10 @@ useEffect(() => {
         updateBoundaryThrottled();
       });
 
+      // Disable heavy mid-edit updates (keeps undo instant)
       mapRef.current.on('draw.update', () => {
-        // Minimal mid-edit updates, still throttled
-        updateBoundaryThrottled();
+        // Intentionally minimal: rely on the mode's internal redraw, not React/state
+        // console.log('📐 draw.update (lightweight redraw only)');
       });
 
       mapRef.current.on('draw.delete', () => {
@@ -257,7 +271,6 @@ useEffect(() => {
   console.log('🧭 showSurveyForm:', showSurveyForm);
   console.log('🧭 surveyComplete:', surveyComplete);
 }, [step, showSurveyForm, surveyComplete]);
-
 
 // Part 3
 
