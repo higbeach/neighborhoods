@@ -92,7 +92,6 @@ const NeighborhoodMap = () => {
     }
   }, []);
 
-// second quarter
 
 // second quarter
 
