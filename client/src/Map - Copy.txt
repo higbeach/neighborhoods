@@ -1,4 +1,4 @@
-// Part 1
+//Part 1
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
@@ -11,11 +11,9 @@ import NeighborhoodSurvey from './NeighborhoodSurvey';
 import neighborhoodNames from './neighborhoodNames';
 import DrawOpenPolygon from './draw_open_polygon';
 
-// ✅ Mapbox setup
 mapboxgl.accessToken = 'pk.eyJ1IjoiZWhpZ2JlZSIsImEiOiJjbWczeTQ3YXQwcDR5MmxxYjNvY2h0Mzd6In0.2KW_zGxkTEaJXPRFbOUqBw';
 if (typeof mapboxgl.setTelemetryEnabled === 'function') {
   mapboxgl.setTelemetryEnabled(false);
-  console.log('📡 Mapbox telemetry disabled');
 }
 
 const NeighborhoodMap = () => {
@@ -35,7 +33,6 @@ const NeighborhoodMap = () => {
   const [drawingStarted, setDrawingStarted] = useState(false);
   const [submissionUuid, setSubmissionUuid] = useState(null);
 
-  // ✅ Confirm location step
   const handleConfirmLocation = () => {
     if (!mapRef.current) return;
     const center = mapRef.current.getCenter();
@@ -51,11 +48,8 @@ const NeighborhoodMap = () => {
     })
       .setLngLat(center)
       .addTo(mapRef.current);
-
-    console.log('📍 Location confirmed:', center);
   };
 
-  // ✅ Custom marker
   const createCustomMarker = () => {
     const img = document.createElement('img');
     img.src = '/pin-icon.svg';
@@ -65,15 +59,12 @@ const NeighborhoodMap = () => {
     return img;
   };
 
-  // ✅ Reset everything
   const handleReset = () => {
     setLocation(null);
     setYears(0);
     setAreaName('');
     setBoundary(null);
-    if (drawRef.current) {
-      drawRef.current.deleteAll();
-    }
+    drawRef.current.deleteAll();
     setStep(0);
     setShowSurveyPrompt(false);
     setShowSurveyForm(false);
@@ -83,42 +74,33 @@ const NeighborhoodMap = () => {
       markerRef.current.remove();
       markerRef.current = null;
     }
-
-    console.log('🔄 Reset triggered — state cleared');
   };
 
   const startOver = () => {
     handleReset();
     setStep(0);
-    console.log('🔄 Start over triggered');
   };
 
-  // ✅ Scroll to top on step change
   useEffect(() => {
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 100);
   }, [step]);
 
-  // ✅ Update boundary from draw
   const updateBoundary = useCallback(() => {
-    if (!drawRef.current) return;
     const data = drawRef.current.getAll();
     if (data.features.length > 0) {
       const feature = data.features[0];
       setBoundary(feature);
-      console.log('📐 Boundary updated:', feature);
     } else {
       setBoundary(null);
-      console.log('📐 Boundary cleared');
     }
   }, []);
 
 
-
 // Part 2
 
-  useEffect(() => {
+    useEffect(() => {
     if (mapRef.current) return;
 
     mapRef.current = new mapboxgl.Map({
@@ -152,7 +134,6 @@ const NeighborhoodMap = () => {
       layerIdsToRemove.forEach(id => {
         if (mapRef.current.getLayer(id)) {
           mapRef.current.removeLayer(id);
-          console.log(`🧹 Removed lingering layer: ${id}`);
         }
       });
 
@@ -161,7 +142,6 @@ const NeighborhoodMap = () => {
       sourceIdsToRemove.forEach(id => {
         if (mapRef.current.getSource(id)) {
           mapRef.current.removeSource(id);
-          console.log(`🧹 Removed lingering source: ${id}`);
         }
       });
 
@@ -244,13 +224,9 @@ const NeighborhoodMap = () => {
         mapRef.current.addControl(drawRef.current);
         console.log('✏️ Draw control added');
 
-        // ✅ Event bindings
         mapRef.current.on('draw.create', updateBoundary);
         mapRef.current.on('draw.update', updateBoundary);
-        mapRef.current.on('draw.delete', () => {
-          setBoundary(null);
-          console.log('🗑️ Boundary deleted');
-        });
+        mapRef.current.on('draw.delete', () => setBoundary(null));
         mapRef.current.on('draw.finish', (e) => {
           console.log('🎯 Custom finish event fired', e.features);
           updateBoundary();
@@ -260,7 +236,6 @@ const NeighborhoodMap = () => {
       }
     });
 
-    // ✅ Hide labels after map load
     mapRef.current.on('load', () => {
       console.log('🧩 Map loaded — hiding labels');
 
@@ -277,7 +252,6 @@ const NeighborhoodMap = () => {
       layersToHide.forEach((layerId) => {
         if (mapRef.current.getLayer(layerId)) {
           mapRef.current.setLayoutProperty(layerId, 'visibility', 'none');
-          console.log(`🙈 Hid label layer: ${layerId}`);
         }
       });
 
@@ -288,7 +262,6 @@ const NeighborhoodMap = () => {
           ['!=', ['get', 'place_type'], 'neighborhood'],
           ['!=', ['get', 'place_type'], 'locality'],
         ]);
-        console.log('🙈 Filtered place-label to hide neighborhood/locality');
       }
 
       const allLayers = mapRef.current.getStyle().layers;
@@ -304,6 +277,20 @@ const NeighborhoodMap = () => {
     };
   }, [updateBoundary]);
 
+  useEffect(() => {
+    console.log('📍 Step changed to:', step);
+  }, [step]);
+
+  useEffect(() => {
+    console.log('🧾 Survey form visibility:', showSurveyForm);
+  }, [showSurveyForm]);
+
+  useEffect(() => {
+    console.log('🧭 Survey render check — step:', step);
+    console.log('🧭 showSurveyForm:', showSurveyForm);
+    console.log('🧭 surveyComplete:', surveyComplete);
+  }, [step, showSurveyForm, surveyComplete]);
+
 
 // Part 3
 
@@ -316,30 +303,14 @@ return (
     {step === 0 && (
       <div className="overlay overlay-enter">
         <h2>Help Us Map Our Neighborhood.</h2>
-        <p>
-          Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong>
-        </p>
+        <p>Please help us create a community-sourced boundary map of <strong>Columbia City and its adjacent neighborhoods.</strong></p>
         <p>This website is a beta-test for a larger project. All of your information will be kept confidential.</p>
-        <p>
-          Please use{" "}
-          <a
-            href="https://www.convenepllc.com/contact-us/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <p>Please use <a href="https://www.convenepllc.com/contact-us/" target="_blank" rel="noopener noreferrer">
             this contact form
-          </a>{" "}
-          for any questions or feedback.
+          </a> for any questions or feedback.
         </p>
         <div className="overlay-actions">
-          <button
-            onClick={() => {
-              console.log("➡️ Moving from Step 0 to Step 1");
-              setStep(1);
-            }}
-          >
-            Let's Get Started
-          </button>
+          <button onClick={() => setStep(1)}>Let's Get Started</button>
         </div>
       </div>
     )}
@@ -348,12 +319,7 @@ return (
     {step === 1 && (
       <>
         <div className="map-pin">
-          <svg
-            viewBox="0 0 16 16"
-            width="32"
-            height="32"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg viewBox="0 0 16 16" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
             <path
               fillRule="evenodd"
               clipRule="evenodd"
@@ -364,19 +330,10 @@ return (
         </div>
         <div className="overlay overlay-enter">
           <h2>Mark Where You Live</h2>
-          <p>
-            1. Pan the map until the pin is centered over where you live.<br />
-            2. Click the "I Live here!" button
-          </p>
+          <p>1. Pan the map until the pin is centered over where you live.<br />
+             2. Click the "I Live here!" button</p>
           <div className="overlay-actions">
-            <button
-              onClick={() => {
-                console.log("➡️ Confirming location at Step 1");
-                handleConfirmLocation();
-              }}
-            >
-              I live here!
-            </button>
+            <button onClick={handleConfirmLocation}>I live here!</button>
           </div>
         </div>
       </>
@@ -391,10 +348,7 @@ return (
           type="text"
           placeholder="Neighborhood name"
           value={areaName}
-          onChange={(e) => {
-            console.log("✏️ Area name updated:", e.target.value);
-            setAreaName(e.target.value);
-          }}
+          onChange={(e) => setAreaName(e.target.value)}
           list="neighborhood-names"
         />
         <datalist id="neighborhood-names">
@@ -409,40 +363,18 @@ return (
           min="0"
           max="100"
           value={years}
-          onChange={(e) => {
-            console.log("📅 Years updated:", e.target.value);
-            setYears(e.target.value);
-          }}
+          onChange={(e) => setYears(e.target.value)}
         />
         <p>{years} years</p>
 
         <div className="overlay-actions">
-          <button
-            onClick={() => {
-              console.log("➡️ Moving from Step 2 to Step 3A");
-              setStep("3A");
-            }}
-            disabled={!areaName}
-          >
-            Next
-          </button>
-          <button
-            className="secondary"
-            onClick={() => {
-              console.log("🔄 Reset triggered at Step 2");
-              handleReset();
-            }}
-          >
-            Reset
-          </button>
+          <button onClick={() => setStep('3A')} disabled={!areaName}>Next</button>
+          <button className="secondary" onClick={handleReset}>Reset</button>
         </div>
       </div>
     )}
 
-
     // Part 4
-
-   // Part 4
 
     {/* Step 3A: Drawing instructions */}
     {step === '3A' && (
@@ -462,13 +394,9 @@ return (
             onClick={(ev) => {
               ev.stopPropagation();
               ev.preventDefault();
-              if (drawRef.current) {
-                drawRef.current.deleteAll();
-                drawRef.current.changeMode('draw_open_polygon', { setBoundary });
-                console.log('✅ Switched to draw_open_polygon mode');
-              } else {
-                console.warn('⚠️ drawRef not ready when starting draw');
-              }
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_open_polygon', { setBoundary });
+              console.log('✅ Switched to draw_open_polygon mode');
               setDrawingStarted(true);
               setStep('3B');
               setTimeout(() => {
@@ -490,11 +418,7 @@ return (
             console.log('🧭 Undo button clicked — firing ui:undo');
             ev.stopPropagation();
             ev.preventDefault();
-            if (mapRef.current) {
-              mapRef.current.fire('ui:undo');
-            } else {
-              console.warn('⚠️ mapRef not ready for undo');
-            }
+            mapRef.current?.fire('ui:undo');
           }}
         >
           Undo
@@ -505,7 +429,6 @@ return (
           onClick={(ev) => {
             ev.stopPropagation();
             ev.preventDefault();
-            console.log('📖 Returning to drawing instructions (Step 3A)');
             setStep('3A');
           }}
         >
@@ -520,23 +443,18 @@ return (
         <h2>Looking good!</h2>
         <p>If this looks right, press "Next." <br /><br />To try again, press "Draw Again."</p>
         <div className="overlay-actions">
-          <button
-            onClick={() => {
-              console.log('📐 Confirming boundary at Step 3C:', boundary);
-              setStep(4);
-            }}
-          >
+          <button onClick={() => {
+            console.log('📐 Confirming boundary:', boundary);
+            setStep(4);
+          }}>
             Next
           </button>
           <button
             onClick={(ev) => {
               ev.stopPropagation();
               ev.preventDefault();
-              if (drawRef.current) {
-                drawRef.current.deleteAll();
-                drawRef.current.changeMode('draw_open_polygon', { setBoundary });
-                console.log('🔄 Restarted drawing from Step 3C');
-              }
+              drawRef.current.deleteAll();
+              drawRef.current.changeMode('draw_open_polygon', { setBoundary });
               setBoundary(null);
               setDrawingStarted(true);
               setStep('3B');
@@ -558,7 +476,6 @@ return (
         onReset={handleReset}
         onStartOver={startOver}
         onSubmitted={(uuid) => {
-          console.log('✅ Boundary submitted with UUID:', uuid);
           setSubmissionUuid(uuid);
           setStep(5);
           setShowSurveyPrompt(true);
@@ -570,27 +487,10 @@ return (
     {step === 5 && showSurveyPrompt && !showSurveyForm && (
       <div className="overlay overlay-enter">
         <h2>Thank you for your submission!</h2>
-        <p>
-          Do you have 2–3 minutes to answer some additional questions about your feelings toward your neighborhood?
-        </p>
+        <p>Do you have 2–3 minutes to answer some additional questions about your feelings toward your neighborhood?</p>
         <div className="overlay-actions">
-          <button
-            onClick={() => {
-              console.log('📝 User opted into survey');
-              setShowSurveyForm(true);
-            }}
-          >
-            Yes — take me to the survey
-          </button>
-          <button
-            className="secondary"
-            onClick={() => {
-              console.log('🚫 User declined survey');
-              handleReset();
-            }}
-          >
-            No thanks
-          </button>
+          <button onClick={() => setShowSurveyForm(true)}>Yes — take me to the survey</button>
+          <button className="secondary" onClick={handleReset}>No thanks</button>
         </div>
       </div>
     )}
@@ -604,7 +504,6 @@ return (
         boundary={boundary}
         submissionUuid={submissionUuid}
         onComplete={() => {
-          console.log('✅ Survey completed');
           setSurveyComplete(true);
         }}
       />
@@ -615,18 +514,9 @@ return (
       <div className="overlay overlay-enter">
         <h2>Thank you!</h2>
         <p>Your survey responses have been recorded.</p>
-        <p>
-          Please share this with other people you know who live in Columbia City or surrounding neighborhoods.
-        </p>
+        <p>Please share this with other people you know who live in Columbia City or surrounding neighborhoods.</p>
         <div className="overlay-actions">
-          <button
-            onClick={() => {
-              console.log('🔄 Restarting after survey complete');
-              handleReset();
-            }}
-          >
-            Start Over
-          </button>
+          <button onClick={handleReset}>Start Over</button>
         </div>
       </div>
     )}

@@ -18,7 +18,6 @@ const BoundariesForm = ({
 
     if (!boundary) {
       alert('Please draw a boundary before submitting.');
-      console.warn('⚠️ No boundary found on submit');
       return;
     }
 
@@ -29,19 +28,18 @@ const BoundariesForm = ({
     console.log('📦 First coord:', ring?.[0]);
     console.log('📦 Last coord:', ring?.[ring?.length - 1]);
 
-    // More tolerant closure check
-    const isClosed = (() => {
+    // Optional: use a tolerance instead of exact match
+   const isClosed = (() => {
       if (!Array.isArray(ring) || ring.length < 4) return false;
       const [x1, y1] = ring[0];
       const [x2, y2] = ring[ring.length - 1];
       const dx = x1 - x2;
       const dy = y1 - y2;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      console.log('📦 Closure distance:', distance);
-      return distance < 0.0001; // relaxed tolerance
+      return Math.sqrt(dx * dx + dy * dy) < 0.000001;
     })();
 
-    console.log('📦 isClosed:', isClosed);
+      console.log('📦 isClosed:', isClosed);
+
 
     const isValidPolygon =
       boundary.geometry?.type === 'Polygon' &&
@@ -49,11 +47,11 @@ const BoundariesForm = ({
       coords.length > 0 &&
       isClosed;
 
-    console.log('📦 isValidPolygon:', isValidPolygon);
-
+      console.log('📦 isValidPolygon:', isValidPolygon);
+      console.log('📦 Closure distance:', Math.sqrt((ring[0][0] - ring[ring.length - 1][0]) ** 2 + (ring[0][1] - ring[ring.length - 1][1]) ** 2));
+      
     if (!isValidPolygon) {
       alert('Your boundary is incomplete or malformed. Please redraw it before submitting.');
-      console.error('❌ Invalid polygon on submit:', boundary);
       return;
     }
 

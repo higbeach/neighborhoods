@@ -26,6 +26,7 @@ const DrawOpenPolygon = {
 
       ctx.line.removeCoordinate(coords.length - 1);
       console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
+      console.log('🧠 ctx.line after undo:', ctx.line);
 
       if (ctx.line.coordinates.length === 0) {
         this.deleteFeature(ctx.line.id);
@@ -63,7 +64,8 @@ const DrawOpenPolygon = {
     if (target && !(target === canvas || canvas.contains(target))) {
       console.log('🛡️ Ignored tap outside map canvas');
       return;
-    }
+}
+
 
     console.log('🖱 onClick/onTap at', e.lngLat);
 
@@ -90,7 +92,6 @@ const DrawOpenPolygon = {
 
       if (typeof state.setBoundary === 'function') {
         state.setBoundary(polygon.toGeoJSON());
-        console.log('📦 Boundary set via draw.finish');
       }
 
       this.changeMode('simple_select', { featureIds: [] });
@@ -99,6 +100,7 @@ const DrawOpenPolygon = {
 
     state.line.updateCoordinate(coords.length, e.lngLat.lng, e.lngLat.lat);
     console.log('➕ Added point, total coords:', state.line.coordinates.length);
+    console.log('🧠 ctx.line after add:', state.line);
 
     this.map.fire('draw.update', { features: [state.line.toGeoJSON()] });
   },
@@ -117,11 +119,14 @@ const DrawOpenPolygon = {
   },
 
   toDisplayFeatures(state, geojson, display) {
+    console.log('🧠 toDisplayFeatures geojson:', geojson);
+
     if (geojson.geometry.type === 'LineString' &&
-        geojson.geometry.coordinates.length < 2) {
-      console.log('🚫 Not enough coords to display');
-      return;
-    }
+      geojson.geometry.coordinates.length < 2) {
+    console.log('🚫 Not enough coords to display');
+    return;
+}
+
 
     display(geojson);
 
