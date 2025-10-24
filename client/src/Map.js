@@ -144,48 +144,71 @@ const NeighborhoodMap = () => {
         mapRef.current.addControl(drawRef.current);
         console.log('✏️ Draw control added');
 
-        // Restyle Mapbox Draw defaults directly (no custom layers)
-        const setPaint = (layerId, prop, value) => {
-          if (mapRef.current.getLayer(layerId)) {
-            mapRef.current.setPaintProperty(layerId, prop, value);
-            console.log(`🎨 ${layerId} ${prop} =`, value);
-          } else {
-            console.warn(`⚠️ Missing Draw layer: ${layerId}`);
-          }
+        // Dynamically restyle Mapbox Draw layers (red dashed line + red vertices)
+        const style = mapRef.current.getStyle();
+        const layers = style?.layers || [];
+        const hotSource = 'mapbox-gl-draw-hot';
+        const coldSource = 'mapbox-gl-draw-cold';
+
+        const restyleLayer = (id, changes) => {
+          Object.entries(changes).forEach(([prop, value]) => {
+            try {
+              mapRef.current.setPaintProperty(id, prop, value);
+              console.log(`🎨 Restyled ${id}: ${prop}=${JSON.stringify(value)}`);
+            } catch (err) {
+              console.warn(`⚠️ Unable to restyle ${id} ${prop}`, err);
+            }
+          });
         };
 
-        // Active line (hot / during drawing)
-        setPaint('gl-draw-line-active', 'line-color', '#ff0000');
-        setPaint('gl-draw-line-active', 'line-width', 2);
-        setPaint('gl-draw-line-active', 'line-dasharray', [2, 2]);
+        const isDrawLayer = (layer) =>
+          layer?.source === hotSource || layer?.source === coldSource;
 
-        // Inactive line (cold / after finishing)
-        setPaint('gl-draw-line-inactive', 'line-color', '#ff0000');
-        setPaint('gl-draw-line-inactive', 'line-width', 2);
-        setPaint('gl-draw-line-inactive', 'line-dasharray', [2, 2]);
+        // Identify and restyle
+        layers.forEach((layer) => {
+          if (!isDrawLayer(layer)) return;
 
-        // Active polygon stroke + fill
-        setPaint('gl-draw-polygon-stroke-active', 'line-color', '#ff0000');
-        setPaint('gl-draw-polygon-stroke-active', 'line-width', 3);
-        setPaint('gl-draw-polygon-fill', 'fill-color', '#ff0000');
-        setPaint('gl-draw-polygon-fill', 'fill-opacity', 0.1);
+          const { id, type, source } = layer;
+          // Active vs inactive heuristic: “hot” = active, “cold” = inactive/static
+          const active = source === hotSource;
 
-        // Inactive polygon stroke + fill
-        setPaint('gl-draw-polygon-stroke-inactive', 'line-color', '#ff0000');
-        setPaint('gl-draw-polygon-stroke-inactive', 'line-width', 3);
-        setPaint('gl-draw-polygon-fill-inactive', 'fill-color', '#ff0000');
-        setPaint('gl-draw-polygon-fill-inactive', 'fill-opacity', 0.1);
+          if (type === 'line') {
+            // Red dashed lines for both active drawing and inactive shapes
+            restyleLayer(id, {
+              'line-color': '#ff0000',
+              'line-width': 2,
+              'line-dasharray': [2, 2]
+            });
+          }
 
-        // Vertex halo and vertex dot (both active/inactive)
-        setPaint('gl-draw-vertex-halo-active', 'circle-radius', 8);
-        setPaint('gl-draw-vertex-halo-active', 'circle-color', '#ffffff');
-        setPaint('gl-draw-vertex-halo-inactive', 'circle-radius', 8);
-        setPaint('gl-draw-vertex-halo-inactive', 'circle-color', '#ffffff');
+          if (type === 'fill') {
+            // Red translucent fills
+            restyleLayer(id, {
+              'fill-color': '#ff0000',
+              'fill-opacity': 0.1
+            });
+          }
 
-        setPaint('gl-draw-vertex-active', 'circle-radius', 5);
-        setPaint('gl-draw-vertex-active', 'circle-color', '#ff0000');
-        setPaint('gl-draw-vertex-inactive', 'circle-radius', 5);
-        setPaint('gl-draw-vertex-inactive', 'circle-color', '#ff0000');
+          if (type === 'circle') {
+            // Vertex halo vs dot layers vary by label; apply both where applicable
+            // Heuristic: smaller circles become dots; larger become halos
+            // We set both, since layer responsibilities vary by Draw version
+            restyleLayer(id, {
+              'circle-radius': 5,
+              'circle-color': '#ff0000'
+            });
+
+            // Try to detect halo layers by existing radius > 6
+            const existingRadius = mapRef.current.getPaintProperty(id, 'circle-radius');
+            if (typeof existingRadius === 'number' && existingRadius >= 6) {
+              restyleLayer(id, {
+                'circle-radius': 8,
+                'circle-color': '#ffffff'
+              });
+              console.log(`🟡 Treated ${id} as halo layer (radius ${existingRadius})`);
+            }
+          }
+        });
 
         // Bind draw events
         mapRef.current.on('draw.create', updateBoundary);
@@ -263,8 +286,6 @@ const NeighborhoodMap = () => {
     console.log('🧭 showSurveyForm:', showSurveyForm);
     console.log('🧭 surveyComplete:', surveyComplete);
   }, [step, showSurveyForm, surveyComplete]);
-
-
 
 // Part 3
 
