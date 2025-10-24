@@ -1,6 +1,6 @@
 const DrawOpenPolygon = {
   onSetup(options = {}) {
-    console.log('🎬 draw_open_polygon.js → onSetup fired');
+    console.log('🎬 onSetup fired');
 
     const line = this.newFeature({
       type: 'Feature',
@@ -28,15 +28,9 @@ const DrawOpenPolygon = {
       console.log('↩️ After undo — coords:', ctx.line.coordinates.length);
 
       if (ctx.line.coordinates.length === 0) {
-        this.deleteFeature(ctx.line.id);
-        ctx.line = this.newFeature({
-          type: 'Feature',
-          properties: { meta: 'feature' },
-          geometry: { type: 'LineString', coordinates: [] }
-        });
-        this.addFeature(ctx.line);
+        ctx.line.setCoordinates([]); // ✅ Avoid deleteFeature crash
         ctx.nearFirstVertex = false;
-        console.log('🧹 Line reset to empty after full undo');
+        console.log('🧹 Line cleared after full undo');
       }
 
       this.map.fire('draw.update', { features: [ctx.line.toGeoJSON()] });
@@ -143,9 +137,6 @@ const DrawOpenPolygon = {
           console.log('🌟 First vertex displayed at', coord);
         }
       });
-
-      // ✅ Explicitly suppress ghostline emission
-      // Do NOT emit any feature with meta: 'ghost'
     }
   },
 
