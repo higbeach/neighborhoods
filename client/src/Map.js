@@ -285,6 +285,7 @@ const NeighborhoodMap = () => {
     console.log('🧭 surveyComplete:', surveyComplete);
   }, [step, showSurveyForm, surveyComplete]);
 
+  
 // second half
 
 return (
