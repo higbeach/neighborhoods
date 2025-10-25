@@ -340,8 +340,8 @@ return (
         <div className="overlay overlay-enter">
           <h2>Mark Where You Live</h2>
           <p>
-            1. Pan the map until the pin is centered over where you live.<br />
-            2. Click the "I Live here!" button
+            1. Pan the map until the pin is centered over where you live.<br /><br />
+            2. Then click the "I Live here!" button
           </p>
           <div className="overlay-actions">
             <button
