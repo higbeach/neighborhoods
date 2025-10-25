@@ -36,26 +36,44 @@ const SubmissionsMap = ({ submissions }) => {
 
     const map = mapRef.current;
 
-    // 🔴 Extract home location pins from lat/lon
-  const locationFeatures = submissions.features
-    .filter((f) =>
-      f.properties.location &&
-      typeof f.properties.location.lat === 'number' &&
-      typeof f.properties.location.lng === 'number'
-    )
-    .map((f, idx) => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [f.properties.location.lng, f.properties.location.lat],
-      },
-      properties: {
-        neighborhood: f.properties.neighborhood,
-        comments: f.properties.comments,
-        timestamp: f.properties.timestamp,
-      },
-      id: `loc-${idx}`,
-    }));
+    // 🎨 Assign dynamic colors per neighborhood
+    const neighborhoodColors = {};
+    const colorPalette = [
+      '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+      '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
+      '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000'
+    ];
+    let colorIndex = 0;
+
+    submissions.features.forEach((f) => {
+      const name = f.properties.neighborhood || 'Unknown';
+      if (!neighborhoodColors[name]) {
+        neighborhoodColors[name] = colorPalette[colorIndex % colorPalette.length];
+        colorIndex++;
+      }
+      f.properties.neighborhoodColor = neighborhoodColors[name];
+    });
+
+    // 📍 Extract home location pins
+    const locationFeatures = submissions.features
+      .filter((f) =>
+        f.properties.location &&
+        typeof f.properties.location.lat === 'number' &&
+        typeof f.properties.location.lng === 'number'
+      )
+      .map((f) => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [f.properties.location.lng, f.properties.location.lat],
+        },
+        properties: {
+          neighborhood: f.properties.neighborhood,
+          comments: f.properties.comments,
+          timestamp: f.properties.timestamp,
+        },
+        id: `loc-${f.id}`,
+      }));
 
     const locationGeoJSON = {
       type: 'FeatureCollection',
@@ -72,26 +90,6 @@ const SubmissionsMap = ({ submissions }) => {
       });
 
       map.addLayer({
-        id: 'submissions-fill',
-        type: 'fill',
-        source: 'submissions',
-        paint: {
-          'fill-color': [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false],
-            '#f00',
-            '#088',
-          ],
-          'fill-opacity': [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false],
-            0.6,
-            0.4,
-          ],
-        },
-      });
-
-      map.addLayer({
         id: 'submissions-outline',
         type: 'line',
         source: 'submissions',
@@ -99,39 +97,38 @@ const SubmissionsMap = ({ submissions }) => {
           'line-color': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            '#f00',
-            '#000',
+            '#ff0000',
+            ['get', 'neighborhoodColor']
           ],
           'line-width': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
             3,
-            1,
+            1
           ],
         },
       });
 
-      map.on('click', 'submissions-fill', (e) => {
+      map.on('click', 'submissions-outline', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
-        const props = feature.properties || {};
         const id = feature.id;
+        const props = feature.properties || {};
 
         if (selectedFeatureId !== null && selectedFeatureId !== id) {
-          map.setFeatureState(
-            { source: 'submissions', id: selectedFeatureId },
-            { selected: false }
-          );
+          map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
+          map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
         }
 
         if (id !== undefined && id !== null) {
           setSelectedFeatureId(id);
           map.setFeatureState({ source: 'submissions', id }, { selected: true });
+          map.setFeatureState({ source: 'home-locations', id: `loc-${id}` }, { selected: true });
         }
 
         const popupHTML = `
-          <strong>${props.neighborhood || props.location || 'Unnamed'}</strong><br/>
-          ${props.comments ? `${props.comments} comment${props.comments > 1 ? 's' : ''}` : 'No comments'}<br/>
+          <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+          ${props.comments || 'No comments'}<br/>
           <small>${props.timestamp || ''}</small>
         `;
 
@@ -141,11 +138,11 @@ const SubmissionsMap = ({ submissions }) => {
           .addTo(map);
       });
 
-      map.on('mouseenter', 'submissions-fill', () => {
+      map.on('mouseenter', 'submissions-outline', () => {
         map.getCanvas().style.cursor = 'pointer';
       });
 
-      map.on('mouseleave', 'submissions-fill', () => {
+      map.on('mouseleave', 'submissions-outline', () => {
         map.getCanvas().style.cursor = '';
       });
     }
@@ -165,7 +162,12 @@ const SubmissionsMap = ({ submissions }) => {
         source: 'home-locations',
         layout: {
           'icon-image': 'marker-15',
-          'icon-size': 1.2,
+          'icon-size': [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            1.8,
+            1.2
+          ],
           'icon-allow-overlap': true,
         },
       });
