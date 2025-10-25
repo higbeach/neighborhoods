@@ -103,8 +103,9 @@ const SubmissionsMap = ({ submissions }) => {
           'line-width': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            3,
-            1
+             5,   // thicker when selected
+              3    // thicker default
+
           ],
         },
       });
