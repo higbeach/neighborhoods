@@ -11,6 +11,7 @@ const neighborhoodNames = [
   "Beacon Hill", 
   "South Beacon Hill",
   "Hillman City",
+  "Graham Hill",
   "Rainier Valley",
   "Rainier Vista"
 ];

@@ -28,7 +28,13 @@ print(f"📦 Loaded {len(blocks)} blocks")
 
 # -------------------- LOAD SUBMISSIONS FROM SUPABASE --------------------
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-response = supabase.table("submissions").select("geometry", "properties").execute()
+response = (
+    supabase
+    .table("submissions")
+    .select("geometry", "properties")
+    .eq("archived", False)
+    .execute()
+)
 rows = response.data
 
 if not rows:

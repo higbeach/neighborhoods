@@ -360,7 +360,7 @@ return (
     {/* Step 2: Name + years */}
     {step === 2 && (
       <div className="overlay overlay-enter">
-        <h2>What do you call this area?</h2>
+        <h2>What do you call this area where you live?</h2>
         <label>Type the neighborhood name</label>
         <input
           type="text"
