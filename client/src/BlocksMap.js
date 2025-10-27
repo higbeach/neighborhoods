@@ -54,14 +54,15 @@ const BlocksMap = ({ blocks }) => {
         console.error('❌ Failed to fit bounds:', err);
       }
 
-      // 🎨 Generate colors for each neighborhood
-      const neighborhoods = Array.from(
-        new Set(
-          blocks.features.flatMap(f =>
-            Object.keys(f.properties).filter(k => k.endsWith('_pct')).map(k => k.replace('_pct', ''))
-          )
-        )
-      );
+      // 🎨 Fixed colors for key neighborhoods
+      const fixedColors = {
+        'Columbia City': '#ce2427',
+        'Mt. Baker': '#377eb8',
+        'Lakewood': '#88af4a',
+        'Seward Park': '#9543a1',
+        'Lakewood-Seward Park': '#ff7f00',
+        'Hillman City': '#ffff33'
+      };
 
       const generateColor = (i) => {
         const palette = [
@@ -72,11 +73,26 @@ const BlocksMap = ({ blocks }) => {
         return palette[i % palette.length];
       };
 
+      // 🎨 Generate colors for each neighborhood
+      const neighborhoods = Array.from(
+        new Set(
+          blocks.features.flatMap(f =>
+            Object.keys(f.properties).filter(k => k.endsWith('_pct')).map(k => k.replace('_pct', ''))
+          )
+        )
+      );
 
-      const neighborhoodColors = neighborhoods.reduce((acc, name, i) => {
-        acc[name] = generateColor(i); 
-        return acc;
-      }, {});
+      const neighborhoodColors = {};
+      let dynamicIndex = 0;
+
+      neighborhoods.forEach((name) => {
+        if (fixedColors[name]) {
+          neighborhoodColors[name] = fixedColors[name];
+        } else {
+          neighborhoodColors[name] = generateColor(dynamicIndex);
+          dynamicIndex++;
+        }
+      });
 
       // 🌀 Blended color expression
       const blendedColorExpression = ['case'];
