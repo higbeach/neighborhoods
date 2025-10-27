@@ -46,14 +46,14 @@ const SubmissionsMap = ({ submissions }) => {
     let colorIndex = 0;
 
     submissions.features.forEach((f) => {
-      f.id = f.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
-      const name = f.properties.neighborhood || 'Unknown';
-      if (!neighborhoodColors[name]) {
-        neighborhoodColors[name] = colorPalette[colorIndex % colorPalette.length];
-        colorIndex++;
-      }
-      f.properties.neighborhoodColor = neighborhoodColors[name];
-    });
+  // Ensure stable ID
+  f.id = f.id || f.properties?.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Promote uuid from top-level to properties if missing
+  if (!f.properties.uuid && f.uuid) {
+    f.properties.uuid = f.uuid;
+  }
+});
 
     // 📍 Extract home location pins
     const locationFeatures = submissions.features
@@ -78,6 +78,7 @@ const SubmissionsMap = ({ submissions }) => {
         },
         id: `loc-${f.id}`,
       }));
+
 
     const locationGeoJSON = {
       type: 'FeatureCollection',
