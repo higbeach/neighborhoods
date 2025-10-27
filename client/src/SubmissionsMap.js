@@ -40,12 +40,13 @@ const SubmissionsMap = ({ submissions }) => {
     const neighborhoodColors = {};
     const colorPalette = [
       '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
-      '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
-      '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000'
+      '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', 
+      '#008080', '#396139ff', '#9a6324', '#800000'
     ];
     let colorIndex = 0;
 
     submissions.features.forEach((f) => {
+      f.id = f.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
       const name = f.properties.neighborhood || 'Unknown';
       if (!neighborhoodColors[name]) {
         neighborhoodColors[name] = colorPalette[colorIndex % colorPalette.length];
@@ -71,6 +72,9 @@ const SubmissionsMap = ({ submissions }) => {
           neighborhood: f.properties.neighborhood,
           comments: f.properties.comments,
           timestamp: f.properties.timestamp,
+          years: f.properties.years,
+          uuid: f.properties.uuid,
+          parentId: f.id,
         },
         id: `loc-${f.id}`,
       }));
@@ -103,9 +107,8 @@ const SubmissionsMap = ({ submissions }) => {
           'line-width': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-             5,   // thicker when selected
-              3    // thicker default
-
+            5,
+            3
           ],
         },
       });
@@ -130,7 +133,9 @@ const SubmissionsMap = ({ submissions }) => {
         const popupHTML = `
           <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
           ${props.comments || 'No comments'}<br/>
-          <small>${props.timestamp || ''}</small>
+          <small>${props.timestamp || ''}</small><br/>
+          <small><strong>Years:</strong> ${props.years || '—'}</small><br/>
+          <small><strong>UUID:</strong> ${props.uuid || '—'}</small>
         `;
 
         new mapboxgl.Popup()
@@ -171,6 +176,35 @@ const SubmissionsMap = ({ submissions }) => {
           ],
           'icon-allow-overlap': true,
         },
+      });
+
+      map.on('click', 'home-location-pins', (e) => {
+        if (!e.features.length) return;
+        const feature = e.features[0];
+        const parentId = feature.properties.parentId;
+
+        if (selectedFeatureId !== null && selectedFeatureId !== parentId) {
+          map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
+          map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
+        }
+
+        setSelectedFeatureId(parentId);
+        map.setFeatureState({ source: 'submissions', id: parentId }, { selected: true });
+        map.setFeatureState({ source: 'home-locations', id: `loc-${parentId}` }, { selected: true });
+
+        const props = feature.properties || {};
+        const popupHTML = `
+          <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+          ${props.comments || 'No comments'}<br/>
+          <small>${props.timestamp || ''}</small><br/>
+          <small><strong>Years:</strong> ${props.years || '—'}</small><br/>
+          <small><strong>UUID:</strong> ${props.uuid || '—'}</small>
+        `;
+
+        new mapboxgl.Popup()
+          .setLngLat(feature.geometry.coordinates)
+          .setHTML(popupHTML)
+          .addTo(map);
       });
     }
   }, [submissions, mapLoaded, selectedFeatureId]);

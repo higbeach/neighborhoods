@@ -66,10 +66,12 @@ const BlocksMap = ({ blocks }) => {
       const generateColor = (i) => {
         const palette = [
           '#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
-          '#ff7f00', '#ffff33', '#a65628', '#f781bf', '#999999'
+          '#ff7f00', '#ffff33', '#a65628', '#f781bf',
+          '#1b9e77', '#d95f02', '#7570b3', '#66a61e'
         ];
         return palette[i % palette.length];
       };
+
 
       const neighborhoodColors = neighborhoods.reduce((acc, name, i) => {
         acc[name] = generateColor(i);
@@ -105,7 +107,7 @@ const BlocksMap = ({ blocks }) => {
         }
       });
 
-      blendedColorExpression.push('#cccccc'); // fallback
+      blendedColorExpression.push('#ffffff'); // fallback (white)
 
       mapRef.current.addLayer({
         id: 'blocks-fill',
