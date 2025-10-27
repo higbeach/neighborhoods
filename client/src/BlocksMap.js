@@ -65,9 +65,9 @@ const BlocksMap = ({ blocks }) => {
 
       const generateColor = (i) => {
         const palette = [
-          '#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
-          '#ff7f00', '#ffff33', '#a65628', '#f781bf',
-          '#1b9e77', '#d95f02', '#7570b3', '#66a61e'
+          '#e41a1c', '#377eb8', '#88af4aff', '#9543a1ff',
+          '#ff7f00', '#ffff33', '#a67428', '#f781bf',
+          '#1d5847', '#682d00', '#7570b3', '#6e6c43ff'
         ];
         return palette[i % palette.length];
       };
