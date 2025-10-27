@@ -65,16 +65,16 @@ const BlocksMap = ({ blocks }) => {
 
       const generateColor = (i) => {
         const palette = [
-          '#e41a1c', '#377eb8', '#88af4aff', '#9543a1ff',
+          '#ce2427', '#377eb8', '#88af4aff', '#9543a1',
           '#ff7f00', '#ffff33', '#a67428', '#f781bf',
-          '#1d5847', '#682d00', '#7570b3', '#6e6c43ff'
+          '#1d5847', '#682d00', '#6e6c43'
         ];
         return palette[i % palette.length];
       };
 
 
       const neighborhoodColors = neighborhoods.reduce((acc, name, i) => {
-        acc[name] = generateColor(i);
+        acc[name] = generateColor(i); 
         return acc;
       }, {});
 
