@@ -40,20 +40,28 @@ const SubmissionsMap = ({ submissions }) => {
     const neighborhoodColors = {};
     const colorPalette = [
       '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
-      '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', 
-      '#008080', '#396139ff', '#9a6324', '#800000'
+      '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+      '#008080', '#396139', '#9a6324', '#800000'
     ];
     let colorIndex = 0;
 
     submissions.features.forEach((f) => {
-  // Ensure stable ID
-  f.id = f.id || f.properties?.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
+      // Ensure stable ID
+      f.id = f.id || f.properties?.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Promote uuid from top-level to properties if missing
-  if (!f.properties.uuid && f.uuid) {
-    f.properties.uuid = f.uuid;
-  }
-});
+      // Promote uuid from top-level to properties if missing
+      if (!f.properties.uuid && f.uuid) {
+        f.properties.uuid = f.uuid;
+      }
+
+      // Assign neighborhood color
+      const name = f.properties.neighborhood || 'Unknown';
+      if (!neighborhoodColors[name]) {
+        neighborhoodColors[name] = colorPalette[colorIndex % colorPalette.length];
+        colorIndex++;
+      }
+      f.properties.neighborhoodColor = neighborhoodColors[name];
+    });
 
     // 📍 Extract home location pins
     const locationFeatures = submissions.features
@@ -79,7 +87,6 @@ const SubmissionsMap = ({ submissions }) => {
         id: `loc-${f.id}`,
       }));
 
-
     const locationGeoJSON = {
       type: 'FeatureCollection',
       features: locationFeatures,
@@ -102,8 +109,8 @@ const SubmissionsMap = ({ submissions }) => {
           'line-color': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            '#ff0000',
-            ['get', 'neighborhoodColor']
+            '#ff0000', // highlight color
+            ['get', 'neighborhoodColor'] // default color per neighborhood
           ],
           'line-width': [
             'case',
@@ -113,7 +120,7 @@ const SubmissionsMap = ({ submissions }) => {
           ],
         },
       });
-
+      
       map.on('click', 'submissions-outline', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
