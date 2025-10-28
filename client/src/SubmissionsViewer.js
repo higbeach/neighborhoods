@@ -55,11 +55,15 @@ const SubmissionsViewer = () => {
 
           const cleanedData = {
             type: 'FeatureCollection',
-            features: validFeatures.filter(f => f.properties?.archived !== true),
+            features: validFeatures,
+            // features: validFeatures.filter(f => f.properties?.archived !== true),
           };
 
-          console.log('🧼 Cleaned GeoJSON:', cleanedData);
+          if (!cleanedData.features || cleanedData.features.length === 0) {
+           console.warn('⚠️ No features returned from server:', cleanedData);
+          }
 
+          console.log('🧼 Cleaned GeoJSON:', cleanedData);
           setSubmissions(cleanedData);
 
 
