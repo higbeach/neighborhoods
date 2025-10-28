@@ -34,6 +34,8 @@ const SubmissionsMap = ({ submissions }) => {
       return;
     }
 
+    const activeFeatures = submissions.features.filter(f => f.properties.archived !== true);
+
     const map = mapRef.current;
 
     // 🎨 Assign dynamic colors per neighborhood
@@ -45,7 +47,7 @@ const SubmissionsMap = ({ submissions }) => {
     ];
     let colorIndex = 0;
 
-    submissions.features.forEach((f) => {
+    activeFeatures.forEach((f) => {
       // Ensure stable ID
       f.id = f.id || f.properties?.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -64,7 +66,7 @@ const SubmissionsMap = ({ submissions }) => {
     });
 
     // 📍 Extract home location pins
-    const locationFeatures = submissions.features
+    const locationFeatures = activeFeatures
       .filter((f) =>
         f.properties.location &&
         typeof f.properties.location.lat === 'number' &&
@@ -94,11 +96,17 @@ const SubmissionsMap = ({ submissions }) => {
 
     // 🟦 Add or update polygon boundaries
     if (map.getSource('submissions')) {
-      map.getSource('submissions').setData(submissions);
+      map.getSource('submissions').setData({
+        type: 'FeatureCollection',
+        features: activeFeatures
+      });
     } else {
       map.addSource('submissions', {
         type: 'geojson',
-        data: submissions,
+        data: {
+          type: 'FeatureCollection',
+          features: activeFeatures
+        }
       });
 
       map.addLayer({
@@ -120,12 +128,15 @@ const SubmissionsMap = ({ submissions }) => {
           ],
         },
       });
-      
+
       map.on('click', 'submissions-outline', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
         const id = feature.id;
         const props = feature.properties || {};
+
+        console.log('🔍 Clicked boundary feature ID:', id);
+
 
         if (selectedFeatureId !== null && selectedFeatureId !== id) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
@@ -171,25 +182,29 @@ const SubmissionsMap = ({ submissions }) => {
       });
 
       map.addLayer({
-        id: 'home-location-pins',
-        type: 'symbol',
+        id: 'home-location-circles',
+        type: 'circle',
         source: 'home-locations',
-        layout: {
-          'icon-image': 'marker-15',
-          'icon-size': [
+        paint: {
+          'circle-radius': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            1.8,
-            1.2
+            8,
+            5
           ],
-          'icon-allow-overlap': true,
-        },
+          'circle-color': '#ff0000',
+          'circle-stroke-color': '#fff',
+          'circle-stroke-width': 1
+        }
       });
 
-      map.on('click', 'home-location-pins', (e) => {
+
+      map.on('click', 'home-location-circles', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
         const parentId = feature.properties.parentId;
+
+        console.log('🔍 Clicked point feature parent ID:', parentId);
 
         if (selectedFeatureId !== null && selectedFeatureId !== parentId) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
