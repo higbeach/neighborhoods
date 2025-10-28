@@ -56,17 +56,17 @@ const BlocksMap = ({ blocks }) => {
 
       // 🎨 Fixed colors for key neighborhoods
       const fixedColors = {
-        'Columbia City': '#ce2427',
-        'Mt. Baker': '#377eb8',
-        'Lakewood': '#88af4a',
-        'Seward Park': '#9543a1',
-        'Lakewood-Seward Park': '#ff7f00',
-        'Hillman City': '#ffff33'
+        'Columbia City': '#c37459',
+        'Mt. Baker': '#c28fab',
+        'Lakewood': '#d9b96d',
+        'Lakewood-Seward Park': '#88af4a, ',
+        'Seward Park': '#3c8095',
+        'Hillman City': '#d9b96d'
       };
 
       const generateColor = (i) => {
         const palette = [
-          '#ce2427', '#377eb8', '#88af4aff', '#9543a1',
+          '#bd6667ff', '#377eb8', '#88af4aff', '#9543a1',
           '#ff7f00', '#ffff33', '#a67428', '#f781bf',
           '#1d5847', '#682d00', '#6e6c43'
         ];
