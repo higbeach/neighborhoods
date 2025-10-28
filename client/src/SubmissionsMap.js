@@ -51,6 +51,7 @@ const SubmissionsMap = ({ submissions }) => {
     activeFeatures.forEach((f) => {
       f.id = f.id || f.properties?.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
       f.properties.uuid = f.properties.uuid || f.uuid;
+      f.properties.created_at = f.created_at; // ✅ promote timestamp
       f.properties.neighborhoodColor = neighborhoodColors[f.properties.neighborhood] || (() => {
         const name = f.properties.neighborhood || 'Unknown';
         if (!neighborhoodColors[name]) {
@@ -58,8 +59,13 @@ const SubmissionsMap = ({ submissions }) => {
           colorIndex++;
         }
         return neighborhoodColors[name];
+        
       })();
+
+      console.log(`🧩 Feature ID: ${f.id}, Archived: ${f.properties.archived}, Created At: ${f.properties.created_at}`);
     });
+
+      
 
     // 📍 Extract home location pins
     const locationFeatures = activeFeatures
@@ -130,6 +136,7 @@ const SubmissionsMap = ({ submissions }) => {
         if (!e.features.length) return;
         const feature = e.features[0];
         const id = feature.id;
+        console.log('🧠 Full clicked feature:', feature);
         const props = feature.properties || {};
 
         console.log('🔍 Clicked boundary feature ID:', id);
