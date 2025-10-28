@@ -34,6 +34,7 @@ const SubmissionsMap = ({ submissions }) => {
       return;
     }
 
+    // 🧼 Filter out archived submissions
     const activeFeatures = submissions.features.filter(f => f.properties.archived !== true);
 
     const map = mapRef.current;
@@ -48,21 +49,16 @@ const SubmissionsMap = ({ submissions }) => {
     let colorIndex = 0;
 
     activeFeatures.forEach((f) => {
-      // Ensure stable ID
       f.id = f.id || f.properties?.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
-
-      // Promote uuid from top-level to properties if missing
-      if (!f.properties.uuid && f.uuid) {
-        f.properties.uuid = f.uuid;
-      }
-
-      // Assign neighborhood color
-      const name = f.properties.neighborhood || 'Unknown';
-      if (!neighborhoodColors[name]) {
-        neighborhoodColors[name] = colorPalette[colorIndex % colorPalette.length];
-        colorIndex++;
-      }
-      f.properties.neighborhoodColor = neighborhoodColors[name];
+      f.properties.uuid = f.properties.uuid || f.uuid;
+      f.properties.neighborhoodColor = neighborhoodColors[f.properties.neighborhood] || (() => {
+        const name = f.properties.neighborhood || 'Unknown';
+        if (!neighborhoodColors[name]) {
+          neighborhoodColors[name] = colorPalette[colorIndex % colorPalette.length];
+          colorIndex++;
+        }
+        return neighborhoodColors[name];
+      })();
     });
 
     // 📍 Extract home location pins
@@ -81,10 +77,10 @@ const SubmissionsMap = ({ submissions }) => {
         properties: {
           neighborhood: f.properties.neighborhood,
           comments: f.properties.comments,
-          timestamp: f.properties.timestamp,
+          created_at_timestamp: f.properties.created_at_timestamp,
           years: f.properties.years,
-          uuid: f.properties.uuid,
           parentId: f.id,
+          color: f.properties.neighborhoodColor
         },
         id: `loc-${f.id}`,
       }));
@@ -94,7 +90,8 @@ const SubmissionsMap = ({ submissions }) => {
       features: locationFeatures,
     };
 
-    // 🟦 Add or update polygon boundaries
+
+       // 🟦 Add or update polygon boundaries
     if (map.getSource('submissions')) {
       map.getSource('submissions').setData({
         type: 'FeatureCollection',
@@ -117,8 +114,8 @@ const SubmissionsMap = ({ submissions }) => {
           'line-color': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            '#ff0000', // highlight color
-            ['get', 'neighborhoodColor'] // default color per neighborhood
+            '#ff0000',
+            ['get', 'neighborhoodColor']
           ],
           'line-width': [
             'case',
@@ -137,7 +134,6 @@ const SubmissionsMap = ({ submissions }) => {
 
         console.log('🔍 Clicked boundary feature ID:', id);
 
-
         if (selectedFeatureId !== null && selectedFeatureId !== id) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
           map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
@@ -152,9 +148,8 @@ const SubmissionsMap = ({ submissions }) => {
         const popupHTML = `
           <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
           ${props.comments || 'No comments'}<br/>
-          <small>${props.timestamp || ''}</small><br/>
-          <small><strong>Years:</strong> ${props.years || '—'}</small><br/>
-          <small><strong>UUID:</strong> ${props.uuid || '—'}</small>
+          <small><strong>Submitted:</strong> ${props.created_at_timestamp || '—'}</small><br/>
+          <small><strong>Years:</strong> ${props.years || '—'}</small>
         `;
 
         new mapboxgl.Popup()
@@ -192,12 +187,11 @@ const SubmissionsMap = ({ submissions }) => {
             8,
             5
           ],
-          'circle-color': '#ff0000',
+          'circle-color': ['get', 'color'],
           'circle-stroke-color': '#fff',
           'circle-stroke-width': 1
         }
       });
-
 
       map.on('click', 'home-location-circles', (e) => {
         if (!e.features.length) return;
@@ -219,9 +213,8 @@ const SubmissionsMap = ({ submissions }) => {
         const popupHTML = `
           <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
           ${props.comments || 'No comments'}<br/>
-          <small>${props.timestamp || ''}</small><br/>
-          <small><strong>Years:</strong> ${props.years || '—'}</small><br/>
-          <small><strong>UUID:</strong> ${props.uuid || '—'}</small>
+          <small><strong>Submitted:</strong> ${props.created_at_timestamp || '—'}</small><br/>
+          <small><strong>Years:</strong> ${props.years || '—'}</small>
         `;
 
         new mapboxgl.Popup()
