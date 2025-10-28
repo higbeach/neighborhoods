@@ -55,7 +55,7 @@ const SubmissionsViewer = () => {
 
           const cleanedData = {
             type: 'FeatureCollection',
-            features: validFeatures,
+            features: validFeatures.filter(f => f.properties?.archived !== true),
           };
 
           console.log('🧼 Cleaned GeoJSON:', cleanedData);

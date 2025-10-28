@@ -146,10 +146,11 @@ const SubmissionsMap = ({ submissions }) => {
         }
 
         const popupHTML = `
-          <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
-          ${props.comments || 'No comments'}<br/>
-          <small><strong>Submitted:</strong> ${props.created_at_timestamp || '—'}</small><br/>
-          <small><strong>Years:</strong> ${props.years || '—'}</small>
+            <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+            ${props.comments || 'No comments'}<br/>
+            <small><strong>Submitted:</strong> ${props.created_at || '—'}</small><br/>
+            <small><strong>Years:</strong> ${props.years || '—'}</small>
+
         `;
 
         new mapboxgl.Popup()
@@ -184,12 +185,22 @@ const SubmissionsMap = ({ submissions }) => {
           'circle-radius': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            8,
-            5
+            10,
+            6
           ],
           'circle-color': ['get', 'color'],
-          'circle-stroke-color': '#fff',
-          'circle-stroke-width': 1
+          'circle-stroke-color': [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            '#000',
+            '#fff'
+          ],
+          'circle-stroke-width': [
+            'case',
+            ['boolean', ['feature-state', 'selected'], false],
+            2,
+            1
+]
         }
       });
 
@@ -211,10 +222,11 @@ const SubmissionsMap = ({ submissions }) => {
 
         const props = feature.properties || {};
         const popupHTML = `
-          <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
-          ${props.comments || 'No comments'}<br/>
-          <small><strong>Submitted:</strong> ${props.created_at_timestamp || '—'}</small><br/>
-          <small><strong>Years:</strong> ${props.years || '—'}</small>
+            <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+            ${props.comments || 'No comments'}<br/>
+            <small><strong>Submitted:</strong> ${props.created_at || '—'}</small><br/>
+            <small><strong>Years:</strong> ${props.years || '—'}</small>
+
         `;
 
         new mapboxgl.Popup()
