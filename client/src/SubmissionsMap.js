@@ -51,6 +51,7 @@ const SubmissionsMap = ({ submissions }) => {
 
     activeFeatures.forEach((f) => {
       f.properties.created_at = f.created_at;
+      f.properties.archived = f.archived;
       f.properties.uuid = f.properties.uuid || f.uuid;
       f.properties.created_at = f.created_at; // ✅ promote timestamp
       f.properties.neighborhoodColor = neighborhoodColors[f.properties.neighborhood] || (() => {
@@ -110,8 +111,10 @@ const SubmissionsMap = ({ submissions }) => {
         data: {
           type: 'FeatureCollection',
           features: activeFeatures
-        }
+        },
+        generateId: false // ✅ prevent Mapbox from overriding your IDs
       });
+
 
       map.addLayer({
         id: 'submissions-outline',
