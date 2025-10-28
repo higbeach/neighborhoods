@@ -55,8 +55,8 @@ const SubmissionsViewer = () => {
 
           const cleanedData = {
             type: 'FeatureCollection',
-            features: validFeatures,
-            // features: validFeatures.filter(f => f.properties?.archived !== true),
+            // features: validFeatures,
+            features: validFeatures.filter(f => f.properties?.archived !== true),
           };
 
           if (!cleanedData.features || cleanedData.features.length === 0) {

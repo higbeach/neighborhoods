@@ -77,7 +77,7 @@ const SubmissionsMap = ({ submissions }) => {
         properties: {
           neighborhood: f.properties.neighborhood,
           comments: f.properties.comments,
-          created_at_timestamp: f.properties.created_at_timestamp,
+          created_at: f.properties.created_at,
           years: f.properties.years,
           parentId: f.id,
           color: f.properties.neighborhoodColor
