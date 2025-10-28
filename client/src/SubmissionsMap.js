@@ -36,6 +36,7 @@ const SubmissionsMap = ({ submissions }) => {
 
     // 🧼 Filter out archived submissions
     const activeFeatures = submissions.features.filter(f => f.properties.archived !== true);
+    console.log('🧪 Sample feature ID:', activeFeatures[0]?.id);
 
     const map = mapRef.current;
 
@@ -49,7 +50,7 @@ const SubmissionsMap = ({ submissions }) => {
     let colorIndex = 0;
 
     activeFeatures.forEach((f) => {
-      f.id = f.id || f.properties?.id || `feature-${Math.random().toString(36).substr(2, 9)}`;
+      f.properties.created_at = f.created_at;
       f.properties.uuid = f.properties.uuid || f.uuid;
       f.properties.created_at = f.created_at; // ✅ promote timestamp
       f.properties.neighborhoodColor = neighborhoodColors[f.properties.neighborhood] || (() => {

@@ -55,9 +55,15 @@ const SubmissionsViewer = () => {
 
           const cleanedData = {
             type: 'FeatureCollection',
-            // features: validFeatures,
-            features: validFeatures.filter(f => f.properties?.archived !== true),
+            features: validFeatures
+              .filter(f => f.properties?.archived !== true)
+              .map((f, i) => {
+                const id = f.id || f.properties?.id || f.properties?.uuid || `feature-${i}`;
+                return { ...f, id };
+              }),
           };
+
+
 
           if (!cleanedData.features || cleanedData.features.length === 0) {
            console.warn('⚠️ No features returned from server:', cleanedData);
