@@ -51,6 +51,7 @@ const SubmissionsMap = ({ submissions }) => {
 
     activeFeatures.forEach((f) => {
       f.properties.created_at = f.created_at;
+      console.log('🧪 Raw feature:', f);
       f.properties.archived = f.archived;
       f.properties.uuid = f.properties.uuid || f.uuid;
       f.properties.created_at = f.created_at; // ✅ promote timestamp
@@ -112,7 +113,7 @@ const SubmissionsMap = ({ submissions }) => {
           type: 'FeatureCollection',
           features: activeFeatures
         },
-        generateId: false // ✅ prevent Mapbox from overriding your IDs
+      
         
       });
 
@@ -137,6 +138,17 @@ const SubmissionsMap = ({ submissions }) => {
         },
       });
 
+      map.addLayer({
+        id: 'debug-boundaries',
+        type: 'line',
+        source: 'submissions',
+        paint: {
+          'line-color': '#00ffff',
+          'line-width': 1
+        }
+      });
+
+
       map.on('click', 'submissions-outline', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
@@ -144,7 +156,7 @@ const SubmissionsMap = ({ submissions }) => {
         console.log('🧠 Full clicked feature:', feature);
         const props = feature.properties || {};
 
-        console.log('🔍 Clicked boundary feature ID:', id);
+        console.log('🧠 Clicked feature props:', props);
 
         if (selectedFeatureId !== null && selectedFeatureId !== id) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
