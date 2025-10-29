@@ -59,10 +59,17 @@ const SubmissionsViewer = () => {
               .filter(f => f.properties?.archived !== true)
               .map((f, i) => {
                 const id = f.id || f.properties?.id || f.properties?.uuid || `feature-${i}`;
-                return { ...f, id };
+                const created_at = f.created_at || f.properties?.created_at || null;
+                return {
+                  ...f,
+                  id,
+                  properties: {
+                    ...f.properties,
+                    created_at, // ✅ promote created_at into properties
+                  }
+                };
               }),
           };
-
 
 
 

@@ -47,11 +47,7 @@ app.post('/api/submissions', async (req, res) => {
   }
 
   try {
-    const id = crypto.randomUUID();
-    const timestamp = new Date().toLocaleString('sv-SE', {
-      timeZone: 'America/Los_Angeles',
-      hour12: false,
-    });
+  
 
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
@@ -60,7 +56,7 @@ app.post('/api/submissions', async (req, res) => {
       .insert([
         {
           geometry,
-          properties: { ...properties, id, timestamp },
+          properties: { ...properties, id, },
           ip_address: ip,
         },
       ])
