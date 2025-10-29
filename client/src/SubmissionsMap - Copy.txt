@@ -50,10 +50,7 @@ const SubmissionsMap = ({ submissions }) => {
     let colorIndex = 0;
 
     activeFeatures.forEach((f) => {
-      // ✅ Do not overwrite created_at if it's already in properties
-      if (!f.properties.created_at && f.created_at) {
-        f.properties.created_at = f.created_at;
-      }
+      f.properties.created_at = f.created_at;
       console.log('🧪 Raw feature:', f);
       f.properties.archived = f.archived;
       f.properties.uuid = f.properties.uuid || f.uuid;
