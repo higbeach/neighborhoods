@@ -113,6 +113,7 @@ const SubmissionsMap = ({ submissions }) => {
           features: activeFeatures
         },
         generateId: false // ✅ prevent Mapbox from overriding your IDs
+        
       });
 
 

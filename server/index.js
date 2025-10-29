@@ -181,7 +181,7 @@ app.get('/api/submissions', async (req, res) => {
 
     const query = supabase
       .from('submissions')
-      .select('geometry, properties')
+      .select('geometry, properties, created_at, archived, uuid')
       .order('created_at', { ascending: false });
 
     const { data, error } = isNaN(limit)
@@ -205,8 +205,15 @@ app.get('/api/submissions', async (req, res) => {
       return {
         type: 'Feature',
         geometry: row.geometry,
-        properties: row.properties,
+        id: row.uuid || row.properties?.id || `feature-${i}`, // ✅ assign stable ID
+        properties: {
+          ...row.properties,
+          created_at: row.created_at,
+          archived: row.archived ?? false,
+          uuid: row.uuid
+        }
       };
+
     });
 
     console.log(`✅ Returning ${features.length} submissions`);
