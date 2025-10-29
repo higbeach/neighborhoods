@@ -113,6 +113,16 @@ const SubmissionsMap = ({ submissions }) => {
           }
         });
 
+        activeFeatures.forEach((f) => {
+          if (f.id) {
+            map.setFeatureState({ source: 'submissions', id: f.id }, { selected: false });
+            console.log(`🔧 Initialized feature state: ${f.id} → selected: false`);
+          } else {
+            console.warn('⚠️ Feature missing ID:', f);
+          }
+        });
+
+
         // ✅ Debug log to confirm source was added
         console.log('✅ Submissions source added:', map.getSource('submissions'));
 
@@ -151,36 +161,42 @@ const SubmissionsMap = ({ submissions }) => {
 
       map.on('click', 'submissions-outline', (e) => {
         if (!e.features.length) return;
+
         const feature = e.features[0];
-
-        console.log('🧠 Full clicked feature:', feature);
-        console.log('🧠 Clicked feature ID:', feature.id);
-        console.log('🧠 Clicked feature props:', feature.properties);
-        console.log('🧠 Feature state object:', map.getFeatureState({ source: 'submissions', id: feature.id }));
-
         const id = feature.id;
-        console.log('🧠 Full clicked feature:', feature);
         const props = feature.properties || {};
 
+        console.log('🧠 Full clicked feature:', feature);
+        console.log('🧠 Clicked feature ID:', id);
         console.log('🧠 Clicked feature props:', props);
 
+        // ✅ Clear previous selection
         if (selectedFeatureId !== null && selectedFeatureId !== id) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
           map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
         }
 
+        // ✅ Apply new selection
         if (id !== undefined && id !== null) {
           setSelectedFeatureId(id);
           map.setFeatureState({ source: 'submissions', id }, { selected: true });
           map.setFeatureState({ source: 'home-locations', id: `loc-${id}` }, { selected: true });
+
+          // ✅ Log the updated state
+          const updatedState = map.getFeatureState({ source: 'submissions', id });
+          console.log(`🧪 Feature ${id} state after click:`, updatedState);
         }
 
-        const popupHTML = `
-            <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
-            ${props.comments || 'No comments'}<br/>
-            <small><strong>Submitted:</strong> ${props.created_at || '—'}</small><br/>
-            <small><strong>Years:</strong> ${props.years || '—'}</small>
+        // ✅ Format timestamp for popup
+        const formattedDate = props.created_at
+          ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+          : '—';
 
+        const popupHTML = `
+          <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+          ${props.comments || 'No comments'}<br/>
+          <small><strong>Submitted:</strong> ${formattedDate}</small><br/>
+          <small><strong>Years:</strong> ${props.years || '—'}</small>
         `;
 
         new mapboxgl.Popup()
@@ -188,6 +204,7 @@ const SubmissionsMap = ({ submissions }) => {
           .setHTML(popupHTML)
           .addTo(map);
       });
+
 
       map.on('mouseenter', 'submissions-outline', () => {
         map.getCanvas().style.cursor = 'pointer';

@@ -59,17 +59,19 @@ const SubmissionsViewer = () => {
               .filter(f => f.properties?.archived !== true)
               .map((f, i) => {
                 const id = f.id || f.properties?.id || f.properties?.uuid || `feature-${i}`;
-                const created_at = f.created_at || f.properties?.created_at || null;
                 return {
                   ...f,
-                  id,
+                  id, // ✅ top-level ID for Mapbox
                   properties: {
                     ...f.properties,
-                    created_at, // ✅ promote created_at into properties
+                    id, // ✅ promote into properties for debugging
+                    uuid: f.properties?.uuid || f.uuid,
+                    created_at: f.created_at || f.properties?.created_at || null
                   }
                 };
               }),
           };
+
 
 
 

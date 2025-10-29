@@ -57,7 +57,6 @@ const SubmissionsMap = ({ submissions }) => {
       console.log('🧪 Raw feature:', f);
       f.properties.archived = f.archived;
       f.properties.uuid = f.properties.uuid || f.uuid;
-      f.properties.created_at = f.created_at; // ✅ promote timestamp
       f.properties.neighborhoodColor = neighborhoodColors[f.properties.neighborhood] || (() => {
         const name = f.properties.neighborhood || 'Unknown';
         if (!neighborhoodColors[name]) {
@@ -104,21 +103,19 @@ const SubmissionsMap = ({ submissions }) => {
 
 
        // 🟦 Add or update polygon boundaries
-    if (map.getSource('submissions')) {
-      map.getSource('submissions').setData({
-        type: 'FeatureCollection',
-        features: activeFeatures
-      });
-    } else {
-      map.addSource('submissions', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: activeFeatures
-        },
-      
-        
-      });
+    if (!map.getSource('submissions')) {
+        // ✅ Add source first
+        map.addSource('submissions', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: activeFeatures
+          }
+        });
+
+        // ✅ Debug log to confirm source was added
+        console.log('✅ Submissions source added:', map.getSource('submissions'));
+
 
 
       map.addLayer({
@@ -155,6 +152,12 @@ const SubmissionsMap = ({ submissions }) => {
       map.on('click', 'submissions-outline', (e) => {
         if (!e.features.length) return;
         const feature = e.features[0];
+
+        console.log('🧠 Full clicked feature:', feature);
+        console.log('🧠 Clicked feature ID:', feature.id);
+        console.log('🧠 Clicked feature props:', feature.properties);
+        console.log('🧠 Feature state object:', map.getFeatureState({ source: 'submissions', id: feature.id }));
+
         const id = feature.id;
         console.log('🧠 Full clicked feature:', feature);
         const props = feature.properties || {};
