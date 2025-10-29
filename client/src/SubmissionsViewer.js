@@ -65,6 +65,7 @@ const SubmissionsViewer = () => {
 
 
 
+
           if (!cleanedData.features || cleanedData.features.length === 0) {
            console.warn('⚠️ No features returned from server:', cleanedData);
           }
