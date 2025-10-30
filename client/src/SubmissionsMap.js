@@ -102,6 +102,8 @@ const SubmissionsMap = ({ submissions }) => {
       });
 
       map.on('click', 'submissions-outline', (e) => {
+        console.log('🖱️ Boundary clicked:', e.features[0]);
+
         const feature = e.features[0];
         const id = feature.id;
         const props = feature.properties || {};
