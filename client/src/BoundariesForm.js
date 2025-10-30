@@ -74,6 +74,8 @@ const BoundariesForm = ({
       },
     };
 
+    console.log('📤 Submitting feature:', feature);
+
     try {
       const res = await fetch('https://neighborhoods-server.onrender.com/api/submissions', {
         method: 'POST',
