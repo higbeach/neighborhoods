@@ -26,7 +26,6 @@ const SubmissionsMap = ({ submissions }) => {
     const map = mapRef.current;
     const activeFeatures = submissions.features.filter(f => f.properties.archived !== true);
 
-    // 🎨 Assign dynamic colors
     const neighborhoodColors = {};
     const colorPalette = [
       '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
@@ -67,8 +66,7 @@ const SubmissionsMap = ({ submissions }) => {
       type: 'FeatureCollection',
       features: locationFeatures,
     };
-        // 🟦 Add or update polygon boundaries
-    if (!map.getSource('submissions')) {
+        map.once('load', () => {
       map.addSource('submissions', {
         type: 'geojson',
         data: {
@@ -143,17 +141,7 @@ const SubmissionsMap = ({ submissions }) => {
       map.on('mouseleave', 'submissions-outline', () => {
         map.getCanvas().style.cursor = '';
       });
-    } else {
-      map.getSource('submissions').setData({
-        type: 'FeatureCollection',
-        features: activeFeatures
-      });
-    }
 
-    // 🔴 Add or update location pin layer
-    if (map.getSource('home-locations')) {
-      map.getSource('home-locations').setData(locationGeoJSON);
-    } else {
       map.addSource('home-locations', {
         type: 'geojson',
         data: locationGeoJSON,
@@ -216,7 +204,7 @@ const SubmissionsMap = ({ submissions }) => {
           .setHTML(popupHTML)
           .addTo(map);
       });
-    }
+    });
   }, [submissions, selectedFeatureId]);
 
   return <div ref={mapContainer} style={{ width: '100vw', height: '100vh' }} />;
