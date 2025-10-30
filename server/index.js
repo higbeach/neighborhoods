@@ -47,20 +47,25 @@ app.post('/api/submissions', async (req, res) => {
   }
 
   try {
-  
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const id = crypto.randomUUID(); // ✅ this creates a unique ID
+  const timestamp = new Date().toISOString(); // ✅ this creates a timestamp
 
-    const { data, error } = await supabase
-      .from('submissions')
-      .insert([
-        {
-          geometry,
-          properties: { ...properties, id, },
-          ip_address: ip,
-        },
-      ])
-      .select('uuid'); // ✅ Explicitly return the UUID field
+  console.log('🆔 Submission ID:', id);
+  console.log('🕒 Timestamp:', timestamp);
+
+  const { data, error } = await supabase
+    .from('submissions')
+    .insert([
+      {
+        geometry,
+        properties: { ...properties, id, timestamp }, // ✅ now using both
+        ip_address: ip,
+      },
+    ])
+    .select('uuid');
+
 
     console.log('📦 Inserted row:', data?.[0]);
     console.log('🧾 Supabase insert result:', { data, error });
