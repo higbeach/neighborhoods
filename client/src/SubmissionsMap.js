@@ -76,6 +76,7 @@ const SubmissionsMap = ({ submissions }) => {
         map.once('load', () => {
       map.addSource('submissions', {
         type: 'geojson',
+        promoteId: 'id', // ✅ This tells Mapbox to use `id` as the feature ID
         data: {
           type: 'FeatureCollection',
           features: boundaryFeatures
