@@ -103,43 +103,41 @@ const SubmissionsMap = ({ submissions }) => {
         },
       });
 
-      map.on('click', 'submissions-outline', (e) => {
-        console.log('🖱️ Boundary clicked:', e.features[0]);
+     map.on('click', 'submissions-outline', (e) => {
+      const feature = e.features[0];
+      const id = feature.id || feature.properties.id;
+      const props = feature.properties || {};
 
-        const feature = e.features[0];
-        const id = feature.id || feature.properties.id; // ✅ fallback
-        const props = feature.properties || {};
+      if (!id) return;
 
-        if (!id) {
-          console.warn('⚠️ No ID found for clicked feature:', feature);
-          return;
-        }
+      // Clear previous selection
+      if (selectedFeatureId && selectedFeatureId !== id) {
+        map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
+        map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
+      }
 
-        if (selectedFeatureId && selectedFeatureId !== id) {
-          map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
-          map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
-        }
+      // Set new selection
+      setSelectedFeatureId(id);
+      map.setFeatureState({ source: 'submissions', id }, { selected: true });
+      map.setFeatureState({ source: 'home-locations', id: `loc-${id}` }, { selected: true });
 
-        setSelectedFeatureId(id);
-        map.setFeatureState({ source: 'submissions', id }, { selected: true });
-        map.setFeatureState({ source: 'home-locations', id: `loc-${id}` }, { selected: true });
+      // Popup
+      const formattedDate = props.created_at
+        ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+        : '—';
 
-        const formattedDate = props.created_at
-          ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
-          : '—';
+      const popupHTML = `
+        <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+        ${props.comments || 'No comments'}<br/>
+        <small><strong>Submitted:</strong> ${formattedDate}</small><br/>
+        <small><strong>Years:</strong> ${props.years || '—'}</small>
+      `;
 
-        const popupHTML = `
-          <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
-          ${props.comments || 'No comments'}<br/>
-          <small><strong>Submitted:</strong> ${formattedDate}</small><br/>
-          <small><strong>Years:</strong> ${props.years || '—'}</small>
-        `;
-
-        new mapboxgl.Popup()
-          .setLngLat(e.lngLat)
-          .setHTML(popupHTML)
-          .addTo(map);
-      });
+      new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(popupHTML)
+        .addTo(map);
+    });
 
       map.on('mouseenter', 'submissions-outline', () => {
         map.getCanvas().style.cursor = 'pointer';
@@ -185,15 +183,20 @@ const SubmissionsMap = ({ submissions }) => {
         const feature = e.features[0];
         const parentId = feature.properties.parentId;
 
+        if (!parentId) return;
+
+        // Clear previous selection
         if (selectedFeatureId && selectedFeatureId !== parentId) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
           map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
         }
 
+        // Set new selection
         setSelectedFeatureId(parentId);
         map.setFeatureState({ source: 'submissions', id: parentId }, { selected: true });
         map.setFeatureState({ source: 'home-locations', id: `loc-${parentId}` }, { selected: true });
 
+        // Popup
         const props = feature.properties || {};
         const formattedDate = props.created_at
           ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
