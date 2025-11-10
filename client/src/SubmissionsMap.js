@@ -34,8 +34,6 @@ const SubmissionsMap = ({ submissions }) => {
     ];
     let colorIndex = 0;
 
-    console.log('🆔 Assigned feature IDs:', activeFeatures.map(f => f.id));
-
     activeFeatures.forEach((f) => {
       const name = f.properties.neighborhood || 'Unknown';
       if (!neighborhoodColors[name]) {
@@ -45,7 +43,14 @@ const SubmissionsMap = ({ submissions }) => {
       f.properties.neighborhoodColor = neighborhoodColors[name];
     });
 
-    const locationFeatures = activeFeatures
+    const boundaryFeatures = activeFeatures.map((f, i) => ({
+      ...f,
+      id: f.id || f.properties.id || f.properties.uuid || `feature-${i}`
+    }));
+
+    console.log('🆔 Promoted boundary IDs:', boundaryFeatures.map(f => f.id));
+
+    const locationFeatures = boundaryFeatures
       .filter(f => f.properties.location?.lat && f.properties.location?.lng)
       .map(f => ({
         type: 'Feature',
@@ -73,18 +78,12 @@ const SubmissionsMap = ({ submissions }) => {
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
-          features: activeFeatures.map((f, i) => ({
-            ...f,
-            id: f.id || f.properties.id || f.properties.uuid || `feature-${i}`
-          }))
+          features: boundaryFeatures
         }
       });
 
-
-      activeFeatures.forEach((f) => {
-        if (f.id) {
-          map.setFeatureState({ source: 'submissions', id: f.id }, { selected: false });
-        }
+      boundaryFeatures.forEach((f) => {
+        map.setFeatureState({ source: 'submissions', id: f.id }, { selected: false });
       });
 
       map.addLayer({
@@ -107,47 +106,39 @@ const SubmissionsMap = ({ submissions }) => {
         },
       });
 
-     map.on('click', 'submissions-outline', (e) => {
-      const feature = e.features[0];
+      map.on('click', 'submissions-outline', (e) => {
+        const feature = e.features[0];
+        console.log('🖱️ Boundary clicked with ID:', feature.id, 'props.id:', feature.properties.id);
 
-      console.log('🖱️ Boundary clicked with ID:', feature.id, 'props.id:', feature.properties.id);
+        const id = feature.id || feature.properties.id;
+        const props = feature.properties || {};
+        if (!id) return;
 
-      const id = feature.id || feature.properties.id;
-      const props = feature.properties || {};
+        if (selectedFeatureId && selectedFeatureId !== id) {
+          map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
+          map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
+        }
 
-      if (!id) {
-        console.warn('⚠️ No ID found for clicked feature:', feature);
-        return;
-      }
+        setSelectedFeatureId(id);
+        map.setFeatureState({ source: 'submissions', id }, { selected: true });
+        map.setFeatureState({ source: 'home-locations', id: `loc-${id}` }, { selected: true });
 
-      // Clear previous selection
-      if (selectedFeatureId && selectedFeatureId !== id) {
-        map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
-        map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
-      }
+        const formattedDate = props.created_at
+          ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+          : '—';
 
-      // Set new selection
-      setSelectedFeatureId(id);
-      map.setFeatureState({ source: 'submissions', id }, { selected: true });
-      map.setFeatureState({ source: 'home-locations', id: `loc-${id}` }, { selected: true });
+        const popupHTML = `
+          <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+          ${props.comments || 'No comments'}<br/>
+          <small><strong>Submitted:</strong> ${formattedDate}</small><br/>
+          <small><strong>Years:</strong> ${props.years || '—'}</small>
+        `;
 
-      // Popup
-      const formattedDate = props.created_at
-        ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
-        : '—';
-
-      const popupHTML = `
-        <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
-        ${props.comments || 'No comments'}<br/>
-        <small><strong>Submitted:</strong> ${formattedDate}</small><br/>
-        <small><strong>Years:</strong> ${props.years || '—'}</small>
-      `;
-
-      new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(popupHTML)
-        .addTo(map);
-    });
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(popupHTML)
+          .addTo(map);
+      });
 
       map.on('mouseenter', 'submissions-outline', () => {
         map.getCanvas().style.cursor = 'pointer';
@@ -192,21 +183,17 @@ const SubmissionsMap = ({ submissions }) => {
       map.on('click', 'home-location-circles', (e) => {
         const feature = e.features[0];
         const parentId = feature.properties.parentId;
-
         if (!parentId) return;
 
-        // Clear previous selection
         if (selectedFeatureId && selectedFeatureId !== parentId) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
           map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
         }
 
-        // Set new selection
         setSelectedFeatureId(parentId);
         map.setFeatureState({ source: 'submissions', id: parentId }, { selected: true });
         map.setFeatureState({ source: 'home-locations', id: `loc-${parentId}` }, { selected: true });
 
-        // Popup
         const props = feature.properties || {};
         const formattedDate = props.created_at
           ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
