@@ -73,9 +73,13 @@ const SubmissionsMap = ({ submissions }) => {
         type: 'geojson',
         data: {
           type: 'FeatureCollection',
-          features: activeFeatures
+          features: activeFeatures.map((f, i) => ({
+            ...f,
+            id: f.id || f.properties.id || f.properties.uuid || `feature-${i}`
+          }))
         }
       });
+
 
       activeFeatures.forEach((f) => {
         if (f.id) {
@@ -105,10 +109,16 @@ const SubmissionsMap = ({ submissions }) => {
 
      map.on('click', 'submissions-outline', (e) => {
       const feature = e.features[0];
+
+      console.log('🖱️ Boundary clicked with ID:', feature.id, 'props.id:', feature.properties.id);
+
       const id = feature.id || feature.properties.id;
       const props = feature.properties || {};
 
-      if (!id) return;
+      if (!id) {
+        console.warn('⚠️ No ID found for clicked feature:', feature);
+        return;
+      }
 
       // Clear previous selection
       if (selectedFeatureId && selectedFeatureId !== id) {
