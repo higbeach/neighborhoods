@@ -34,14 +34,7 @@ const SubmissionsMap = ({ submissions }) => {
     ];
     let colorIndex = 0;
 
-    activeFeatures.forEach((f, i) => {
-      if (!f.id) {
-        f.id = f.properties.uuid || f.properties.id || `feature-${i}`;
-      }
-    });
-
     console.log('🆔 Assigned feature IDs:', activeFeatures.map(f => f.id));
-
 
     activeFeatures.forEach((f) => {
       const name = f.properties.neighborhood || 'Unknown';
@@ -114,10 +107,13 @@ const SubmissionsMap = ({ submissions }) => {
         console.log('🖱️ Boundary clicked:', e.features[0]);
 
         const feature = e.features[0];
-        const id = feature.id;
+        const id = feature.id || feature.properties.id; // ✅ fallback
         const props = feature.properties || {};
 
-        if (!id) return;
+        if (!id) {
+          console.warn('⚠️ No ID found for clicked feature:', feature);
+          return;
+        }
 
         if (selectedFeatureId && selectedFeatureId !== id) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
