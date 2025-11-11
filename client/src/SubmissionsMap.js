@@ -135,8 +135,11 @@ const SubmissionsMap = ({ submissions }) => {
             map.setFeatureState({ source: 'submissions', id: previousId }, { selected: false });
             map.setFeatureState({ source: 'home-locations', id: `loc-${previousId}` }, { selected: false });
 
-            console.log('🧹 Cleared boundary:', previousId);
-            console.log('🧹 Cleared point:', `loc-${previousId}`);
+            console.log('✅ Highlighted boundary:', id);
+          console.log('✅ Highlighted point:', `loc-${id}`);
+
+            const pointState = map.getFeatureState({ source: 'home-locations', id: `loc-${id}` });
+            console.log('📍 Point highlight state after boundary click:', pointState);
           }
 
           map.setFeatureState({ source: 'submissions', id }, { selected: true });
