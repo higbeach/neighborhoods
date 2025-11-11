@@ -97,7 +97,7 @@ const SubmissionsMap = ({ submissions }) => {
           'line-color': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            '#3b0505ff',
+            '#3b0505',
             ['get', 'neighborhoodColor']
           ],
           'line-width': [
