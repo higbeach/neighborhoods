@@ -109,20 +109,44 @@ const SubmissionsMap = ({ submissions }) => {
 
       map.on('click', 'submissions-outline', (e) => {
         const feature = e.features[0];
-        console.log('🖱️ Boundary clicked with ID:', feature.id, 'props.id:', feature.properties.id);
+
+        // ✅ Log feature identity and source
+        console.log('🖱️ Clicked feature:', {
+          id: feature.id,
+          propsId: feature.properties.id,
+          source: feature.source,
+          layer: feature.layer.id
+        });
 
         const id = feature.id || feature.properties.id;
         const props = feature.properties || {};
-        if (!id) return;
 
+        if (!id) {
+          console.warn('⚠️ No ID found for clicked feature:', feature);
+          return;
+        }
+
+        // Clear previous selection
         if (selectedFeatureId && selectedFeatureId !== id) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
           map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
+
+          console.log('🧹 Cleared boundary:', selectedFeatureId);
+          console.log('🧹 Cleared point:', `loc-${selectedFeatureId}`);
         }
 
+        // Set new selection
         setSelectedFeatureId(id);
         map.setFeatureState({ source: 'submissions', id }, { selected: true });
         map.setFeatureState({ source: 'home-locations', id: `loc-${id}` }, { selected: true });
+
+        console.log('✅ Highlighted boundary:', id);
+        console.log('✅ Highlighted point:', `loc-${id}`);
+
+        const boundaryState = map.getFeatureState({ source: 'submissions', id });
+        const pointState = map.getFeatureState({ source: 'home-locations', id: `loc-${id}` });
+        console.log('📊 Boundary state after set:', boundaryState);
+        console.log('📊 Point state after set:', pointState);
 
         const formattedDate = props.created_at
           ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
@@ -140,6 +164,7 @@ const SubmissionsMap = ({ submissions }) => {
           .setHTML(popupHTML)
           .addTo(map);
       });
+
 
       map.on('mouseenter', 'submissions-outline', () => {
         map.getCanvas().style.cursor = 'pointer';
@@ -183,19 +208,45 @@ const SubmissionsMap = ({ submissions }) => {
 
       map.on('click', 'home-location-circles', (e) => {
         const feature = e.features[0];
-        const parentId = feature.properties.parentId;
-        if (!parentId) return;
 
+        // ✅ Log feature identity and source
+        console.log('🖱️ Clicked point:', {
+          id: feature.id,
+          parentId: feature.properties.parentId,
+          source: feature.source,
+          layer: feature.layer.id
+        });
+
+        const parentId = feature.properties.parentId;
+        const props = feature.properties || {};
+
+        if (!parentId) {
+          console.warn('⚠️ No parentId found for clicked point:', feature);
+          return;
+        }
+
+        // Clear previous selection
         if (selectedFeatureId && selectedFeatureId !== parentId) {
           map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
           map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
+
+          console.log('🧹 Cleared boundary:', selectedFeatureId);
+          console.log('🧹 Cleared point:', `loc-${selectedFeatureId}`);
         }
 
+        // Set new selection
         setSelectedFeatureId(parentId);
         map.setFeatureState({ source: 'submissions', id: parentId }, { selected: true });
         map.setFeatureState({ source: 'home-locations', id: `loc-${parentId}` }, { selected: true });
 
-        const props = feature.properties || {};
+        console.log('✅ Highlighted boundary:', parentId);
+        console.log('✅ Highlighted point:', `loc-${parentId}`);
+
+        const boundaryState = map.getFeatureState({ source: 'submissions', id: parentId });
+        const pointState = map.getFeatureState({ source: 'home-locations', id: `loc-${parentId}` });
+        console.log('📊 Boundary state after set:', boundaryState);
+        console.log('📊 Point state after set:', pointState);
+
         const formattedDate = props.created_at
           ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
           : '—';
