@@ -164,7 +164,7 @@ const SubmissionsMap = ({ submissions }) => {
         console.log('📊 Point state after set:', pointState);
 
         const formattedDate = props.created_at
-          ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+          ? new Date(props.created_at).toISOString()
           : '—';
 
         const popupHTML = `
