@@ -127,13 +127,17 @@ const SubmissionsMap = ({ submissions }) => {
         }
 
         // Clear previous selection
-        if (selectedFeatureId && selectedFeatureId !== id) {
-          map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
-          map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
+          const previousId = selectedFeatureId;
+            setSelectedFeatureId(id);
 
-          console.log('🧹 Cleared boundary:', selectedFeatureId);
-          console.log('🧹 Cleared point:', `loc-${selectedFeatureId}`);
-        }
+            if (previousId && previousId !== id) {
+              map.setFeatureState({ source: 'submissions', id: previousId }, { selected: false });
+              map.setFeatureState({ source: 'home-locations', id: `loc-${previousId}` }, { selected: false });
+
+              console.log('🧹 Cleared boundary:', previousId);
+              console.log('🧹 Cleared point:', `loc-${previousId}`);
+            }
+
 
         // Set new selection
         setSelectedFeatureId(id);
@@ -206,63 +210,62 @@ const SubmissionsMap = ({ submissions }) => {
         }
       });
 
-      map.on('click', 'home-location-circles', (e) => {
-        const feature = e.features[0];
+     map.on('click', 'home-location-circles', (e) => {
+      const feature = e.features[0];
 
-        // ✅ Log feature identity and source
-        console.log('🖱️ Clicked point:', {
-          id: feature.id,
-          parentId: feature.properties.parentId,
-          source: feature.source,
-          layer: feature.layer.id
-        });
-
-        const parentId = feature.properties.parentId;
-        const props = feature.properties || {};
-
-        if (!parentId) {
-          console.warn('⚠️ No parentId found for clicked point:', feature);
-          return;
-        }
-
-        // Clear previous selection
-        if (selectedFeatureId && selectedFeatureId !== parentId) {
-          map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
-          map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
-
-          console.log('🧹 Cleared boundary:', selectedFeatureId);
-          console.log('🧹 Cleared point:', `loc-${selectedFeatureId}`);
-        }
-
-        // Set new selection
-        setSelectedFeatureId(parentId);
-        map.setFeatureState({ source: 'submissions', id: parentId }, { selected: true });
-        map.setFeatureState({ source: 'home-locations', id: `loc-${parentId}` }, { selected: true });
-
-        console.log('✅ Highlighted boundary:', parentId);
-        console.log('✅ Highlighted point:', `loc-${parentId}`);
-
-        const boundaryState = map.getFeatureState({ source: 'submissions', id: parentId });
-        const pointState = map.getFeatureState({ source: 'home-locations', id: `loc-${parentId}` });
-        console.log('📊 Boundary state after set:', boundaryState);
-        console.log('📊 Point state after set:', pointState);
-
-        const formattedDate = props.created_at
-          ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
-          : '—';
-
-        const popupHTML = `
-          <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
-          ${props.comments || 'No comments'}<br/>
-          <small><strong>Submitted:</strong> ${formattedDate}</small><br/>
-          <small><strong>Years:</strong> ${props.years || '—'}</small>
-        `;
-
-        new mapboxgl.Popup()
-          .setLngLat(feature.geometry.coordinates)
-          .setHTML(popupHTML)
-          .addTo(map);
+      console.log('🖱️ Clicked point:', {
+        id: feature.id,
+        parentId: feature.properties.parentId,
+        source: feature.source,
+        layer: feature.layer.id
       });
+
+      const parentId = feature.properties.parentId;
+      const props = feature.properties || {};
+
+      if (!parentId) {
+        console.warn('⚠️ No parentId found for clicked point:', feature);
+        return;
+      }
+
+      const previousId = selectedFeatureId;
+      setSelectedFeatureId(parentId);
+
+      if (previousId && previousId !== parentId) {
+        map.setFeatureState({ source: 'submissions', id: previousId }, { selected: false });
+        map.setFeatureState({ source: 'home-locations', id: `loc-${previousId}` }, { selected: false });
+
+        console.log('🧹 Cleared boundary:', previousId);
+        console.log('🧹 Cleared point:', `loc-${previousId}`);
+      }
+
+      map.setFeatureState({ source: 'submissions', id: parentId }, { selected: true });
+      map.setFeatureState({ source: 'home-locations', id: `loc-${parentId}` }, { selected: true });
+
+      console.log('✅ Highlighted boundary:', parentId);
+      console.log('✅ Highlighted point:', `loc-${parentId}`);
+
+      const boundaryState = map.getFeatureState({ source: 'submissions', id: parentId });
+      const pointState = map.getFeatureState({ source: 'home-locations', id: `loc-${parentId}` });
+      console.log('📊 Boundary state after set:', boundaryState);
+      console.log('📊 Point state after set:', pointState);
+
+      const formattedDate = props.created_at
+        ? new Date(props.created_at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+        : '—';
+
+      const popupHTML = `
+        <strong>${props.neighborhood || 'Unnamed'}</strong><br/>
+        ${props.comments || 'No comments'}<br/>
+        <small><strong>Submitted:</strong> ${formattedDate}</small><br/>
+        <small><strong>Years:</strong> ${props.years || '—'}</small>
+      `;
+
+      new mapboxgl.Popup()
+        .setLngLat(feature.geometry.coordinates)
+        .setHTML(popupHTML)
+        .addTo(map);
+    });
     });
   }, [submissions, selectedFeatureId]);
 
