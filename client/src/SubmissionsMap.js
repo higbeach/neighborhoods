@@ -194,32 +194,38 @@ const SubmissionsMap = ({ submissions }) => {
         data: locationGeoJSON,
       });
 
-      map.addLayer({
-        id: 'home-location-circles',
-        type: 'circle',
-        source: 'home-locations',
-        paint: {
-          'circle-radius': [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false],
-            10,
-            6
-          ],
-          'circle-color': ['get', 'color'],
-          'circle-stroke-color': [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false],
-            '#000',
-            '#fff'
-          ],
-          'circle-stroke-width': [
-            'case',
-            ['boolean', ['feature-state', 'selected'], false],
-            2,
-            1
-          ]
-        }
-      });
+     map.addLayer({
+      id: 'home-location-circles',
+      type: 'circle',
+      source: 'home-locations',
+      paint: {
+        'circle-radius': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          12, // larger when selected
+          6
+        ],
+        'circle-color': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          '#ff0000', // red when selected
+          ['get', 'color']
+        ],
+        'circle-stroke-color': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          '#000',
+          '#fff'
+        ],
+        'circle-stroke-width': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          3,
+          1
+        ]
+      }
+    });
+
 
      map.on('click', 'home-location-circles', (e) => {
       const feature = e.features[0];
