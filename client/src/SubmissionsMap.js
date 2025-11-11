@@ -30,7 +30,7 @@ const SubmissionsMap = ({ submissions }) => {
 
     const neighborhoodColors = {};
     const colorPalette = [
-      '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+      '#e22050', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
       '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
       '#008080', '#396139', '#9a6324', '#800000'
     ];
@@ -97,14 +97,14 @@ const SubmissionsMap = ({ submissions }) => {
           'line-color': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
-            '#ff0000',
+            '#3b0505ff',
             ['get', 'neighborhoodColor']
           ],
           'line-width': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],
             5,
-            3
+            2
           ],
         },
       });
