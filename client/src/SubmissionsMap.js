@@ -127,16 +127,14 @@ const SubmissionsMap = ({ submissions }) => {
         }
 
         // Clear previous selection
-          const previousId = selectedFeatureId;
-            setSelectedFeatureId(id);
+          if (selectedFeatureId && selectedFeatureId !== id) {
+          map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
+          map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
 
-            if (previousId && previousId !== id) {
-              map.setFeatureState({ source: 'submissions', id: previousId }, { selected: false });
-              map.setFeatureState({ source: 'home-locations', id: `loc-${previousId}` }, { selected: false });
+          console.log('🧹 Cleared boundary:', selectedFeatureId);
+          console.log('🧹 Cleared point:', `loc-${selectedFeatureId}`);
+        }
 
-              console.log('🧹 Cleared boundary:', previousId);
-              console.log('🧹 Cleared point:', `loc-${previousId}`);
-            }
 
 
         // Set new selection
@@ -228,16 +226,14 @@ const SubmissionsMap = ({ submissions }) => {
         return;
       }
 
-      const previousId = selectedFeatureId;
-      setSelectedFeatureId(parentId);
+      if (selectedFeatureId && selectedFeatureId !== parentId) {
+        map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
+        map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
 
-      if (previousId && previousId !== parentId) {
-        map.setFeatureState({ source: 'submissions', id: previousId }, { selected: false });
-        map.setFeatureState({ source: 'home-locations', id: `loc-${previousId}` }, { selected: false });
-
-        console.log('🧹 Cleared boundary:', previousId);
-        console.log('🧹 Cleared point:', `loc-${previousId}`);
+        console.log('🧹 Cleared boundary:', selectedFeatureId);
+        console.log('🧹 Cleared point:', `loc-${selectedFeatureId}`);
       }
+
 
       map.setFeatureState({ source: 'submissions', id: parentId }, { selected: true });
       map.setFeatureState({ source: 'home-locations', id: `loc-${parentId}` }, { selected: true });
