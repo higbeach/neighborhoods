@@ -8,6 +8,8 @@ const SubmissionsMap = ({ submissions }) => {
   const mapContainer = useRef(null);
   const mapRef = useRef(null);
   const [selectedFeatureId, setSelectedFeatureId] = useState(null);
+  const previousFeatureIdRef = useRef(null);
+
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -127,15 +129,23 @@ const SubmissionsMap = ({ submissions }) => {
         }
 
         // Clear previous selection
-          if (selectedFeatureId && selectedFeatureId !== id) {
-          map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
-          map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
+          const previousId = previousFeatureIdRef.current;
 
-          console.log('🧹 Cleared boundary:', selectedFeatureId);
-          console.log('🧹 Cleared point:', `loc-${selectedFeatureId}`);
-        }
+          if (previousId && previousId !== id) {
+            map.setFeatureState({ source: 'submissions', id: previousId }, { selected: false });
+            map.setFeatureState({ source: 'home-locations', id: `loc-${previousId}` }, { selected: false });
 
+            console.log('🧹 Cleared boundary:', previousId);
+            console.log('🧹 Cleared point:', `loc-${previousId}`);
+          }
 
+          map.setFeatureState({ source: 'submissions', id }, { selected: true });
+          map.setFeatureState({ source: 'home-locations', id: `loc-${id}` }, { selected: true });
+
+          console.log('✅ Highlighted boundary:', id);
+          console.log('✅ Highlighted point:', `loc-${id}`);
+
+          previousFeatureIdRef.current = id;
 
         // Set new selection
         setSelectedFeatureId(id);
@@ -226,20 +236,24 @@ const SubmissionsMap = ({ submissions }) => {
         return;
       }
 
-      if (selectedFeatureId && selectedFeatureId !== parentId) {
-        map.setFeatureState({ source: 'submissions', id: selectedFeatureId }, { selected: false });
-        map.setFeatureState({ source: 'home-locations', id: `loc-${selectedFeatureId}` }, { selected: false });
+      const previousId = previousFeatureIdRef.current;
 
-        console.log('🧹 Cleared boundary:', selectedFeatureId);
-        console.log('🧹 Cleared point:', `loc-${selectedFeatureId}`);
+      if (previousId && previousId !== parentId) {
+        map.setFeatureState({ source: 'submissions', id: previousId }, { selected: false });
+        map.setFeatureState({ source: 'home-locations', id: `loc-${previousId}` }, { selected: false });
+
+        console.log('🧹 Cleared boundary:', previousId);
+        console.log('🧹 Cleared point:', `loc-${previousId}`);
       }
-
 
       map.setFeatureState({ source: 'submissions', id: parentId }, { selected: true });
       map.setFeatureState({ source: 'home-locations', id: `loc-${parentId}` }, { selected: true });
 
       console.log('✅ Highlighted boundary:', parentId);
       console.log('✅ Highlighted point:', `loc-${parentId}`);
+
+      previousFeatureIdRef.current = parentId;
+      setSelectedFeatureId(parentId);
 
       const boundaryState = map.getFeatureState({ source: 'submissions', id: parentId });
       const pointState = map.getFeatureState({ source: 'home-locations', id: `loc-${parentId}` });
