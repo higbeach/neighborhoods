@@ -140,16 +140,21 @@ const BlocksMap = ({ blocks }) => {
           }
       });
 
-      blendedColorExpression.push('#ffffff'); // fallback (white)
+      blendedColorExpression.push('#000000'); // fallback (black)
 
       mapRef.current.addLayer({
         id: 'blocks-fill',
         type: 'fill',
         source: 'blocks',
         paint: {
-          'fill-color': blendedColorExpression,
-          'fill-opacity': 1,
-        },
+        'fill-color': blendedColorExpression,
+        'fill-opacity': [
+          'case',
+          ['has', 'dominant_neighborhood'],
+          1,
+          0
+        ]
+      }
       });
 
       mapRef.current.addLayer({
