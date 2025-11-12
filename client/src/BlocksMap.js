@@ -23,7 +23,8 @@ const BlocksMap = ({ blocks }) => {
 
     mapRef.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v10',
+      style: 'mapbox://styles/mapbox/dark-v10',
+     // style: 'mapbox://styles/mapbox/light-v10',
       center: [-122.33, 47.61],
       zoom: 11,
     });
@@ -63,13 +64,16 @@ const BlocksMap = ({ blocks }) => {
         'Seward Park': '#207892',
         'Hillman City': '#ece149',
         'Brighton': '#b67e3e',
+        'Graham Hill': '#aa7d96',
+        'Rainier Vista': '#ece149',
+        'Lockmore': '#aa7d96',
       };
 
       const generateColor = (i) => {
         const palette = [
-          '#bd6667', '#377eb8', '#88af4aff', '#9543a1',
-          '#e49e59', '#ffff33', '#a67428', '#ad7a96',
-          '#1d5847', '#682d00', '#6e6c43'
+          '#b69495', 
+            '#938063', 
+          '#67654c'
         ];
         return palette[i % palette.length];
       };
@@ -101,27 +105,39 @@ const BlocksMap = ({ blocks }) => {
         const props = feature.properties;
         const voteKeys = Object.keys(props).filter(k => k.endsWith('_pct') && props[k] > 0);
 
-        let totalWeight = 0;
-        let r = 0, g = 0, b = 0;
+        // Check for any dominant neighborhood ≥90%
+          const dominantKey = voteKeys.find(k => props[k] >= 90);
+          if (dominantKey) {
+            const name = dominantKey.replace('_pct', '');
+            const baseHex = neighborhoodColors[name];
+            if (baseHex) {
+              blendedColorExpression.push(['==', ['get', 'BLOCK_ID'], props.BLOCK_ID], baseHex);
+              return; // Skip blending
+            }
+          }
 
-        voteKeys.forEach((key) => {
-          const name = key.replace('_pct', '');
-          const pct = props[key];
-          const baseHex = neighborhoodColors[name];
-          if (!baseHex) return;
+          // Otherwise, blend normally
+          let totalWeight = 0;
+          let r = 0, g = 0, b = 0;
 
-          const rgb = hexToRgb(baseHex);
-          const weight = pct / 100;
-          totalWeight += weight;
-          r += rgb.r * weight;
-          g += rgb.g * weight;
-          b += rgb.b * weight;
-        });
+          voteKeys.forEach((key) => {
+            const name = key.replace('_pct', '');
+            const pct = props[key];
+            const baseHex = neighborhoodColors[name];
+            if (!baseHex) return;
 
-        if (totalWeight > 0) {
-          const finalColor = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
-          blendedColorExpression.push(['==', ['get', 'BLOCK_ID'], props.BLOCK_ID], finalColor);
-        }
+            const rgb = hexToRgb(baseHex);
+            const weight = pct / 100;
+            totalWeight += weight;
+            r += rgb.r * weight;
+            g += rgb.g * weight;
+            b += rgb.b * weight;
+          });
+
+          if (totalWeight > 0) {
+            const finalColor = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+            blendedColorExpression.push(['==', ['get', 'BLOCK_ID'], props.BLOCK_ID], finalColor);
+          }
       });
 
       blendedColorExpression.push('#ffffff'); // fallback (white)
